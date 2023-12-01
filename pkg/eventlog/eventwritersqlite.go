@@ -10,6 +10,7 @@ import (
 
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/pb/eventpb"
+	"github.com/filecoin-project/mir/stdtypes"
 	t "github.com/filecoin-project/mir/stdtypes"
 )
 
@@ -45,33 +46,33 @@ func NewSqliteWriter(filename string, nodeID t.NodeID, logger logging.Logger) (E
 	}, nil
 }
 
-func (w sqliteWriter) Write(record EventRecord) error {
+func (w sqliteWriter) Write(evts *stdtypes.EventList, timestamp int64) (*stdtypes.EventList, error) {
 	// For each incoming event
-	iter := record.Events.Iterator()
+	iter := evts.Iterator()
 	for event := iter.Next(); event != nil; event = iter.Next() {
 
 		pbevent, ok := event.(*eventpb.Event)
 		if !ok {
-			return es.Errorf("SQLite event writer only supports proto events, received %T", event)
+			return nil, es.Errorf("SQLite event writer only supports proto events, received %T", event)
 		}
 
 		jsonData, err := protojson.Marshal(pbevent)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		_, err = w.db.Exec(
 			insert,
-			record.Time,
+			timestamp,
 			w.nodeID,
 			fmt.Sprintf("%T", pbevent.Type)[len("*eventpb.Event_"):],
 			jsonData,
 		)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
-	return nil
+	return evts, nil
 }
 
 func (w sqliteWriter) Flush() error {

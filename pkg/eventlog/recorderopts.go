@@ -35,9 +35,9 @@ func BufferSizeOpt(size int) RecorderOpt {
 
 // TODO: Write documenting comments for the options below.
 
-type fileSplitterOpt func(EventRecord) []EventRecord
+type fileSplitterOpt func(*stdtypes.EventList) []*stdtypes.EventList
 
-func FileSplitterOpt(splitter func(EventRecord) []EventRecord) RecorderOpt {
+func FileSplitterOpt(splitter func(*stdtypes.EventList) []*stdtypes.EventList) RecorderOpt {
 	return fileSplitterOpt(splitter)
 }
 

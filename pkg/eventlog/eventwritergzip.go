@@ -36,10 +36,10 @@ func NewGzipWriter(filename string, compressionLevel int, nodeID stdtypes.NodeID
 	}, nil
 }
 
-func (w *gzipWriter) Write(record EventRecord) error {
+func (w *gzipWriter) Write(evts *stdtypes.EventList, timestamp int64) (*stdtypes.EventList, error) {
 	gzWriter, err := gzip.NewWriterLevel(w.dest, w.compressionLevel)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer func() {
 		if err := gzWriter.Close(); err != nil {
@@ -47,14 +47,14 @@ func (w *gzipWriter) Write(record EventRecord) error {
 		}
 	}()
 
-	pbEvents, err := pbEventSlice(record.Events)
+	pbEvents, err := pbEventSlice(evts)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return writeRecordedEvent(gzWriter, &recordingpb.Entry{
+	return evts, writeRecordedEvent(gzWriter, &recordingpb.Entry{
 		NodeId: string(w.nodeID.Bytes()),
-		Time:   record.Time,
+		Time:   timestamp,
 		Events: pbEvents,
 	})
 }
