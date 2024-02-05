@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package eventpb;
+
+option go_package = "github.com/filecoin-project/mir/pkg-blockchain/pbeventpb";
+
+import "protos-blockchain/broadcastpb/broadcastpb.proto";
+import "protos-blockchain/bcmpb/bcmpb.proto";
+import "protos-blockchain/minerpb/minerpb.proto";
+import "protos-blockchain/synchronizerpb/synchronizerpb.proto";
+import "protos-blockchain/applicationpb/applicationpb.proto";
+import "protos-blockchain/interceptorpb/interceptorpb.proto";
+
+import "protos/mir/codegen_extensions.proto";
+
+// Event represents a state event to be injected into the state machine
+message Event {
+  option (mir.event_root) = true;
+
+  string dest_module = 1 [(mir.type) = "github.com/filecoin-project/mir/stdtypes.ModuleID"];
+
+  oneof type {
+    option (mir.event_type) = true;
+
+    // Events for blockchain 
+    bcmpb.Event           bcm           = 401;
+    minerpb.Event         miner         = 402;
+    broadcastpb.Event     broadcast     = 403;
+    synchronizerpb.Event  synchronizer  = 404;
+    applicationpb.Event   application   = 405;
+
+    // Events for blockchain interceptor
+    interceptorpb.Event   bcinterceptor = 410;
+  }
+}
+
+message SerializedEvent {
+  bytes data = 1;
+}

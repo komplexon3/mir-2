@@ -49,6 +49,7 @@ vulncheck:
 .PHONY: generate
 generate:
 	rm -rf pkg/pb/*
+	rm -rf pkg-blockchain/pb/*
 	go generate ./...
 
 cmd: $(targetdir)/bench $(targetdir)/mircat

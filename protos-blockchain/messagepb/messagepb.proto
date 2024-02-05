@@ -1,0 +1,31 @@
+/*
+Copyright IBM Corp. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
+syntax = "proto3";
+
+package messagepb;
+
+option go_package = "github.com/filecoin-project/mir/pkg-blockchain/pbmessagepb";
+
+import "protos-blockchain/broadcastpb/broadcastpb.proto";
+import "protos-blockchain/synchronizerpb/synchronizerpb.proto";
+
+import "protos/mir/codegen_extensions.proto";
+import "protos/net/codegen_extensions.proto";
+
+message Message {
+  option (net.message_root) = true;
+
+  string dest_module = 1 [(mir.type) = "github.com/filecoin-project/mir/stdtypes.ModuleID"];
+
+  oneof type {
+    option (net.message_type) = true;
+
+    // Messages for blockchain
+    broadcastpb.Message         broadcast           = 8;
+    synchronizerpb.Message      synchronizer        = 9;
+  }
+}
