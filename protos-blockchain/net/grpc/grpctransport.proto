@@ -1,0 +1,33 @@
+/*
+Copyright IBM Corp. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
+syntax = "proto3";
+
+package grpctransport;
+
+import "messagepb/messagepb.proto";
+
+option go_package = "github.com/filecoin-project/mir/pkg/net/grpc";
+
+service GrpcTransport {
+	rpc Listen(stream GrpcMessage) returns(ByeBye);
+}
+
+message GrpcMessage {
+	bytes            sender = 1;
+	oneof type {
+		messagepb.Message pb_msg  = 2;
+		RawMessage        raw_msg = 3;
+	}
+}
+
+message RawMessage {
+	string dest_module = 1;
+	bytes  data        = 2;
+}
+
+message ByeBye {
+}

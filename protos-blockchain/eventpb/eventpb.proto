@@ -4,14 +4,14 @@ package eventpb;
 
 option go_package = "github.com/filecoin-project/mir/pkg-blockchain/pbeventpb";
 
-import "protos-blockchain/broadcastpb/broadcastpb.proto";
-import "protos-blockchain/bcmpb/bcmpb.proto";
-import "protos-blockchain/minerpb/minerpb.proto";
-import "protos-blockchain/synchronizerpb/synchronizerpb.proto";
-import "protos-blockchain/applicationpb/applicationpb.proto";
-import "protos-blockchain/interceptorpb/interceptorpb.proto";
+import "broadcastpb/broadcastpb.proto";
+import "bcmpb/bcmpb.proto";
+import "minerpb/minerpb.proto";
+import "synchronizerpb/synchronizerpb.proto";
+import "applicationpb/applicationpb.proto";
+import "interceptorpb/interceptorpb.proto";
 
-import "protos/mir/codegen_extensions.proto";
+import "mir/codegen_extensions.proto";
 
 // Event represents a state event to be injected into the state machine
 message Event {

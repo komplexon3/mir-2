@@ -6,37 +6,27 @@ SPDX-License-Identifier: Apache-2.0
 
 package protos
 
-//go:generate -command protoc-basic protoc --proto_path=.. --go_out=../pkg-blockchain/pb --go_opt=paths=source_relative
-
-// Generate the code for codegen extensions.
-//go:generate protoc-basic protos/mir/codegen_extensions.proto
-//go:generate protoc-basic protos/net/codegen_extensions.proto
-
-// Build the protoc plugin.
-//go:generate go build -o ../codegen/protoc-plugin/protoc-gen-mir ../codegen/protoc-plugin
-
-//go:generate -command protoc-events protoc --proto_path=.. --go_out=../pkg-blockchain/pb --go_opt=paths=source_relative --plugin=../codegen/protoc-plugin/protoc-gen-mir --mir_out=../pkg-blockchain/pb --mir_opt=paths=source_relative
+//go:generate -command protoc-events protoc --proto_path=. --go_out=../pkg-blockchain/pb --go_opt=paths=source_relative --plugin=../codegen/protoc-plugin/protoc-gen-mir --mir_out=../pkg-blockchain/pb --mir_opt=paths=source_relative
 
 // Generate the protoc-generated code for events and messages.
-//go:generate protoc-events protos-blockchain/messagepb/messagepb.proto
-//go:generate protoc-events protos-blockchain/eventpb/eventpb.proto
-//go:generate protoc-events protos-blockchain/blockchainpb/blockchainpb.proto
-//go:generate protoc-events protos-blockchain/bcmpb/bcmpb.proto
-//go:generate protoc-events protos-blockchain/minerpb/minerpb.proto
-//go:generate protoc-events protos-blockchain/broadcastpb/broadcastpb.proto
-//go:generate protoc-events protos-blockchain/synchronizerpb/synchronizerpb.proto
-//go:generate protoc-events protos-blockchain/applicationpb/applicationpb.proto
-//go:generate protoc-events protos-blockchain/payloadpb/payloadpb.proto
-//go:generate protoc-events protos-blockchain/statepb/statepb.proto
-//go:generate protoc-events protos-blockchain/interceptorpb/interceptorpb.proto
+//go:generate protoc-events messagepb/messagepb.proto
+//go:generate protoc-events eventpb/eventpb.proto
+//go:generate protoc-events blockchainpb/blockchainpb.proto
+//go:generate protoc-events bcmpb/bcmpb.proto
+//go:generate protoc-events minerpb/minerpb.proto
+//go:generate protoc-events broadcastpb/broadcastpb.proto
+//go:generate protoc-events synchronizerpb/synchronizerpb.proto
+//go:generate protoc-events applicationpb/applicationpb.proto
+//go:generate protoc-events payloadpb/payloadpb.proto
+//go:generate protoc-events statepb/statepb.proto
+//go:generate protoc-events interceptorpb/interceptorpb.proto
 
 // Build the custom code generators.
-//go:generate go build -o ../codegen/generators/mir-std-gen/mir-std-gen.bin ../codegen/generators/mir-std-gen
 //go:generate -command std-gen ../codegen/generators/mir-std-gen/mir-std-gen.bin
 
 // Generate the Mir-generated code for events and messages.
-//go:generate std-gen "github.com/filecoin-project/mir/pkg/pb/eventpb"
-//go:generate std-gen "github.com/filecoin-project/mir/pkg/pb/messagepb"
+//go:generate std-gen "github.com/filecoin-project/mir/pkg-blockchain/pb/eventpb"
+//go:generate std-gen "github.com/filecoin-project/mir/pkg-blockchain/pb/messagepb"
 //go:generate std-gen "github.com/filecoin-project/mir/pkg-blockchain/pb/blockchainpb"
 //go:generate std-gen "github.com/filecoin-project/mir/pkg-blockchain/pb/bcmpb"
 //go:generate std-gen "github.com/filecoin-project/mir/pkg-blockchain/pb/minerpb"
@@ -47,4 +37,4 @@ package protos
 //go:generate std-gen "github.com/filecoin-project/mir/pkg-blockchain/pb/applicationpb"
 //go:generate std-gen "github.com/filecoin-project/mir/pkg-blockchain/pb/interceptorpb"
 
-//go:generate cp eventinterface.go.template pkg-blockchain/pbeventpb/eventinterface.go
+//go:generate cp eventinterface.go.template pkg-blockchain/pb/eventpb/eventinterface.go

@@ -4,8 +4,8 @@ package blockchainpb;
 
 option go_package = "github.com/filecoin-project/mir/pkg-blockchain/pb/blockchainpb";
 
-import "protos/mir/codegen_extensions.proto";
-import "protos-blockchain/payloadpb/payloadpb.proto";
+import "mir/codegen_extensions.proto";
+import "payloadpb/payloadpb.proto";
 import "google/protobuf/timestamp.proto";
 
 message Block {

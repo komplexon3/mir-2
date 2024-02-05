@@ -4,7 +4,7 @@ package payloadpb;
 
 option go_package = "github.com/filecoin-project/mir/pkg-blockchain/pb/payloadpb";
 
-import "protos/mir/codegen_extensions.proto";
+import "mir/codegen_extensions.proto";
 import "google/protobuf/timestamp.proto";
 
  

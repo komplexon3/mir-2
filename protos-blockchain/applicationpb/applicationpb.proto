@@ -4,10 +4,10 @@ package applicationpb;
 
 option go_package = "github.com/filecoin-project/mir/pkg-blockchain/pb//applicationpb";
 
-import "protos/mir/codegen_extensions.proto";
-import "protos-blockchain/payloadpb/payloadpb.proto";
-import "protos-blockchain/statepb/statepb.proto";
-import "protos-blockchain/blockchainpb/blockchainpb.proto";
+import "mir/codegen_extensions.proto";
+import "payloadpb/payloadpb.proto";
+import "statepb/statepb.proto";
+import "blockchainpb/blockchainpb.proto";
 
 message Event {
   option (mir.event_class) = true;

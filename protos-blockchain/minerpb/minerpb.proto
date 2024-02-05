@@ -4,8 +4,8 @@ package minerpb;
 
 option go_package = "github.com/filecoin-project/mir/pkg-blockchain/pb/minerpb";
 
-import "protos/mir/codegen_extensions.proto";
-import "protos-blockchain/payloadpb/payloadpb.proto";
+import "mir/codegen_extensions.proto";
+import "payloadpb/payloadpb.proto";
 
 message Event {
   option (mir.event_class) = true;

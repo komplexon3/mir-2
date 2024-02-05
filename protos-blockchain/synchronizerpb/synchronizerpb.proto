@@ -4,10 +4,10 @@ package synchronizerpb;
 
 option go_package = "github.com/filecoin-project/mir/pkg-blockchain/pb/synchronizerpb";
 
-import "protos-blockchain/blockchainpb/blockchainpb.proto";
+import "blockchainpb/blockchainpb.proto";
 
-import "protos/mir/codegen_extensions.proto";
-import "protos/net/codegen_extensions.proto";
+import "mir/codegen_extensions.proto";
+import "net/codegen_extensions.proto";
 
 message Event {
   option (mir.event_class) = true;

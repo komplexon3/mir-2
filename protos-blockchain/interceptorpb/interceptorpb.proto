@@ -4,9 +4,9 @@ package interceptorpb;
 
 option go_package = "github.com/filecoin-project/mir/pkg-blockchain/pb/interceptorpb";
 
-import "protos-blockchain/blockchainpb/blockchainpb.proto";
-import "protos-blockchain/statepb/statepb.proto";
-import "protos/mir/codegen_extensions.proto";
+import "blockchainpb/blockchainpb.proto";
+import "statepb/statepb.proto";
+import "mir/codegen_extensions.proto";
 
 message Event {
   option (mir.event_class) = true;
