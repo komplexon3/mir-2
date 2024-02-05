@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package applicationpb;
+
+option go_package = "github.com/filecoin-project/mir/pkg/pb/blockchainpb/applicationpb";
+
+import "mir/codegen_extensions.proto";
+import "blockchainpb/payloadpb/payloadpb.proto";
+import "blockchainpb/statepb/statepb.proto";
+import "blockchainpb/blockchainpb.proto";
+
+message Event {
+  option (mir.event_class) = true;
+
+  oneof type {
+    option (mir.event_type) = true;
+
+    VerifyBlocksRequest       verify_block_request  = 1;
+    VerifyBlocksResponse      verify_block_response = 2;
+    PayloadRequest            payload_request       = 3;
+    PayloadResponse           payload_response      = 4;
+    HeadChange                head_change           = 5;
+  
+    // Message input
+    MessageInput              message_input         = 10;
+  }
+}
+
+message VerifyBlocksRequest {
+  option (mir.event) = true;
+  
+  statepb.State                 checkpoint_state            = 1;
+  repeated blockchainpb.Block   chain_checkpoint_to_start   = 2;
+  repeated blockchainpb.Block   chain_to_verify             = 3;
+}
+
+message VerifyBlocksResponse {
+  option (mir.event) = true;
+
+  repeated blockchainpb.Block   verified_blocks = 1;
+}
+
+message HeadChange {
+  option (mir.event) = true;
+
+  repeated blockchainpb.Block removed_chain           = 1;
+  repeated blockchainpb.Block added_chain             = 2;
+  repeated blockchainpb.Block checkpoint_to_fork_root = 3;
+  statepb.State               checkpoint_state        = 4;
+}
+
+message PayloadRequest {
+  option (mir.event) = true;
+
+  uint64  head_id = 1;
+}
+
+message PayloadResponse {
+  option (mir.event) = true;
+  
+  uint64            head_id = 1;
+  payloadpb.Payload payload = 2;
+}
+
+// Message input events
+
+message MessageInput {
+  option (mir.event) = true;
+
+  string  text  = 1;
+}

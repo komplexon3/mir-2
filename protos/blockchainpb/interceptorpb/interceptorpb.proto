@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package interceptorpb;
+
+option go_package = "github.com/filecoin-project/mir/pkg/pb/blockchainpb/interceptorpb";
+
+import "blockchainpb/blockchainpb.proto";
+import "blockchainpb/statepb/statepb.proto";
+import "mir/codegen_extensions.proto";
+
+message Event {
+  option (mir.event_class) = true;
+
+  oneof type {
+    option (mir.event_type) = true;
+
+    TreeUpdate  tree_update   = 1;
+    StateUpdate state_update  = 2;
+  }
+}
+
+message TreeUpdate {
+    option (mir.event) = true;
+
+    repeated blockchainpb.Block blocks  = 1;
+    uint64                      head_id = 2;
+}
+
+message StateUpdate {
+    option (mir.event) = true;
+
+    statepb.State state = 1;
+}

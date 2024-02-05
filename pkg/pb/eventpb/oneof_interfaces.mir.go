@@ -8,6 +8,12 @@ import (
 	batchdbpb "github.com/filecoin-project/mir/pkg/pb/availabilitypb/batchdbpb"
 	batchfetcherpb "github.com/filecoin-project/mir/pkg/pb/batchfetcherpb"
 	bcbpb "github.com/filecoin-project/mir/pkg/pb/bcbpb"
+	applicationpb "github.com/filecoin-project/mir/pkg/pb/blockchainpb/applicationpb"
+	bcmpb "github.com/filecoin-project/mir/pkg/pb/blockchainpb/bcmpb"
+	broadcastpb "github.com/filecoin-project/mir/pkg/pb/blockchainpb/broadcastpb"
+	interceptorpb "github.com/filecoin-project/mir/pkg/pb/blockchainpb/interceptorpb"
+	minerpb "github.com/filecoin-project/mir/pkg/pb/blockchainpb/minerpb"
+	synchronizerpb "github.com/filecoin-project/mir/pkg/pb/blockchainpb/synchronizerpb"
 	checkpointpb "github.com/filecoin-project/mir/pkg/pb/checkpointpb"
 	chkpvalidatorpb "github.com/filecoin-project/mir/pkg/pb/checkpointpb/chkpvalidatorpb"
 	cryptopb "github.com/filecoin-project/mir/pkg/pb/cryptopb"
@@ -108,4 +114,28 @@ func (w *Event_TestingUint) Unwrap() *wrapperspb.UInt64Value {
 
 func (w *Event_Tester) Unwrap() *testerpb.Tester {
 	return w.Tester
+}
+
+func (w *Event_Bcm) Unwrap() *bcmpb.Event {
+	return w.Bcm
+}
+
+func (w *Event_Miner) Unwrap() *minerpb.Event {
+	return w.Miner
+}
+
+func (w *Event_Broadcast) Unwrap() *broadcastpb.Event {
+	return w.Broadcast
+}
+
+func (w *Event_Synchronizer) Unwrap() *synchronizerpb.Event {
+	return w.Synchronizer
+}
+
+func (w *Event_Application) Unwrap() *applicationpb.Event {
+	return w.Application
+}
+
+func (w *Event_Bcinterceptor) Unwrap() *interceptorpb.Event {
+	return w.Bcinterceptor
 }

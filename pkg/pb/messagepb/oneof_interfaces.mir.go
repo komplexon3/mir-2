@@ -5,6 +5,8 @@ package messagepb
 import (
 	mscpb "github.com/filecoin-project/mir/pkg/pb/availabilitypb/mscpb"
 	bcbpb "github.com/filecoin-project/mir/pkg/pb/bcbpb"
+	broadcastpb "github.com/filecoin-project/mir/pkg/pb/blockchainpb/broadcastpb"
+	synchronizerpb "github.com/filecoin-project/mir/pkg/pb/blockchainpb/synchronizerpb"
 	checkpointpb "github.com/filecoin-project/mir/pkg/pb/checkpointpb"
 	isspb "github.com/filecoin-project/mir/pkg/pb/isspb"
 	ordererpb "github.com/filecoin-project/mir/pkg/pb/ordererpb"
@@ -40,4 +42,12 @@ func (w *Message_Checkpoint) Unwrap() *checkpointpb.Message {
 
 func (w *Message_Orderer) Unwrap() *ordererpb.Message {
 	return w.Orderer
+}
+
+func (w *Message_Broadcast) Unwrap() *broadcastpb.Message {
+	return w.Broadcast
+}
+
+func (w *Message_Synchronizer) Unwrap() *synchronizerpb.Message {
+	return w.Synchronizer
 }

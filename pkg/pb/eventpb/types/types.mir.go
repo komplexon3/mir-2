@@ -9,6 +9,12 @@ import (
 	types3 "github.com/filecoin-project/mir/pkg/pb/availabilitypb/types"
 	types5 "github.com/filecoin-project/mir/pkg/pb/batchfetcherpb/types"
 	types1 "github.com/filecoin-project/mir/pkg/pb/bcbpb/types"
+	types21 "github.com/filecoin-project/mir/pkg/pb/blockchainpb/applicationpb/types"
+	types17 "github.com/filecoin-project/mir/pkg/pb/blockchainpb/bcmpb/types"
+	types19 "github.com/filecoin-project/mir/pkg/pb/blockchainpb/broadcastpb/types"
+	types22 "github.com/filecoin-project/mir/pkg/pb/blockchainpb/interceptorpb/types"
+	types18 "github.com/filecoin-project/mir/pkg/pb/blockchainpb/minerpb/types"
+	types20 "github.com/filecoin-project/mir/pkg/pb/blockchainpb/synchronizerpb/types"
 	types13 "github.com/filecoin-project/mir/pkg/pb/checkpointpb/chkpvalidatorpb/types"
 	types7 "github.com/filecoin-project/mir/pkg/pb/checkpointpb/types"
 	types10 "github.com/filecoin-project/mir/pkg/pb/cryptopb/types"
@@ -88,6 +94,18 @@ func Event_TypeFromPb(pb eventpb.Event_Type) Event_Type {
 		return &Event_TestingUint{TestingUint: pb.TestingUint}
 	case *eventpb.Event_Tester:
 		return &Event_Tester{Tester: types16.TesterFromPb(pb.Tester)}
+	case *eventpb.Event_Bcm:
+		return &Event_Bcm{Bcm: types17.EventFromPb(pb.Bcm)}
+	case *eventpb.Event_Miner:
+		return &Event_Miner{Miner: types18.EventFromPb(pb.Miner)}
+	case *eventpb.Event_Broadcast:
+		return &Event_Broadcast{Broadcast: types19.EventFromPb(pb.Broadcast)}
+	case *eventpb.Event_Synchronizer:
+		return &Event_Synchronizer{Synchronizer: types20.EventFromPb(pb.Synchronizer)}
+	case *eventpb.Event_Application:
+		return &Event_Application{Application: types21.EventFromPb(pb.Application)}
+	case *eventpb.Event_Bcinterceptor:
+		return &Event_Bcinterceptor{Bcinterceptor: types22.EventFromPb(pb.Bcinterceptor)}
 	}
 	return nil
 }
@@ -570,6 +588,150 @@ func (w *Event_Tester) Pb() eventpb.Event_Type {
 
 func (*Event_Tester) MirReflect() mirreflect.Type {
 	return mirreflect.TypeImpl{PbType_: reflectutil.TypeOf[*eventpb.Event_Tester]()}
+}
+
+type Event_Bcm struct {
+	Bcm *types17.Event
+}
+
+func (*Event_Bcm) isEvent_Type() {}
+
+func (w *Event_Bcm) Unwrap() *types17.Event {
+	return w.Bcm
+}
+
+func (w *Event_Bcm) Pb() eventpb.Event_Type {
+	if w == nil {
+		return nil
+	}
+	if w.Bcm == nil {
+		return &eventpb.Event_Bcm{}
+	}
+	return &eventpb.Event_Bcm{Bcm: (w.Bcm).Pb()}
+}
+
+func (*Event_Bcm) MirReflect() mirreflect.Type {
+	return mirreflect.TypeImpl{PbType_: reflectutil.TypeOf[*eventpb.Event_Bcm]()}
+}
+
+type Event_Miner struct {
+	Miner *types18.Event
+}
+
+func (*Event_Miner) isEvent_Type() {}
+
+func (w *Event_Miner) Unwrap() *types18.Event {
+	return w.Miner
+}
+
+func (w *Event_Miner) Pb() eventpb.Event_Type {
+	if w == nil {
+		return nil
+	}
+	if w.Miner == nil {
+		return &eventpb.Event_Miner{}
+	}
+	return &eventpb.Event_Miner{Miner: (w.Miner).Pb()}
+}
+
+func (*Event_Miner) MirReflect() mirreflect.Type {
+	return mirreflect.TypeImpl{PbType_: reflectutil.TypeOf[*eventpb.Event_Miner]()}
+}
+
+type Event_Broadcast struct {
+	Broadcast *types19.Event
+}
+
+func (*Event_Broadcast) isEvent_Type() {}
+
+func (w *Event_Broadcast) Unwrap() *types19.Event {
+	return w.Broadcast
+}
+
+func (w *Event_Broadcast) Pb() eventpb.Event_Type {
+	if w == nil {
+		return nil
+	}
+	if w.Broadcast == nil {
+		return &eventpb.Event_Broadcast{}
+	}
+	return &eventpb.Event_Broadcast{Broadcast: (w.Broadcast).Pb()}
+}
+
+func (*Event_Broadcast) MirReflect() mirreflect.Type {
+	return mirreflect.TypeImpl{PbType_: reflectutil.TypeOf[*eventpb.Event_Broadcast]()}
+}
+
+type Event_Synchronizer struct {
+	Synchronizer *types20.Event
+}
+
+func (*Event_Synchronizer) isEvent_Type() {}
+
+func (w *Event_Synchronizer) Unwrap() *types20.Event {
+	return w.Synchronizer
+}
+
+func (w *Event_Synchronizer) Pb() eventpb.Event_Type {
+	if w == nil {
+		return nil
+	}
+	if w.Synchronizer == nil {
+		return &eventpb.Event_Synchronizer{}
+	}
+	return &eventpb.Event_Synchronizer{Synchronizer: (w.Synchronizer).Pb()}
+}
+
+func (*Event_Synchronizer) MirReflect() mirreflect.Type {
+	return mirreflect.TypeImpl{PbType_: reflectutil.TypeOf[*eventpb.Event_Synchronizer]()}
+}
+
+type Event_Application struct {
+	Application *types21.Event
+}
+
+func (*Event_Application) isEvent_Type() {}
+
+func (w *Event_Application) Unwrap() *types21.Event {
+	return w.Application
+}
+
+func (w *Event_Application) Pb() eventpb.Event_Type {
+	if w == nil {
+		return nil
+	}
+	if w.Application == nil {
+		return &eventpb.Event_Application{}
+	}
+	return &eventpb.Event_Application{Application: (w.Application).Pb()}
+}
+
+func (*Event_Application) MirReflect() mirreflect.Type {
+	return mirreflect.TypeImpl{PbType_: reflectutil.TypeOf[*eventpb.Event_Application]()}
+}
+
+type Event_Bcinterceptor struct {
+	Bcinterceptor *types22.Event
+}
+
+func (*Event_Bcinterceptor) isEvent_Type() {}
+
+func (w *Event_Bcinterceptor) Unwrap() *types22.Event {
+	return w.Bcinterceptor
+}
+
+func (w *Event_Bcinterceptor) Pb() eventpb.Event_Type {
+	if w == nil {
+		return nil
+	}
+	if w.Bcinterceptor == nil {
+		return &eventpb.Event_Bcinterceptor{}
+	}
+	return &eventpb.Event_Bcinterceptor{Bcinterceptor: (w.Bcinterceptor).Pb()}
+}
+
+func (*Event_Bcinterceptor) MirReflect() mirreflect.Type {
+	return mirreflect.TypeImpl{PbType_: reflectutil.TypeOf[*eventpb.Event_Bcinterceptor]()}
 }
 
 func EventFromPb(pb *eventpb.Event) *Event {

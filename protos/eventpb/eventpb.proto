@@ -22,6 +22,12 @@ import "hasherpb/hasherpb.proto";
 import "cryptopb/cryptopb.proto";
 import "transportpb/transportpb.proto";
 import "testerpb/testerpb.proto";
+import "blockchainpb/bcmpb/bcmpb.proto";
+import "blockchainpb/minerpb/minerpb.proto";
+import "blockchainpb/broadcastpb/broadcastpb.proto";
+import "blockchainpb/synchronizerpb/synchronizerpb.proto";
+import "blockchainpb/applicationpb/applicationpb.proto";
+import "blockchainpb/interceptorpb/interceptorpb.proto";
 
 import "mir/codegen_extensions.proto";
 
@@ -61,6 +67,17 @@ message Event {
     google.protobuf.StringValue testingString = 301;
     google.protobuf.UInt64Value testingUint   = 302;
     testerpb.Tester tester = 303;
+
+
+    // Events for blockchain 
+    bcmpb.Event           bcm           = 401;
+    minerpb.Event         miner         = 402;
+    broadcastpb.Event     broadcast     = 403;
+    synchronizerpb.Event  synchronizer  = 404;
+    applicationpb.Event   application   = 405;
+
+    // Events for blockchain interceptor
+    interceptorpb.Event   bcinterceptor = 410;
   }
 }
 

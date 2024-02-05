@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package bcmpb;
+
+option go_package = "github.com/filecoin-project/mir/pkg/pb/blockchainpb/bcmpb";
+
+import "blockchainpb/blockchainpb.proto";
+import "blockchainpb/statepb/statepb.proto";
+
+import "mir/codegen_extensions.proto";
+
+message Event {
+  option (mir.event_class) = true;
+
+  oneof type {
+    option (mir.event_type) = true;
+
+    NewBlock                          new_block                             = 1;
+    NewChain                          new_chain                             = 2;
+
+    GetChainRequest                   get_chain_request                     = 5;
+    GetChainResponse                  get_chain_response                    = 6;
+    RegisterCheckpoint                register_checkpoint                   = 7;
+    GetChainToHeadRequest             get_chain_to_head_request             = 8;
+    GetChainToHeadResponse            get_chain_to_head_response            = 9;
+
+    InitBlockchain                    init_blockchain                       = 100;
+  }
+}
+
+message NewBlock {
+  option (mir.event) = true;
+  
+  blockchainpb.Block block = 1;
+}
+
+message NewChain {
+  option (mir.event) = true;
+  
+  // chain segment ordered blocks[0]<-blocks[1]<-blocks[2]...
+  repeated blockchainpb.Block blocks = 1;
+}
+
+message GetChainRequest {
+  option (mir.event) = true;
+
+  string          request_id        = 1;
+  string          source_module     = 2 [(mir.type) = "github.com/filecoin-project/mir/stdtypes.ModuleID"];
+  
+  uint64          end_block_id      = 3;
+  repeated uint64 source_block_ids  = 4;
+}
+
+message GetChainResponse {
+  option (mir.event) = true;
+
+  string                        request_id  = 1;
+  bool                          success     = 2;
+  repeated blockchainpb.Block   chain       = 3; // sorted from oldest to youngest
+}
+
+message GetChainToHeadRequest {
+  option (mir.event) = true;
+  string  source_module = 1 [(mir.type) = "github.com/filecoin-project/mir/stdtypes.ModuleID"];
+
+}
+
+message GetChainToHeadResponse {
+  option (mir.event) = true;
+
+  repeated blockchainpb.Block chain           = 1; // sorted from oldest to youngest
+  statepb.State               checkpointState = 2;
+}
+
+message RegisterCheckpoint {
+  option (mir.event) = true;
+
+  uint64        block_id  = 1;
+  statepb.State state     = 2;
+}
+
+message InitBlockchain {
+  option (mir.event) = true;
+
+  statepb.State initial_state = 1;
+}
