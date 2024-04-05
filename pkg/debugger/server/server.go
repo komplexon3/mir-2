@@ -12,14 +12,15 @@ import (
 )
 
 // files to be served
-//go:embed frontend
+//go:embed frontend/build
 
 var frontend embed.FS
 
 type Server struct {
-	port     string
-	WsServer *wsserver.WsServer // TODO: should actually be private
-	logger   logging.Logger
+	port            string
+	EventWsServer   *wsserver.WsServer // TODO: should actually be private
+	GodModeWsServer *wsserver.WsServer // TODO: should actually be private
+	logger          logging.Logger
 }
 
 func getBaseFS() fs.FS {
@@ -32,7 +33,8 @@ func getBaseFS() fs.FS {
 
 func (s *Server) setupHttpRoutes() {
 	fmt.Println("Setting up routes")
-	http.HandleFunc("/ws", s.WsServer.HandleWs)
+	http.HandleFunc("/ws", s.EventWsServer.HandleWs)
+	http.HandleFunc("/godmodews", s.GodModeWsServer.HandleWs)
 	http.Handle("/", http.FileServer(http.FS(getBaseFS())))
 }
 
@@ -45,33 +47,48 @@ func (s *Server) StartServer() {
 }
 
 func (s *Server) HasWSConnections() bool {
-	return s.WsServer.HasConnections()
+	return s.EventWsServer.HasConnections()
 }
 
-func (s *Server) SendMessage(msg []byte) {
-	s.WsServer.SendChan <- wsserver.WsMessage{
+func (s *Server) SendEvent(msg []byte) {
+	s.EventWsServer.SendChan <- wsserver.WsMessage{
 		MessageType: websocket.TextMessage,
 		Payload:     msg,
 	}
 }
 
-func (s *Server) ReceiveAction() wsserver.WsMessage {
-	msg := <-s.WsServer.RecvChan
+func (s *Server) ReceiveEventAction() wsserver.WsMessage {
+	msg := <-s.EventWsServer.RecvChan
+	s.logger.Log(logging.LevelDebug, fmt.Sprintf("Received msg: %v", msg))
+	return msg
+}
+
+func (s *Server) SendGodModeMessage(msg []byte) {
+	s.GodModeWsServer.SendChan <- wsserver.WsMessage{
+		MessageType: websocket.TextMessage,
+		Payload:     msg,
+	}
+}
+
+func (s *Server) ReceiveGodModeMessage() wsserver.WsMessage {
+	msg := <-s.GodModeWsServer.RecvChan
 	s.logger.Log(logging.LevelDebug, fmt.Sprintf("Received msg: %v", msg))
 	return msg
 }
 
 func (s *Server) Close() {
-	s.WsServer.Close()
+	s.EventWsServer.Close()
 }
 
 func NewServer(port string, logger logging.Logger) *Server {
-	wss := wsserver.NewWsServer(logger)
+	ewss := wsserver.NewWsServer(logger)
+	gmwss := wsserver.NewWsServer(logger)
 
 	s := &Server{
-		port:     port,
-		WsServer: wss,
-		logger:   logger,
+		port:            port,
+		EventWsServer:   ewss,
+		GodModeWsServer: gmwss,
+		logger:          logger,
 	}
 
 	return s
