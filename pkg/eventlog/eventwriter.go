@@ -19,5 +19,5 @@ type EventWriter interface {
 // In empirical tests comparing compression levels, best speed was only a few tenths of a percent
 // worse than best compression, but your results may vary.
 var DefaultNewEventWriter = func(dest string, nodeID t.NodeID, logger logging.Logger) (EventWriter, error) {
-	return NewGzipWriter(dest, gzip.BestSpeed, nodeID, logger)
+	return NewGzipWriter(dest+"_"+string(nodeID), gzip.BestSpeed, nodeID, logger)
 }
