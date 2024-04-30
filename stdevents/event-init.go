@@ -12,9 +12,7 @@ type Init struct {
 
 func NewInit(dest stdtypes.ModuleID) *Init {
 	return &Init{
-		mirEvent{
-			DestModule: dest,
-		},
+    newMirEvent(dest),
 	}
 }
 
@@ -47,4 +45,10 @@ func (e *Init) ToString() string {
 	}
 
 	return string(data)
+}
+
+func (e *Init) SetMetadata(key string, value interface{}) (stdtypes.Event, error) {
+	newE := *e
+	newE.Metadata[key] = value
+	return &newE, nil
 }

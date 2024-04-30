@@ -52,7 +52,7 @@ func (e *TimerDelay) serializable() (*serializableTimerDelay, error) {
 
 func NewTimerDelay(dest stdtypes.ModuleID, delay time.Duration, events ...stdtypes.Event) *TimerDelay {
 	return &TimerDelay{
-		mirEvent: mirEvent{DestModule: dest},
+		mirEvent: newMirEvent(dest),
 		Events:   events,
 		Delay:    delay,
 	}
@@ -92,4 +92,10 @@ func (e *TimerDelay) ToString() string {
 	}
 
 	return string(data)
+}
+
+func (e *TimerDelay) SetMetadata(key string, value interface{}) (stdtypes.Event, error) {
+	newE := *e
+	newE.Metadata[key] = value
+	return &newE, nil
 }

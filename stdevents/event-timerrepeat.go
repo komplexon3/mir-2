@@ -60,7 +60,7 @@ func NewTimerRepeat(
 	events ...stdtypes.Event,
 ) *TimerRepeat {
 	return &TimerRepeat{
-		mirEvent:       mirEvent{DestModule: dest},
+		mirEvent:       newMirEvent(dest),
 		Events:         events,
 		Period:         period,
 		RetentionIndex: retentionIndex,
@@ -107,4 +107,10 @@ func (e *TimerRepeat) ToString() string {
 	}
 
 	return string(data)
+}
+
+func (e *TimerRepeat) SetMetadata(key string, value interface{}) (stdtypes.Event, error) {
+	newE := *e
+	newE.Metadata[key] = value
+	return &newE, nil
 }

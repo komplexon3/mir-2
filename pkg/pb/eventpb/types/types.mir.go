@@ -28,8 +28,9 @@ import (
 )
 
 type Event struct {
-	DestModule stdtypes.ModuleID
-	Type       Event_Type
+	DestModule  stdtypes.ModuleID
+	RawMetadata map[string][]uint8
+	Type        Event_Type
 }
 
 type Event_Type interface {
@@ -577,8 +578,9 @@ func EventFromPb(pb *eventpb.Event) *Event {
 		return nil
 	}
 	return &Event{
-		DestModule: (stdtypes.ModuleID)(pb.DestModule),
-		Type:       Event_TypeFromPb(pb.Type),
+		DestModule:  (stdtypes.ModuleID)(pb.DestModule),
+		RawMetadata: pb.RawMetadata,
+		Type:        Event_TypeFromPb(pb.Type),
 	}
 }
 
@@ -589,6 +591,7 @@ func (m *Event) Pb() *eventpb.Event {
 	pbMessage := &eventpb.Event{}
 	{
 		pbMessage.DestModule = (string)(m.DestModule)
+		pbMessage.RawMetadata = m.RawMetadata
 		if m.Type != nil {
 			pbMessage.Type = (m.Type).Pb()
 		}

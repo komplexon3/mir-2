@@ -29,7 +29,8 @@ import "mir/codegen_extensions.proto";
 message Event {
   option (mir.event_root) = true;
 
-  string dest_module = 1 [(mir.type) = "github.com/filecoin-project/mir/stdtypes.ModuleID"];
+  string dest_module                  = 1 [(mir.type) = "github.com/filecoin-project/mir/stdtypes.ModuleID"];
+  map<string, bytes> raw_metadata  = 2 [(mir.omit_in_event_constructors) = true];
 
   oneof type {
     option (mir.event_type) = true;

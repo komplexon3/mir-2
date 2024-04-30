@@ -51,7 +51,7 @@ func NewNewSubmodule(
 	retIdx stdtypes.RetentionIndex,
 ) *NewSubmodule {
 	return &NewSubmodule{
-		mirEvent:       mirEvent{DestModule: dest},
+    mirEvent: newMirEvent(dest),
 		SubmoduleID:    submoduleID,
 		Params:         params,
 		RetentionIndex: retIdx,
@@ -98,4 +98,10 @@ func (e *NewSubmodule) ToString() string {
 	}
 
 	return string(data)
+}
+
+func (e *NewSubmodule) SetMetadata(key string, value interface{}) (stdtypes.Event, error) {
+	newE := *e
+	newE.Metadata[key] = value
+	return &newE, nil
 }

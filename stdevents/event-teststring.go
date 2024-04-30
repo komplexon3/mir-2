@@ -17,9 +17,7 @@ type TestString struct {
 
 func NewTestString(dest stdtypes.ModuleID, value string) *TestString {
 	return &TestString{
-		mirEvent{
-			DestModule: dest,
-		},
+    newMirEvent(dest),
 		value,
 	}
 }
@@ -53,4 +51,10 @@ func (e *TestString) ToString() string {
 	}
 
 	return string(data)
+}
+
+func (e *TestString) SetMetadata(key string, value interface{}) (stdtypes.Event, error) {
+	newE := *e
+	newE.Metadata[key] = value
+	return &newE, nil
 }

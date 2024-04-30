@@ -13,9 +13,7 @@ type GarbageCollect struct {
 
 func NewGarbageCollect(dest stdtypes.ModuleID, retIdx stdtypes.RetentionIndex) *GarbageCollect {
 	return &GarbageCollect{
-		mirEvent: mirEvent{
-			DestModule: dest,
-		},
+    mirEvent: newMirEvent(dest),
 		RetentionIndex: retIdx,
 	}
 }
@@ -53,4 +51,10 @@ func (e *GarbageCollect) ToString() string {
 	}
 
 	return string(data)
+}
+
+func (e *GarbageCollect) SetMetadata(key string, value interface{}) (stdtypes.Event, error) {
+	newE := *e
+	newE.Metadata[key] = value
+	return &newE, nil
 }

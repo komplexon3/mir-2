@@ -13,9 +13,7 @@ type Raw struct {
 
 func NewRaw(dest stdtypes.ModuleID, data []byte) *Raw {
 	return &Raw{
-		mirEvent: mirEvent{
-			DestModule: dest,
-		},
+    mirEvent: newMirEvent(dest),
 		Data: data,
 	}
 }
@@ -57,4 +55,10 @@ func WrapInRaw(e stdtypes.Event) (*Raw, error) {
 		return nil, err
 	}
 	return NewRawWithSrc(e.Src(), e.Dest(), data), nil
+}
+
+func (e *Raw) SetMetadata(key string, value interface{}) (stdtypes.Event, error) {
+	newE := *e
+	newE.Metadata[key] = value
+	return &newE, nil
 }

@@ -41,7 +41,7 @@ func (e *MessageReceived) serializable() (*serializableMessageReceived, error) {
 
 func NewMessageReceived(dest stdtypes.ModuleID, sender stdtypes.NodeID, payload stdtypes.Message) *MessageReceived {
 	return &MessageReceived{
-		mirEvent: mirEvent{DestModule: dest},
+    mirEvent: newMirEvent(dest),
 		Sender:   sender,
 		Payload:  payload,
 	}
@@ -81,4 +81,10 @@ func (e *MessageReceived) ToString() string {
 	}
 
 	return string(data)
+}
+
+func (e *MessageReceived) SetMetadata(key string, value interface{}) (stdtypes.Event, error) {
+	newE := *e
+	newE.Metadata[key] = value
+	return &newE, nil
 }

@@ -7,6 +7,9 @@
 package eventpb
 
 import (
+	"encoding/json"
+	es "github.com/go-errors/errors"
+
 	"google.golang.org/protobuf/proto"
 
 	"github.com/filecoin-project/mir/stdtypes"
@@ -53,6 +56,47 @@ func (event *Event) ToBytes() ([]byte, error) {
 
 func (event *Event) ToString() string {
 	return event.String()
+}
+
+func (event *Event) GetMetadata(key string) (interface{}, error) {
+  if event.RawMetadata == nil {
+		return nil, es.Errorf("value for key %s not found in metadata", key)
+  }
+	encodedVal, ok := event.GetRawMetadata()[key]
+	if !ok {
+		return nil, es.Errorf("value for key %s not found in metadata", key)
+	}
+
+	var value interface{}
+	err := json.Unmarshal(encodedVal, &value)
+	if err != nil {
+		return nil, es.Errorf("failed to unmarshal value for key %s: %v", key, err)
+	}
+
+	return value, nil
+}
+
+func (event *Event) SetMetadata(key string, value interface{}) (stdtypes.Event, error) {
+  metadata := event.RawMetadata
+  if metadata == nil {
+    metadata = make(map[string][]byte)
+  }
+
+	encodedVal, err := json.Marshal(value)
+	if err != nil {
+		es.Errorf("failed to marshal value: %v", err)
+		return nil, err
+	}
+
+  metadata[key] = encodedVal
+
+	newEvent := Event{
+    DestModule: event.DestModule,
+    Type: event.Type,
+    RawMetadata: event.RawMetadata,
+	}
+
+  return &newEvent, nil
 }
 
 // List returns EventList containing the given elements.

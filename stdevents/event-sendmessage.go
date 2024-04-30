@@ -50,7 +50,7 @@ func NewSendMessage(
 	destNodes ...stdtypes.NodeID,
 ) *SendMessage {
 	return &SendMessage{
-		mirEvent:         mirEvent{DestModule: localDestModule},
+		mirEvent:         newMirEvent(localDestModule),
 		DestNodes:        destNodes,
 		RemoteDestModule: remoteDestModule,
 		Payload:          message,
@@ -97,4 +97,10 @@ func (e *SendMessage) ToString() string {
 	}
 
 	return string(data)
+}
+
+func (e *SendMessage) SetMetadata(key string, value interface{}) (stdtypes.Event, error) {
+	newE := *e
+	newE.Metadata[key] = value
+	return &newE, nil
 }

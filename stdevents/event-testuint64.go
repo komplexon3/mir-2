@@ -14,9 +14,7 @@ type TestUint64 struct {
 
 func NewTestUint64(dest stdtypes.ModuleID, value uint64) *TestUint64 {
 	return &TestUint64{
-		mirEvent{
-			DestModule: dest,
-		},
+    newMirEvent(dest),
 		value,
 	}
 }
@@ -50,4 +48,10 @@ func (e *TestUint64) ToString() string {
 	}
 
 	return string(data)
+}
+
+func (e *TestUint64) SetMetadata(key string, value interface{}) (stdtypes.Event, error) {
+	newE := *e
+	newE.Metadata[key] = value
+	return &newE, nil
 }
