@@ -48,6 +48,20 @@ func (r *Reader) ReadEntry() (*recordingpb.Entry, error) {
 	return re, nil
 }
 
+func (r *Reader) ReadAllEntries() ([]*recordingpb.Entry, error) {
+	entries := make([]*recordingpb.Entry, 0)
+
+	var entry *recordingpb.Entry
+	var err error
+	for entry, err = r.ReadEntry(); err == nil; entry, err = r.ReadEntry() {
+		entries = append(entries, entry)
+	}
+	if err != nil && !errors.Is(err, io.EOF) {
+		return nil, err
+	}
+	return entries, nil
+}
+
 func (r *Reader) ReadAllEvents() ([]*eventpb.Event, error) {
 	allEvents := make([]*eventpb.Event, 0)
 
