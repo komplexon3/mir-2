@@ -123,7 +123,7 @@ func NewNode(
 		ID:     id,
 		Config: config,
 
-		eventsIn: make(chan *stdtypes.EventList),
+		eventsIn: make(chan *stdtypes.EventList, len(m)),
 		debugOut: make(chan *stdtypes.EventList),
 
 		workChans:   newWorkChans(m),
@@ -191,10 +191,7 @@ func (n *Node) Run(ctx context.Context) error {
 	defer close(n.stopped)
 
 	// Submit the Init event to the modules.
-	if err := n.pendingEvents.Add(createInitEvents(n.modules)); err != nil {
-		n.workErrNotifier.Fail(err)
-		return es.Errorf("failed to add init event: %w", err)
-	}
+	n.eventsIn <- createInitEvents(n.modules)
 
 	// Start processing of events.
 	return n.process(ctx)
@@ -268,7 +265,11 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 			defer n.statsLock.Unlock()
 
 			newEvents := newEventsVal.Interface().(*stdtypes.EventList)
-			if err := n.pendingEvents.Add(newEvents); err != nil {
+			// Intercept the (stripped of all follow-ups) events that were emitted.
+			// This is only for debugging / diagnostic purposes.
+			interceptedEvents := n.interceptEvents(newEvents)
+      // Add the intercepted events to the modules' event buffers
+			if err := n.pendingEvents.Add(interceptedEvents); err != nil {
 				n.workErrNotifier.Fail(err)
 			}
 
