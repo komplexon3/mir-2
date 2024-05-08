@@ -9,6 +9,9 @@ import (
 	"testing"
 	"time"
 
+	broadcastevents "github.com/filecoin-project/mir/samples/broadcast/events"
+	"github.com/filecoin-project/mir/stdevents"
+
 	testmodules "github.com/filecoin-project/mir/samples/broadcast/properties"
 
 	"github.com/filecoin-project/mir/adversary"
@@ -88,16 +91,14 @@ func RunTest(t *testing.T, testName string) {
 		panicIfErr(err)
 		adv.RunExperiment(test.Plugin, test.Puppeteer)
 
-		// TODO: add property checking
-
+		// property checking
 		files := make([]string, 0, len(allNodes))
 		for i := range allNodes {
 			files = append(files, path.Join(reportDir, fmt.Sprintf("eventlog0_%d.gz", i)))
-
 		}
 
 		logger := logging.ConsoleDebugLogger
-		history := checker.GetEventsFromFile(files...)
+		history := checker.GetEventsFromFile([]func([]byte) (stdtypes.Event, error){broadcastevents.Deserialize, stdevents.Deserialize}, files...)
 		eventChan := make(chan stdtypes.Event)
 
 		systemConfig := &testmodules.SystemConfig{
@@ -115,9 +116,17 @@ func RunTest(t *testing.T, testName string) {
 		panicIfErr(err)
 
 		fmt.Println("Starting analysis")
+		analysisTraceFile, err := os.Create(path.Join(reportDir, "trace.txt"))
+		panicIfErr(err)
+		defer analysisTraceFile.Close()
 		go func() {
 			for _, ele := range history {
 				eventChan <- ele
+				nodeId, err := ele.GetMetadata("node")
+				if err != nil {
+					nodeId = "?"
+				}
+				analysisTraceFile.WriteString(fmt.Sprintf("%s - %s\n", nodeId.(string), ele.ToString()))
 			}
 			close(eventChan)
 		}()
@@ -139,8 +148,6 @@ func RunTest(t *testing.T, testName string) {
 		commit := func() string {
 			commit, err := exec.Command("git", "rev-parse", "HEAD").Output()
 			if err != nil {
-        t.Log(err)
-        fmt.Print(err)
 				return "no commit"
 			}
 			return string(commit)

@@ -7,7 +7,9 @@ import (
 	"github.com/filecoin-project/mir/checker"
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/modules"
+	broadcastevents "github.com/filecoin-project/mir/samples/broadcast/events"
 	testmodules "github.com/filecoin-project/mir/samples/broadcast/properties"
+	"github.com/filecoin-project/mir/stdevents"
 	"github.com/filecoin-project/mir/stdtypes"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -31,7 +33,7 @@ func main() {
 	}
 
 	logger := logging.ConsoleDebugLogger
-	history := checker.GetEventsFromFile(files...)
+	history := checker.GetEventsFromFile([]func([]byte) (stdtypes.Event, error){broadcastevents.Deserialize, stdevents.Deserialize}, files...)
 	eventChan := make(chan stdtypes.Event)
 
 	systemConfig := &testmodules.SystemConfig{

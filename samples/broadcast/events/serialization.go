@@ -2,7 +2,6 @@ package events
 
 import (
 	"encoding/json"
-	"fmt"
 
 	es "github.com/go-errors/errors"
 
@@ -48,7 +47,7 @@ func serialize(e any) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-  
+
 	return data, nil
 }
 
@@ -66,14 +65,12 @@ func Deserialize(data []byte) (stdtypes.Event, error) {
 	case DeliverEvent:
 		e = &Deliver{baseEvent: baseEvent{Metadata: make(map[string]interface{})}}
 	default:
-		return nil, fmt.Errorf("unknown event type: %s", se.EvType)
+		return nil, es.Errorf("unknown event type: %s", se.EvType)
 	}
 
 	if err := json.Unmarshal(se.EvData, e); err != nil {
 		return nil, err
 	}
-
-  fmt.Println(string(se.EvData))
 
 	return e, nil
 }

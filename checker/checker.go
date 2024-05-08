@@ -14,7 +14,7 @@ import (
 
 type Checker struct {
 	conditions []*condition
-  executed   bool // NOTE: is this actually providing any value?
+	executed   bool // NOTE: is this actually providing any value?
 }
 
 type CheckerResult int64
@@ -45,6 +45,7 @@ type condition struct {
 	name         string
 	runnerModule modules.PassiveModule
 	eventChan    chan stdtypes.Event
+	doneC        chan struct{}
 	done         bool
 	result       CheckerResult
 }
@@ -54,6 +55,7 @@ func newCondition(name string, module modules.PassiveModule) *condition {
 		name,
 		module,
 		make(chan stdtypes.Event),
+		make(chan struct{}),
 		false,
 		NOT_READY,
 	}
@@ -77,7 +79,6 @@ func NewChecker(conditions modules.Modules) (*Checker, error) {
 	return checker, nil
 }
 
-
 func (c *Checker) GetResults() (map[string]CheckerResult, error) {
 	if !c.executed {
 		return nil, fmt.Errorf("no results available, run analysis first")
@@ -99,29 +100,15 @@ func (c *Checker) RunAnalysis(eventChan chan stdtypes.Event) error {
 
 	var wg sync.WaitGroup
 
-// func safelyApplyEventsPassive(
-// 	module modules.PassiveModule,
-// 	events *stdtypes.EventList,
-// ) (result *stdtypes.EventList, err error) {
-// 	defer func() {
-// 		if r := recover(); r != nil {
-// 			if rErr, ok := r.(error); ok {
-// 				err = es.Errorf("module panicked: %w\nStack trace:\n%s", rErr, string(debug.Stack()))
-// 			} else {
-// 				err = es.Errorf("module panicked: %v\nStack trace:\n%s", r, string(debug.Stack()))
-// 			}
-// 		}
-// 	}()
-//
-// 	return module.ApplyEvents(events)
-// }
 	for _, cc := range c.conditions {
 		wg.Add(1)
 		go func(cc *condition) {
 			defer func() {
 				cc.done = true
+        close(cc.doneC)
 				wg.Done()
 			}()
+
 			for e := range cc.eventChan {
 				outEvents, err := safelyApplyEvents(cc.runnerModule, stdtypes.ListOf(e))
 				if err != nil {
@@ -151,7 +138,11 @@ func (c *Checker) RunAnalysis(eventChan chan stdtypes.Event) error {
 	for e := range eventChan {
 		for _, condition := range c.conditions {
 			if !condition.done {
-				condition.eventChan <- e
+        // TODO: this seeems very 'meh...' -> read up on 'closing' patterns
+				select {
+				case <-condition.doneC:
+        case condition.eventChan <- e:
+				}
 			}
 		}
 	}
@@ -171,7 +162,7 @@ func (c *Checker) RunAnalysis(eventChan chan stdtypes.Event) error {
 
 	// nomore events, stop all condition runners
 	wg.Wait()
-  c.executed = true
+	c.executed = true
 
 	return nil
 }
