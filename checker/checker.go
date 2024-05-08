@@ -176,6 +176,7 @@ func (c *Checker) RunAnalysis(eventChan chan stdtypes.Event) error {
 	return nil
 }
 
+// TODO - duplicated code...
 func safelyApplyEvents(
 	module modules.PassiveModule,
 	events *stdtypes.EventList,

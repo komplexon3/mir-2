@@ -43,54 +43,75 @@ func (fl *FakeLink) ApplyEvents(
 ) error {
 	iter := eventList.Iterator()
 	for event := iter.Next(); event != nil; event = iter.Next() {
-
-		// Ignore Init event.
-		_, ok := event.(*stdevents.Init)
-		if ok {
-			return nil
-		}
-
-		// We only support proto events.
-		pbevent, ok := event.(*eventpb.Event)
-		if !ok {
-			return es.Errorf("Fake transport only supports proto events, received %T", event)
-		}
-
-		switch e := pbevent.Type.(type) {
-		case *eventpb.Event_Transport:
-			switch e := transportpbtypes.EventFromPb(e.Transport).Type.(type) {
-			case *transportpbtypes.Event_SendMessage:
-				for _, destID := range e.SendMessage.Destinations {
-					if destID == fl.Source {
-						// Send message to myself bypassing the network.
-
-						receivedEvent := transportpbevents.MessageReceived(
-							e.SendMessage.Msg.DestModule,
-							fl.Source,
-							e.SendMessage.Msg,
-						)
-						eventsOut := fl.FakeTransport.NodeSinks[fl.Source]
-						go func() {
-							select {
-							case eventsOut <- stdtypes.ListOf(receivedEvent.Pb()):
-							case <-ctx.Done():
-							}
-						}()
-					} else {
-						// Send message to another node.
-						if err := fl.Send(destID, e.SendMessage.Msg.Pb()); err != nil {
-							fl.FakeTransport.logger.Log(logging.LevelWarn, "failed to send a message", "err", err)
+		switch evt := event.(type) {
+		case *stdevents.Init:
+			// no actions on init
+		case *stdevents.SendMessage:
+			for _, destID := range evt.DestNodes {
+				if destID == fl.Source {
+					// Send message to myself bypassing the network.
+					// The sending must be done in its own goroutine in case writing to tr.incomingMessages blocks.
+					// (Processing of input events must be non-blocking.)
+					receiveEvent := stdevents.NewMessageReceived(evt.RemoteDestModule, fl.Source, evt.Payload)
+					eventsOut := fl.FakeTransport.NodeSinks[fl.Source]
+					go func() {
+						select {
+						case eventsOut <- stdtypes.ListOf(receiveEvent):
+						case <-ctx.Done():
 						}
+					}()
+				} else {
+					// Send message to another node.
+					if err := fl.SendRawMessage(destID, evt.RemoteDestModule, evt.Payload); err != nil {
+						fl.FakeTransport.logger.Log(logging.LevelWarn, "failed to send a message", "err", err)
 					}
 				}
-			default:
-				return es.Errorf("unexpected transport event type: %T", e)
 			}
+		case *eventpb.Event:
+			return fl.ApplyPbEvent(ctx, evt)
 		default:
-			return es.Errorf("unexpected type of Net event: %T", pbevent.Type)
+			return es.Errorf("GRPC transport only supports proto events and OutgoingMessage, received %T", event)
 		}
 	}
 
+	return nil
+}
+
+func (fl *FakeLink) ApplyPbEvent(ctx context.Context, evt *eventpb.Event) error {
+
+	switch e := evt.Type.(type) {
+	case *eventpb.Event_Transport:
+		switch e := transportpbtypes.EventFromPb(e.Transport).Type.(type) {
+		case *transportpbtypes.Event_SendMessage:
+			for _, destID := range e.SendMessage.Destinations {
+				if destID == fl.Source {
+					// Send message to myself bypassing the network.
+
+					receivedEvent := transportpbevents.MessageReceived(
+						e.SendMessage.Msg.DestModule,
+						fl.Source,
+						e.SendMessage.Msg,
+					)
+					eventsOut := fl.FakeTransport.NodeSinks[fl.Source]
+					go func() {
+						select {
+						case eventsOut <- stdtypes.ListOf(receivedEvent.Pb()):
+						case <-ctx.Done():
+						}
+					}()
+				} else {
+					// Send message to another node.
+					if err := fl.Send(destID, e.SendMessage.Msg.Pb()); err != nil {
+						fl.FakeTransport.logger.Log(logging.LevelWarn, "failed to send a message", "err", err)
+					}
+				}
+			}
+		default:
+			return es.Errorf("unexpected transport event type: %T", e)
+		}
+	default:
+		return es.Errorf("unexpected type of Net event: %T", evt.Type)
+	}
 	return nil
 }
 
@@ -99,6 +120,11 @@ func (fl *FakeLink) ImplementsModule() {}
 
 func (fl *FakeLink) Send(dest stdtypes.NodeID, msg *messagepb.Message) error {
 	fl.FakeTransport.Send(fl.Source, dest, msg)
+	return nil
+}
+
+func (fl *FakeLink) SendRawMessage(destNode stdtypes.NodeID, destModule stdtypes.ModuleID, message stdtypes.Message) error {
+	fl.FakeTransport.SendRawMessage(fl.Source, destNode, destModule, message)
 	return nil
 }
 
@@ -136,6 +162,18 @@ func NewFakeTransport(nodeIDsWeight map[stdtypes.NodeID]types.VoteWeight) *FakeT
 		logger:        logging.ConsoleErrorLogger,
 		nodeIDsWeight: nodeIDsWeight,
 	}
+}
+
+func (ft *FakeTransport) SendRawMessage(sourceNode, destNode stdtypes.NodeID, destModule stdtypes.ModuleID, message stdtypes.Message) error {
+	select {
+	case ft.Buffers[sourceNode][destNode] <- stdtypes.ListOf(
+    stdevents.NewMessageReceived(destModule, sourceNode, message),
+	):
+	default:
+		fmt.Printf("Warning: Dropping message %v from %s to %s\n", message, sourceNode, destNode)
+	}
+
+  return nil
 }
 
 func (ft *FakeTransport) Send(source, dest stdtypes.NodeID, msg *messagepb.Message) {
