@@ -70,10 +70,6 @@ func (n *Node) processModuleEvents(
 
 	sw.Start()
 
-	// Intercept the (stripped of all follow-ups) events that are about to be processed.
-	// This is only for debugging / diagnostic purposes.
-	eventsIn = n.interceptEvents(eventsIn)
-
 	// In Trace mode, log all events.
 	if n.Config.Logger.MinLevel() <= logging.LevelTrace {
 		iter := eventsIn.Iterator()
