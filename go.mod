@@ -28,6 +28,8 @@ require (
 	github.com/drand/kyber-bls12381 v0.3.0
 	github.com/fxamacker/cbor/v2 v2.4.0
 	github.com/go-errors/errors v1.4.2
+	github.com/google/uuid v1.3.0
+	github.com/gorilla/websocket v1.5.0
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/multiformats/go-multiaddr v0.9.0
 	github.com/reactivex/rxgo/v2 v2.5.0
@@ -46,7 +48,7 @@ require (
 	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
-	github.com/ipfs/go-cid v0.0.7 // indirect
+	github.com/ipfs/go-cid v0.4.1 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/kilic/bls12-381 v0.1.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect

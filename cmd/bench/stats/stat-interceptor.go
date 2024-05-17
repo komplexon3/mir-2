@@ -25,14 +25,14 @@ func NewStatInterceptor(s *LiveStats, txConsumer stdtypes.ModuleID) *StatInterce
 	return &StatInterceptor{s, txConsumer}
 }
 
-func (i *StatInterceptor) Intercept(events *stdtypes.EventList) error {
+func (i *StatInterceptor) Intercept(events *stdtypes.EventList) (*stdtypes.EventList, error) {
 
 	// Avoid nil dereference if Intercept is called on a nil *Recorder and simply do nothing.
 	// This can happen if a pointer type to *Recorder is assigned to a variable with the interface type Interceptor.
 	// Mir would treat that variable as non-nil, thinking there is an interceptor, and call Intercept() on it.
 	// For more explanation, see https://mangatmodi.medium.com/go-check-nil-interface-the-right-way-d142776edef1
 	if i == nil {
-		return nil
+		return events, nil
 	}
 
 	it := events.Iterator()
@@ -67,5 +67,5 @@ func (i *StatInterceptor) Intercept(events *stdtypes.EventList) error {
 			}
 		}
 	}
-	return nil
+	return events, nil
 }

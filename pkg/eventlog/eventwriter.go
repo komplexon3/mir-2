@@ -4,11 +4,12 @@ import (
 	"compress/gzip"
 
 	"github.com/filecoin-project/mir/pkg/logging"
+	"github.com/filecoin-project/mir/stdtypes"
 	t "github.com/filecoin-project/mir/stdtypes"
 )
 
 type EventWriter interface {
-	Write(record EventRecord) error
+	Write(evts *stdtypes.EventList, timestamp int64) (*stdtypes.EventList, error)
 	Flush() error
 	Close() error
 }
