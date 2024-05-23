@@ -59,9 +59,9 @@ func (event *Event) ToString() string {
 }
 
 func (event *Event) GetMetadata(key string) (interface{}, error) {
-  if event.RawMetadata == nil {
+	if event.RawMetadata == nil {
 		return nil, es.Errorf("value for key %s not found in metadata", key)
-  }
+	}
 	encodedVal, ok := event.GetRawMetadata()[key]
 	if !ok {
 		return nil, es.Errorf("value for key %s not found in metadata", key)
@@ -77,10 +77,10 @@ func (event *Event) GetMetadata(key string) (interface{}, error) {
 }
 
 func (event *Event) SetMetadata(key string, value interface{}) (stdtypes.Event, error) {
-  metadata := event.RawMetadata
-  if metadata == nil {
-    metadata = make(map[string][]byte)
-  }
+	metadata := event.RawMetadata
+	if metadata == nil {
+		metadata = make(map[string][]byte)
+	}
 
 	encodedVal, err := json.Marshal(value)
 	if err != nil {
@@ -88,15 +88,15 @@ func (event *Event) SetMetadata(key string, value interface{}) (stdtypes.Event, 
 		return nil, err
 	}
 
-  metadata[key] = encodedVal
+	metadata[key] = encodedVal
 
 	newEvent := Event{
-    DestModule: event.DestModule,
-    Type: event.Type,
-    RawMetadata: event.RawMetadata,
+		DestModule:  event.DestModule,
+		Type:        event.Type,
+		RawMetadata: metadata,
 	}
 
-  return &newEvent, nil
+	return &newEvent, nil
 }
 
 // List returns EventList containing the given elements.

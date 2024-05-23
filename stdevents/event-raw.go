@@ -13,8 +13,8 @@ type Raw struct {
 
 func NewRaw(dest stdtypes.ModuleID, data []byte) *Raw {
 	return &Raw{
-    mirEvent: newMirEvent(dest),
-		Data: data,
+		mirEvent: newMirEvent(dest),
+		Data:     data,
 	}
 }
 

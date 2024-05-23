@@ -47,7 +47,7 @@ func (br *BroadcastRequest) ToString() string {
 }
 
 func (e *BroadcastRequest) SetMetadata(key string, value interface{}) (stdtypes.Event, error) {
-  newE := *e
+	newE := *e
 	newE.Metadata[key] = value
-  return &newE, nil
+	return &newE, nil
 }

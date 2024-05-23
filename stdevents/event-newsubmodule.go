@@ -51,7 +51,7 @@ func NewNewSubmodule(
 	retIdx stdtypes.RetentionIndex,
 ) *NewSubmodule {
 	return &NewSubmodule{
-    mirEvent: newMirEvent(dest),
+		mirEvent:       newMirEvent(dest),
 		SubmoduleID:    submoduleID,
 		Params:         params,
 		RetentionIndex: retIdx,

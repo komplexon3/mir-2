@@ -49,7 +49,7 @@ func (br *Deliver) ToString() string {
 }
 
 func (e *Deliver) SetMetadata(key string, value interface{}) (stdtypes.Event, error) {
-  newE := *e
+	newE := *e
 	newE.Metadata[key] = value
-  return &newE, nil
+	return &newE, nil
 }

@@ -41,7 +41,7 @@ func (e *MessageReceived) serializable() (*serializableMessageReceived, error) {
 
 func NewMessageReceived(dest stdtypes.ModuleID, sender stdtypes.NodeID, payload stdtypes.Message) *MessageReceived {
 	return &MessageReceived{
-    mirEvent: newMirEvent(dest),
+		mirEvent: newMirEvent(dest),
 		Sender:   sender,
 		Payload:  payload,
 	}

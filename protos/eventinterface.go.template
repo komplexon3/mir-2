@@ -93,7 +93,7 @@ func (event *Event) SetMetadata(key string, value interface{}) (stdtypes.Event, 
 	newEvent := Event{
     DestModule: event.DestModule,
     Type: event.Type,
-    RawMetadata: event.RawMetadata,
+    RawMetadata: metadata,
 	}
 
   return &newEvent, nil

@@ -12,7 +12,7 @@ type Init struct {
 
 func NewInit(dest stdtypes.ModuleID) *Init {
 	return &Init{
-    newMirEvent(dest),
+		newMirEvent(dest),
 	}
 }
 

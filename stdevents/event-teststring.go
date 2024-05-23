@@ -17,7 +17,7 @@ type TestString struct {
 
 func NewTestString(dest stdtypes.ModuleID, value string) *TestString {
 	return &TestString{
-    newMirEvent(dest),
+		newMirEvent(dest),
 		value,
 	}
 }

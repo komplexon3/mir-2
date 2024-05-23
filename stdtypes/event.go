@@ -30,13 +30,13 @@ type Event interface {
 	// Conventionally, this representation is JSON.
 	ToString() string
 
-  // GetMetadata returns arbitrary metadata which was assigned to this key.
-  // If not metadata for this key is available, an error is returned.
-  GetMetadata(key string) (interface{}, error)
+	// GetMetadata returns arbitrary metadata which was assigned to this key.
+	// If not metadata for this key is available, an error is returned.
+	GetMetadata(key string) (interface{}, error)
 
-  // SetMetadata stores arbitrary metadata associated with the specified key
-  // This information might contain informations such as the ID of the node issuing the event.
-  SetMetadata(key string, value interface{}) (Event, error)
+	// SetMetadata stores arbitrary metadata associated with the specified key
+	// This information might contain informations such as the ID of the node issuing the event.
+	SetMetadata(key string, value interface{}) (Event, error)
 }
 
 // Note: The method names ToBytes() and ToString() were chosen instead of the more elegant Bytes() and String(),

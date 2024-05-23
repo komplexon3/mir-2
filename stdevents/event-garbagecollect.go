@@ -13,7 +13,7 @@ type GarbageCollect struct {
 
 func NewGarbageCollect(dest stdtypes.ModuleID, retIdx stdtypes.RetentionIndex) *GarbageCollect {
 	return &GarbageCollect{
-    mirEvent: newMirEvent(dest),
+		mirEvent:       newMirEvent(dest),
 		RetentionIndex: retIdx,
 	}
 }
