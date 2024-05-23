@@ -9,8 +9,8 @@ import (
 	es "github.com/go-errors/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
 
-	broadcast "github.com/filecoin-project/mir/samples/broadcast/module"
 	"github.com/filecoin-project/mir/samples/broadcast/controlmodule"
+	broadcast "github.com/filecoin-project/mir/samples/broadcast/module"
 	"github.com/filecoin-project/mir/stdtypes"
 
 	"github.com/filecoin-project/mir"
@@ -23,6 +23,7 @@ import (
 	trantorpbtypes "github.com/filecoin-project/mir/pkg/pb/trantorpb/types"
 	grpctools "github.com/filecoin-project/mir/pkg/util/grpc"
 	"github.com/filecoin-project/mir/pkg/utilinterceptors"
+	"github.com/filecoin-project/mir/pkg/vcinterceptor"
 )
 
 const (
@@ -32,7 +33,7 @@ const (
 	nodeBasePort = 10000
 
 	// The number of nodes participating in the chat.
-	nodeNumber = 4
+	nodeNumber = 5
 )
 
 // parsedArgs represents parsed command-line parameters passed to the program.
@@ -123,7 +124,7 @@ func run() error {
 		return es.Errorf("error setting up interceptor: %w", err)
 	}
 
-	interceptor := eventlog.MultiInterceptor(&utilinterceptors.NodeIdMetadataInterceptor{NodeID: args.OwnID}, eventLogger)
+	interceptor := eventlog.MultiInterceptor(&utilinterceptors.NodeIdMetadataInterceptor{NodeID: args.OwnID}, vcinterceptor.New(args.OwnID), eventLogger)
 
 	// control module reads the user input from the console and processes it.
 	control := controlmodule.NewControlModule(controlmodule.ControlModuleConfig{Self: "control", Broadcast: "broadcast"})

@@ -1,5 +1,9 @@
 package sliceutil
 
+import (
+	"slices"
+)
+
 // Repeat returns a slice with value repeated n times.
 func Repeat[T any](value T, n int) []T {
 	arr := make([]T, n)
@@ -84,4 +88,30 @@ func Equal[T comparable](s1 []T, s2 []T) bool {
 		}
 	}
 	return true
+}
+
+func TopologicalSortFunc[T comparable](ts []T, less func(a, b T) bool) []T {
+	visited := make(map[T]bool, len(ts))
+  result  := make([]T, 0, len(ts))
+
+	var dfs func(node T)
+	dfs = func(node T) {
+		if !visited[node] {
+			visited[node] = true
+			for _, item := range ts {
+				if less(node, item) && !visited[item] {
+					dfs(item)
+				}
+			}
+			result = append(result, node)
+		}
+	}
+
+	for _, item := range ts {
+		dfs(item)
+	}
+
+	slices.Reverse(result)
+
+	return result
 }

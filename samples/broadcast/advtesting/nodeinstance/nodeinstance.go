@@ -13,6 +13,7 @@ import (
 	"github.com/filecoin-project/mir/pkg/modules"
 	trantorpbtypes "github.com/filecoin-project/mir/pkg/pb/trantorpb/types"
 	"github.com/filecoin-project/mir/pkg/utilinterceptors"
+	"github.com/filecoin-project/mir/pkg/vcinterceptor"
 	broadcast "github.com/filecoin-project/mir/samples/broadcast/module"
 	"github.com/filecoin-project/mir/stdtypes"
 	es "github.com/go-errors/errors"
@@ -79,7 +80,7 @@ func CreateBroadcastNodeInstance(nodeID stdtypes.NodeID, config BroadcastNodeIns
 		return nil, es.Errorf("error setting up interceptor: %w", err)
 	}
 
-	interceptor := eventlog.MultiInterceptor(&utilinterceptors.NodeIdMetadataInterceptor{NodeID: nodeID}, cortexCreeper, eventLogger)
+	interceptor := eventlog.MultiInterceptor(vcinterceptor.New(nodeID), &utilinterceptors.NodeIdMetadataInterceptor{NodeID: nodeID}, cortexCreeper, eventLogger)
 
 	// setup crypto
 	keyPairs, err := crypto.GenerateKeys(config.NumberOfNodes, 42)

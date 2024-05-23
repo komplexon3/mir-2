@@ -8,7 +8,6 @@ import (
 
 	"github.com/filecoin-project/mir"
 	"github.com/filecoin-project/mir/pkg/logging"
-	"github.com/filecoin-project/mir/pkg/util/maputil"
 	"github.com/filecoin-project/mir/pkg/util/sliceutil"
 	"github.com/filecoin-project/mir/stdtypes"
 	es "github.com/go-errors/errors"
@@ -37,17 +36,18 @@ func NewAdversary[T interface{}](
 	createNodeInstance NodeInstanceCreationFunc[T],
 	nodeConfigs NodeConfigs[T],
 	byzantineNodes []stdtypes.NodeID,
+	logger logging.Logger,
 ) (*Adversary, error) {
 	if len(nodeConfigs) < len(byzantineNodes) {
 		return nil, es.Errorf("number of byzantine cannot be larger than number of node configs")
 	}
-	baseNodeLogger := logging.ConsoleWarnLogger
 
 	nodeInstances := make(map[stdtypes.NodeID]NodeInstance)
 	byzantineCortexCreeperLinks := make(map[stdtypes.NodeID]CortexCreeperLink)
 
 	for nodeID, config := range nodeConfigs {
-		nodeLogger := logging.Decorate(baseNodeLogger, "Node %s - ", nodeID)
+		nodeLogger := logging.Decorate(logger, string(nodeID)+" ")
+		// nodeLogger := logger
 		var cortexCreeper CortexCreeper
 		if slices.Contains(byzantineNodes, nodeID) {
 			cortexCreeperLink := NewCortexCreeperLink()
@@ -99,6 +99,7 @@ func (a *Adversary) RunPlugin(plugin *Plugin, c context.Context) error {
 
 	// do some other stuff
 	// run plugin for every byz node
+	// NOTE: race cond? -> fan in to one chan
 	for nodeId, cortexCreeperLink := range a.byzantineCortexCreeperLinks {
 		go func(id stdtypes.NodeID, ccl CortexCreeperLink, ctx context.Context, cancel context.CancelFunc) {
 			wg.Add(1)
@@ -134,7 +135,7 @@ func (a *Adversary) RunExperiment(plugin *Plugin, puppeteer Puppeteer) error {
 	defer cancel()
 	go a.RunPlugin(plugin, ctx)
 
-	err := puppeteer.Run(maputil.GetValues(a.nodeInstances))
+	err := puppeteer.Run(a.nodeInstances)
 	if err != nil {
 		return err
 	}

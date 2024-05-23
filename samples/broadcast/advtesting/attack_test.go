@@ -11,6 +11,7 @@ import (
 
 	broadcastevents "github.com/filecoin-project/mir/samples/broadcast/events"
 	"github.com/filecoin-project/mir/stdevents"
+	"github.com/stretchr/testify/assert"
 
 	testmodules "github.com/filecoin-project/mir/samples/broadcast/properties"
 
@@ -33,9 +34,10 @@ type TestConfig struct {
 	Plugin             *adversary.Plugin
 	Puppeteer          adversary.Puppeteer
 	Description        string // for report, should describe this config
+	ExpectedResult     map[string]checker.CheckerResult
 }
 
-var rrPuppeteer, _ = puppeteers.NewRoundRobinPuppeteer(4, time.Second/5)
+var rrPuppeteer, _ = puppeteers.NewRoundRobinPuppeteer(10, time.Second/100)
 
 var tests = map[string]TestConfig{
 	"no byz": {
@@ -45,6 +47,11 @@ var tests = map[string]TestConfig{
 		Plugin:             nil,
 		Puppeteer:          rrPuppeteer,
 		Description:        "0/5 byzantine nodes, round robin puppeteer (4, 0.2s), reference broadcast",
+		ExpectedResult: map[string]checker.CheckerResult{
+			"validity":    checker.SUCCESS,
+			"integrity":   checker.SUCCESS,
+			"consistency": checker.SUCCESS,
+		},
 	},
 	"threshold no echo": {
 		NonByzantineNodes:  []stdtypes.NodeID{"0", "1", "2"},
@@ -53,6 +60,11 @@ var tests = map[string]TestConfig{
 		Plugin:             plugins.NewNoEcho(),
 		Puppeteer:          rrPuppeteer,
 		Description:        "2/5 byzantine nodes, round robin puppeteer (4, 0.2s), reference broadcast",
+		ExpectedResult: map[string]checker.CheckerResult{
+			"validity":    checker.FAILURE,
+			"integrity":   checker.SUCCESS,
+			"consistency": checker.SUCCESS,
+		},
 	},
 }
 
@@ -75,7 +87,8 @@ func RunTest(t *testing.T, testName string) {
 	err := os.MkdirAll(reportDir, os.ModePerm)
 	panicIfErr(err)
 
-	t.Run(testName, func(_ *testing.T) {
+	t.Run(testName, func(tt *testing.T) {
+		logger := logging.ConsoleWarnLogger
 		allNodes := append(test.NonByzantineNodes, test.ByzantineNodes...)
 		nodeWeights := make(map[stdtypes.NodeID]types.VoteWeight, len(allNodes))
 		for i := range allNodes {
@@ -87,9 +100,11 @@ func RunTest(t *testing.T, testName string) {
 		for _, nodeID := range allNodes {
 			nodeConfigs[nodeID] = config
 		}
-		adv, err := adversary.NewAdversary(test.CreateNodeInstance, nodeConfigs, test.ByzantineNodes)
+		adv, err := adversary.NewAdversary(test.CreateNodeInstance, nodeConfigs, test.ByzantineNodes, logger)
 		panicIfErr(err)
 		adv.RunExperiment(test.Plugin, test.Puppeteer)
+
+		time.Sleep(time.Second)
 
 		// property checking
 		files := make([]string, 0, len(allNodes))
@@ -97,8 +112,7 @@ func RunTest(t *testing.T, testName string) {
 			files = append(files, path.Join(reportDir, fmt.Sprintf("eventlog0_%d.gz", i)))
 		}
 
-		logger := logging.ConsoleDebugLogger
-		history := checker.GetEventsFromFile([]func([]byte) (stdtypes.Event, error){broadcastevents.Deserialize, stdevents.Deserialize}, files...)
+		history := checker.GetEventsFromFileSortedByVectorClock([]func([]byte) (stdtypes.Event, error){broadcastevents.Deserialize, stdevents.Deserialize}, files...)
 		eventChan := make(chan stdtypes.Event)
 
 		systemConfig := &testmodules.SystemConfig{
@@ -130,6 +144,7 @@ func RunTest(t *testing.T, testName string) {
 			}
 			close(eventChan)
 		}()
+		analysisTraceFile.Sync()
 
 		err = c.RunAnalysis(eventChan)
 		panicIfErr(err)
@@ -138,7 +153,9 @@ func RunTest(t *testing.T, testName string) {
 
 		resultStr := "Results:\n"
 		for label, res := range results {
-			resultStr = fmt.Sprintf("%s%s was %s\n", resultStr, label, res.String())
+			resultStr = fmt.Sprintf("%s%s was %s - expected: %s\n", resultStr, label, res.String(), test.ExpectedResult[label])
+			// NOTE: doesn't guarantee that the all expected res are checked... but that is ok for now
+			assert.Equal(t, res, test.ExpectedResult[label])
 		}
 		fmt.Print(resultStr)
 		// write into file
@@ -154,6 +171,7 @@ func RunTest(t *testing.T, testName string) {
 		}()
 		resultStr = fmt.Sprintf("%s\n\n%s\n\nDescription: %s\n\nCommit: %s", testName, resultStr, test.Description, commit)
 		panicIfErr(os.WriteFile(path.Join(reportDir, "report.txt"), []byte(resultStr), 0644))
+
 	})
 }
 
