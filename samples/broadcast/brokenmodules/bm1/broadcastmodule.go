@@ -29,7 +29,7 @@ import (
 * the handle final doesn't verify that the signatures are from unqiue nodes... but broadcast id is checked :/
  *
  * All changes are marked with // CHANGE
- */
+*/
 
 // ModuleConfig sets the module ids. All replicas are expected to use identical module configurations.
 type ModuleConfig struct {
@@ -267,9 +267,9 @@ func (b *Broadcast) handleSigsVerified(_ []stdtypes.NodeID, _ []error, allOK boo
 
 	// CHANGE
 	// node 1 will retransmit final message once
-  // after one retransmit, setting delivered to prevent infinite retransmit
+	// after one retransmit, setting delivered to prevent infinite retransmit
 	if b.params.NodeID == stdtypes.NodeID("1") && !instance.delivered {
-    instance.delivered = true
+		instance.delivered = true
 		fmt.Println("\nByzantine retransmit final message")
 		b.SendMessage(messages.NewFinalMessage(instance.data, instance.senderID, instance.broadcastID, c.signers, c.signatures), b.params.AllNodes...)
 	}

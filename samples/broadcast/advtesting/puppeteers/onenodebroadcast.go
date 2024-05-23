@@ -23,7 +23,7 @@ func NewOneNodeBroadcast(nodeId stdtypes.NodeID) (*OneNodeBroadcast, error) {
 
 func (onb *OneNodeBroadcast) Run(nodeInstances map[stdtypes.NodeID]adversary.NodeInstance) error {
 	ctx := context.Background()
-  time.Sleep(time.Second)
+	time.Sleep(time.Second)
 	nodeInstance := nodeInstances[onb.node]
 	node := nodeInstance.GetNode()
 	msg := fmt.Sprintf("node %s injecting", node.ID)

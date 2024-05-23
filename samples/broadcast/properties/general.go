@@ -18,6 +18,6 @@ func getNodeIdFromMetadata(e stdtypes.Event) stdtypes.NodeID {
 		panic("handleDeliver - node not in metadata")
 	}
 
-  // TODO: just converting without checking - will fail nastily if not string
-  return stdtypes.NodeID(nodeId.(string))
+	// TODO: just converting without checking - will fail nastily if not string
+	return stdtypes.NodeID(nodeId.(string))
 }

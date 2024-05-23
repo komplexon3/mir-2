@@ -181,7 +181,7 @@ func (b *Broadcast) SendMessage(msg stdtypes.Message, destNodes ...stdtypes.Node
 }
 
 func (b *Broadcast) handleInit() error {
-  b.logger.Log(logging.LevelWarn, "BYZANTINE")
+	b.logger.Log(logging.LevelWarn, "BYZANTINE")
 	return nil
 }
 
@@ -260,13 +260,13 @@ func (b *Broadcast) handleEchoMessage(from stdtypes.NodeID, e *messages.EchoMess
 		return nil
 	}
 
-  if sliceutil.Contains(b.primaryGoodNodes, from) {
+	if sliceutil.Contains(b.primaryGoodNodes, from) {
 		sigMsg := &cryptopbtypes.SignedData{Data: [][]byte{instance.broadcastID[:], []byte("ECHO"), instance.primaryData}}
 		cryptopbdsl.VerifySig(b.m, b.moduleConfig.Crypto[b.params.NodeID], sigMsg, e.Signature, from, &verifyEchoContext{instance.broadcastID, from, e.Signature})
-  } else {
+	} else {
 		sigMsg := &cryptopbtypes.SignedData{Data: [][]byte{instance.broadcastID[:], []byte("ECHO"), instance.secondaryData}}
 		cryptopbdsl.VerifySig(b.m, b.moduleConfig.Crypto[b.params.NodeID], sigMsg, e.Signature, from, &verifyEchoContext{instance.broadcastID, from, e.Signature})
-  }
+	}
 
 	return nil
 }
@@ -278,14 +278,14 @@ func (b *Broadcast) handleSigVerified(nodeID stdtypes.NodeID, err error, c *veri
 	}
 
 	if err != nil {
-    return nil
-  }
+		return nil
+	}
 
-  if sliceutil.Contains(b.primaryGoodNodes, c.signerID) {
+	if sliceutil.Contains(b.primaryGoodNodes, c.signerID) {
 		instance.primaryEchoSigs[nodeID] = c.signature
 	} else {
 		instance.secondaryEchoSigs[nodeID] = c.signature
-  }
+	}
 
 	return nil
 }
@@ -324,11 +324,11 @@ func (b *Broadcast) handleSigsVerified(_ []stdtypes.NodeID, _ []error, allOK boo
 
 func (b *Broadcast) checkEmitFinal() error {
 	for _, instance := range b.attackInstances {
-		if len(instance.primaryEchoSigs) > (b.params.GetN()+b.params.GetF())/2&&len(instance.secondaryEchoSigs) > (b.params.GetN()+b.params.GetF())/2  && !instance.sentFinal {
+		if len(instance.primaryEchoSigs) > (b.params.GetN()+b.params.GetF())/2 && len(instance.secondaryEchoSigs) > (b.params.GetN()+b.params.GetF())/2 && !instance.sentFinal {
 			instance.sentFinal = true
-		pCertSigners, pCertSignatures := maputil.GetKeysAndValues(instance.primaryEchoSigs)
+			pCertSigners, pCertSignatures := maputil.GetKeysAndValues(instance.primaryEchoSigs)
 			b.SendMessage(messages.NewFinalMessage(instance.primaryData, b.params.NodeID, instance.broadcastID, pCertSigners, pCertSignatures), b.primaryGoodNodes...)
-		sCertSigners, sCertSignatures := maputil.GetKeysAndValues(instance.secondaryEchoSigs)
+			sCertSigners, sCertSignatures := maputil.GetKeysAndValues(instance.secondaryEchoSigs)
 			b.SendMessage(messages.NewFinalMessage(instance.secondaryData, b.params.NodeID, instance.broadcastID, sCertSigners, sCertSignatures), b.secondaryGoodNodes...)
 		}
 	}
@@ -345,7 +345,7 @@ type signStartMessageContext struct {
 
 type verifyEchoContext struct {
 	broadcastID uuid.UUID
-  signerID stdtypes.NodeID
+	signerID    stdtypes.NodeID
 	signature   []byte
 }
 

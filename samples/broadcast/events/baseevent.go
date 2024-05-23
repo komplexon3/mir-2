@@ -12,10 +12,10 @@ type baseEvent struct {
 }
 
 func newBaseEvent(destModule stdtypes.ModuleID) baseEvent {
-  return baseEvent{
-    DestModule: destModule,
-    Metadata: make(map[string]interface{}),
-  }
+	return baseEvent{
+		DestModule: destModule,
+		Metadata:   make(map[string]interface{}),
+	}
 }
 
 func (e *baseEvent) Src() stdtypes.ModuleID {
@@ -34,4 +34,3 @@ func (e *baseEvent) GetMetadata(key string) (interface{}, error) {
 
 	return val, nil
 }
-

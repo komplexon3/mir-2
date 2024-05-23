@@ -274,8 +274,8 @@ func (b *Broadcast) handleSigsVerified(_ []stdtypes.NodeID, err []error, allOK b
 		instance.delivered = true
 		dsl.EmitEvent(b.m, events.NewDeliver(b.moduleConfig.Consumer, instance.data, instance.broadcastID, instance.senderID))
 	} else {
-      fmt.Println("Signature verification of final message failed.")
-  }
+		fmt.Println("Signature verification of final message failed.")
+	}
 	return nil
 }
 

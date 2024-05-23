@@ -157,4 +157,3 @@ func TestVectorClockCompare(t *testing.T) {
 		t.Errorf("Comparing different vector clocks: expected 1, got %d", result)
 	}
 }
-

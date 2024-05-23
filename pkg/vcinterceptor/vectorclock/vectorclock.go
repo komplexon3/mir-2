@@ -11,7 +11,7 @@ import (
 // TODO: docs!
 
 type VectorClock struct {
-	V    map[stdtypes.NodeID]uint32
+	V map[stdtypes.NodeID]uint32
 }
 
 func NewVectorClock() *VectorClock {
@@ -64,9 +64,9 @@ func (vcA *VectorClock) CombineAndIncrement(vcB *VectorClock, nodeId stdtypes.No
 }
 
 func (vc *VectorClock) Clone() *VectorClock {
-  return &VectorClock{
-    V: maps.Clone(vc.V),
-  }
+	return &VectorClock{
+		V: maps.Clone(vc.V),
+	}
 }
 
 func Compare(vcA, vcB *VectorClock) int {
@@ -90,11 +90,12 @@ func Compare(vcA, vcB *VectorClock) int {
 	return dir
 }
 
-func Less(vcA, vcB *VectorClock)bool {
-  for keyA, valA := range vcA.V {
-    if valB, ok := vcB.V[keyA]; !ok || valA > valB { 
-    return false}
-  }
+func Less(vcA, vcB *VectorClock) bool {
+	for keyA, valA := range vcA.V {
+		if valB, ok := vcB.V[keyA]; !ok || valA > valB {
+			return false
+		}
+	}
 
-  return true
+	return true
 }

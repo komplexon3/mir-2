@@ -29,8 +29,8 @@ type ModuleConfig struct {
 // ModuleParams sets the values for the parameters of an instance of the protocol.
 // All replicas are expected to use identical module parameters.
 type ModuleParams struct {
-	NodeID         stdtypes.NodeID
-	AllNodes       []stdtypes.NodeID // the list of participating nodes
+	NodeID   stdtypes.NodeID
+	AllNodes []stdtypes.NodeID // the list of participating nodes
 }
 
 // GetN returns the total number of nodes.
@@ -114,7 +114,7 @@ func newBcbAttackInstance(primaryBroadcastId uuid.UUID, primaryData []byte) *bcb
 
 func NewBroadcast(mp ModuleParams, mc ModuleConfig, logger logging.Logger) dsl.Module {
 	m := dsl.NewModule(mc.Self)
-  
+
 	// TODO: setup broadcast
 	b := Broadcast{
 		m:               m,
@@ -124,10 +124,9 @@ func NewBroadcast(mp ModuleParams, mc ModuleConfig, logger logging.Logger) dsl.M
 		params:          mp,
 		logger:          logger,
 
-		mixedNodes:   mp.AllNodes[:(len(mp.AllNodes) / 3)],
-		primaryNodes: mp.AllNodes[(len(mp.AllNodes) / 3):(2*len(mp.AllNodes)/3)],
-    secondaryNodes: mp.AllNodes[(2*len(mp.AllNodes)/3):],
-
+		mixedNodes:     mp.AllNodes[:(len(mp.AllNodes) / 3)],
+		primaryNodes:   mp.AllNodes[(len(mp.AllNodes) / 3):(2 * len(mp.AllNodes) / 3)],
+		secondaryNodes: mp.AllNodes[(2 * len(mp.AllNodes) / 3):],
 	}
 
 	dsl.UponEvent(m, func(_ *stdevents.Init) error {
@@ -173,7 +172,7 @@ func (b *Broadcast) SendMessage(msg stdtypes.Message, destNodes ...stdtypes.Node
 }
 
 func (b *Broadcast) handleInit() error {
-  b.logger.Log(logging.LevelInfo,"starting up BYZANTINE")
+	b.logger.Log(logging.LevelInfo, "starting up BYZANTINE")
 	return nil
 }
 

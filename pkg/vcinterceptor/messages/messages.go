@@ -112,7 +112,7 @@ func Deserialize(data []byte) (VCM, error) {
 
 	switch sm.Type {
 	case VCNativeMessageType:
-    payload := stdtypes.RawMessage(sm.Payload)
+		payload := stdtypes.RawMessage(sm.Payload)
 		if err != nil {
 			return nil, err
 		}

@@ -92,7 +92,7 @@ func Equal[T comparable](s1 []T, s2 []T) bool {
 
 func TopologicalSortFunc[T comparable](ts []T, less func(a, b T) bool) []T {
 	visited := make(map[T]bool, len(ts))
-  result  := make([]T, 0, len(ts))
+	result := make([]T, 0, len(ts))
 
 	var dfs func(node T)
 	dfs = func(node T) {

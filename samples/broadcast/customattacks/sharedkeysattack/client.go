@@ -10,8 +10,8 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/filecoin-project/mir/samples/broadcast/controlmodule"
-	broadcast "github.com/filecoin-project/mir/samples/broadcast/module"
 	"github.com/filecoin-project/mir/samples/broadcast/customattacks/sharedkeysattack/sharedkeysmodule"
+	broadcast "github.com/filecoin-project/mir/samples/broadcast/module"
 	"github.com/filecoin-project/mir/stdtypes"
 
 	"github.com/filecoin-project/mir"
@@ -185,7 +185,7 @@ func run() error {
 		if err != nil {
 			return es.Errorf("error setting up crypto: %w", err)
 		}
-    m["crypto"] = mirCrypto.New(crypto)
+		m["crypto"] = mirCrypto.New(crypto)
 	}
 
 	m["broadcast"] = broadcastModule

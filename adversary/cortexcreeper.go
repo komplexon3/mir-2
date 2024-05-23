@@ -10,12 +10,12 @@ import (
 type CortexCreeper = eventlog.Interceptor
 
 type ByzantineCortexCreeper struct {
-  cortexCreeperLink CortexCreeperLink
+	cortexCreeperLink CortexCreeperLink
 }
 
 func NewByzantineCortexCreeper(link CortexCreeperLink) CortexCreeper {
 	return &ByzantineCortexCreeper{
-    cortexCreeperLink: link,
+		cortexCreeperLink: link,
 	}
 }
 
@@ -44,8 +44,8 @@ type CortexCreeperLink struct {
 }
 
 func NewCortexCreeperLink() CortexCreeperLink {
-  return CortexCreeperLink{
-    make(chan *stdtypes.EventList),
-    make(chan *stdtypes.EventList),
-  }
+	return CortexCreeperLink{
+		make(chan *stdtypes.EventList),
+		make(chan *stdtypes.EventList),
+	}
 }

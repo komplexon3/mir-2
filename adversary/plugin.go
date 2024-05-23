@@ -14,15 +14,15 @@ import (
  */
 
 type Plugin struct {
-    name string
-    module modules.PassiveModule
+	name   string
+	module modules.PassiveModule
 }
 
 func NewPlugin(name string, module modules.PassiveModule) *Plugin {
-  return &Plugin{
-    name: name,
-    module: module,
-  }
+	return &Plugin{
+		name:   name,
+		module: module,
+	}
 }
 
 func (p *Plugin) processEvents(evts *stdtypes.EventList) (outEvts *stdtypes.EventList, err error) {
