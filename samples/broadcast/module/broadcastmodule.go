@@ -171,11 +171,7 @@ func (b *Broadcast) handleStartMessage(_ stdtypes.NodeID, e *messages.StartMessa
 
 	if !instance.sentEcho {
 		var sigMsg *cryptopbtypes.SignedData
-		if b.params.NodeID == stdtypes.NodeID("1") {
-			sigMsg = &cryptopbtypes.SignedData{Data: [][]byte{instance.broadcastID[:], []byte("ECHO-byzantine"), []byte("byzantine")}}
-		} else {
-			sigMsg = &cryptopbtypes.SignedData{Data: [][]byte{instance.broadcastID[:], []byte("ECHO"), instance.data}}
-		}
+		sigMsg = &cryptopbtypes.SignedData{Data: [][]byte{instance.broadcastID[:], []byte("ECHO"), instance.data}}
 		cryptopbdsl.SignRequest(b.m, b.moduleConfig.Crypto, sigMsg, &signStartMessageContext{instance.broadcastID})
 	}
 
@@ -262,7 +258,6 @@ func (b *Broadcast) handleSigsVerified(_ []stdtypes.NodeID, _ []error, allOK boo
 
 func (b *Broadcast) checkEmitFinal() error {
 	for _, instance := range b.ourInstances {
-
 		if len(instance.echoSigs) > (b.params.GetN()+b.params.GetF())/2 && !instance.sentFinal {
 			instance.sentFinal = true
 			certSigners, certSignatures := maputil.GetKeysAndValues(instance.echoSigs)
