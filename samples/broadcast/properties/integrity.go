@@ -36,9 +36,9 @@ func NewIntegrity(sc SystemConfig, logger logging.Logger) dsl.Module {
 		broadcastDeliverTracker: make(map[stdtypes.NodeID]map[uuid.UUID]bool, len(sc.AllNodes)),
 	}
 
-  for _, nodeId := range sc.AllNodes {
-    v.broadcastDeliverTracker[nodeId] = make(map[uuid.UUID]bool)
-  }
+	for _, nodeId := range sc.AllNodes {
+		v.broadcastDeliverTracker[nodeId] = make(map[uuid.UUID]bool)
+	}
 
 	dsl.UponEvent(m, v.handleBroadcastRequest)
 	dsl.UponEvent(m, v.handleDeliver)
@@ -64,7 +64,7 @@ func (i *Integrity) handleDeliver(e *broadcastevents.Deliver) error {
 	} else if !slices.Contains(i.systemConfig.ByzantineNodes, e.BroadcastSender) { // broadcastsender can be spoofed!
 		br, ok := i.broadcastRequests[e.BroadcastID]
 		if !ok {
-			fmt.Println("Delivered without previous request")
+			fmt.Printf("Delivered without previous request - bid: %s\n", e.BroadcastID.String())
 			// fail
 			dsl.EmitEvent(i.m, checkerevents.NewFailureEvent())
 		} else if !bytes.Equal(br.data, e.Data) {
