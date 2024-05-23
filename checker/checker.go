@@ -105,7 +105,7 @@ func (c *Checker) RunAnalysis(eventChan chan stdtypes.Event) error {
 		go func(cc *condition) {
 			defer func() {
 				cc.done = true
-        close(cc.doneC)
+				close(cc.doneC)
 				wg.Done()
 			}()
 
@@ -138,10 +138,10 @@ func (c *Checker) RunAnalysis(eventChan chan stdtypes.Event) error {
 	for e := range eventChan {
 		for _, condition := range c.conditions {
 			if !condition.done {
-        // TODO: this seeems very 'meh...' -> read up on 'closing' patterns
+				// TODO: this seeems very 'meh...' -> read up on 'closing' patterns
 				select {
 				case <-condition.doneC:
-        case condition.eventChan <- e:
+				case condition.eventChan <- e:
 				}
 			}
 		}

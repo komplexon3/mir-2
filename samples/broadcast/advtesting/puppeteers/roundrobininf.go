@@ -27,7 +27,7 @@ func NewRoundRobinPuppeteer(repetitions int, delay time.Duration) (*RoundRobinPu
 	}, nil
 }
 
-func (rrp *RoundRobinPuppeteer) Run(nodeInstances []adversary.NodeInstance) error {
+func (rrp *RoundRobinPuppeteer) Run(nodeInstances map[stdtypes.NodeID]adversary.NodeInstance) error {
 	ctx := context.Background()
 	for round := 0; round < rrp.repetitions; round++ {
 		for _, nodeInstance := range nodeInstances {

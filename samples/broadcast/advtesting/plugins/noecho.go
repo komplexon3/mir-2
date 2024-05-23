@@ -30,7 +30,7 @@ func NewNoEcho() *adversary.Plugin {
 			return nil
 		}
 
-    // just pass through all other
+		// just pass through all other
 		dsl.EmitEvent(m, me)
 		return nil
 	})
