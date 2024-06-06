@@ -1,7 +1,6 @@
 package checker
 
 import (
-	"fmt"
 	"os"
 	"slices"
 
@@ -68,19 +67,6 @@ func GetEventsFromFileSortedByVectorClock(serializedDecoders []func(sEvt []byte)
 
 	vcEvents = sliceutil.TopologicalSortFunc(vcEvents, func(a, b vcEvent) bool {
 		return vectorclock.Less(a.vc, b.vc)
-	})
-
-	sliceutil.Filter(vcEvents, func(i int, t vcEvent) bool {
-		fmt.Printf("\n%v", t.vc)
-		if i > 0 {
-			cmp := vectorclock.Less(vcEvents[i-1].vc, t.vc)
-			if cmp {
-				fmt.Print("\t- GREATER")
-			} else {
-				fmt.Print("\t- NOT G")
-			}
-		}
-		return true
 	})
 
 	return sliceutil.Transform(vcEvents, func(_ int, vcE vcEvent) stdtypes.Event { return vcE.event })
