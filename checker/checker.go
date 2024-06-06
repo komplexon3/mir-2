@@ -13,7 +13,7 @@ import (
 )
 
 type Checker struct {
-	conditions []*condition
+	properties []*property
 	executed   bool // NOTE: is this actually providing any value?
 }
 
@@ -41,7 +41,7 @@ func (cr CheckerResult) String() string {
 
 type Decoder func([]byte) (stdtypes.Event, error)
 
-type condition struct {
+type property struct {
 	name         string
 	runnerModule modules.PassiveModule
 	eventChan    chan stdtypes.Event
@@ -50,8 +50,8 @@ type condition struct {
 	result       CheckerResult
 }
 
-func newCondition(name string, module modules.PassiveModule) *condition {
-	return &condition{
+func newProperty(name string, module modules.PassiveModule) *property {
+	return &property{
 		name,
 		module,
 		make(chan stdtypes.Event),
@@ -62,15 +62,15 @@ func newCondition(name string, module modules.PassiveModule) *condition {
 
 }
 
-func NewChecker(conditions modules.Modules) (*Checker, error) {
+func NewChecker(properties modules.Modules) (*Checker, error) {
 	checker := &Checker{
-		conditions: make([]*condition, 0, len(conditions)),
+		properties: make([]*property, 0, len(properties)),
 		executed:   false,
 	}
 
-	for key, cond := range conditions {
+	for key, cond := range properties {
 		if passiveModule, ok := cond.(modules.PassiveModule); ok {
-			checker.conditions = append(checker.conditions, newCondition(string(key), passiveModule))
+			checker.properties = append(checker.properties, newProperty(string(key), passiveModule))
 		} else {
 			return nil, es.Errorf("module %s must be a passive module", key)
 		}
@@ -84,25 +84,25 @@ func (c *Checker) GetResults() (map[string]CheckerResult, error) {
 		return nil, fmt.Errorf("no results available, run analysis first")
 	}
 
-	results := make(map[string]CheckerResult, len(c.conditions))
+	results := make(map[string]CheckerResult, len(c.properties))
 
-	for _, condition := range c.conditions {
-		results[condition.name] = condition.result
+	for _, property := range c.properties {
+		results[property.name] = property.result
 	}
 
 	return results, nil
 }
 
 func (c *Checker) RunAnalysis(eventChan chan stdtypes.Event) error {
-	if len(c.conditions) == 0 {
-		return fmt.Errorf("no conditions registered")
+	if len(c.properties) == 0 {
+		return fmt.Errorf("no properties registered")
 	}
 
 	var wg sync.WaitGroup
 
-	for _, cc := range c.conditions {
+	for _, cc := range c.properties {
 		wg.Add(1)
-		go func(cc *condition) {
+		go func(cc *property) {
 			defer func() {
 				cc.done = true
 				close(cc.doneC)
@@ -112,7 +112,7 @@ func (c *Checker) RunAnalysis(eventChan chan stdtypes.Event) error {
 			for e := range cc.eventChan {
 				outEvents, err := safelyApplyEvents(cc.runnerModule, stdtypes.ListOf(e))
 				if err != nil {
-					fmt.Printf("condition %s failed to apply events: %v", cc.name, err)
+					fmt.Printf("property %s failed to apply events: %v", cc.name, err)
 					return
 				}
 
@@ -127,7 +127,7 @@ func (c *Checker) RunAnalysis(eventChan chan stdtypes.Event) error {
 						return
 					default:
 						// TODO: add logging stuff
-						fmt.Printf("condition returned unsupported event: %T (supported: SuccessEvent, FailureEvent)", ev)
+						fmt.Printf("property returned unsupported event: %T (supported: SuccessEvent, FailureEvent)", ev)
 					}
 				}
 			}
@@ -136,31 +136,31 @@ func (c *Checker) RunAnalysis(eventChan chan stdtypes.Event) error {
 	}
 
 	for e := range eventChan {
-		for _, condition := range c.conditions {
-			if !condition.done {
+		for _, property := range c.properties {
+			if !property.done {
 				// TODO: this seeems very 'meh...' -> read up on 'closing' patterns
 				select {
-				case <-condition.doneC:
-				case condition.eventChan <- e:
+				case <-property.doneC:
+				case property.eventChan <- e:
 				}
 			}
 		}
 	}
 
 	// send done event to all -> initiate post processing if necessary
-	for _, condition := range c.conditions {
-		if !condition.done {
-			condition.eventChan <- events.NewFinalEvent()
+	for _, property := range c.properties {
+		if !property.done {
+			property.eventChan <- events.NewFinalEvent()
 		}
 	}
 
 	// close all channels
-	// will stop any condition runner loop that hadn't terminated bc of success/failure yet
-	for _, condition := range c.conditions {
-		close(condition.eventChan)
+	// will stop any property runner loop that hadn't terminated bc of success/failure yet
+	for _, property := range c.properties {
+		close(property.eventChan)
 	}
 
-	// nomore events, stop all condition runners
+	// nomore events, stop all property runners
 	wg.Wait()
 	c.executed = true
 
