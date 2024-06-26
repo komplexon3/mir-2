@@ -268,7 +268,7 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 			// Intercept the (stripped of all follow-ups) events that were emitted.
 			// This is only for debugging / diagnostic purposes.
 			interceptedEvents := n.interceptEvents(newEvents)
-      // Add the intercepted events to the modules' event buffers
+			// Add the intercepted events to the modules' event buffers
 			if err := n.pendingEvents.Add(interceptedEvents); err != nil {
 				n.workErrNotifier.Fail(err)
 			}

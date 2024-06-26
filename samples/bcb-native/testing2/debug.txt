@@ -1,0 +1,518 @@
+=== RUN   Test_CANoByz
+=== RUN   Test_CANoByz/no_byz
+Running CA
+#e: 1, #h: 0
++++ Processing event +++
+#e: 2, #h: 0
++++ Processing event +++
+#e: 3, #h: 0
++++ Processing event +++
+#e: 4, #h: 0
++++ Processing event +++
+#e: 5, #h: 0
++++ Processing event +++
+#e: 6, #h: 0
++++ Processing event +++
+#e: 7, #h: 0
+&{{ bcb map[injected:true node:4]}}
+Injected - not sending to adv (&{{ bcb map[injected:true node:4]}})
++++ Processing event +++
+#e: 8, #h: 0
+&{{ net map[injected:true node:1]}}
+&{{ null map[injected:true node:4]}}
++++ Processing event +++
+Injected - not sending to adv (&{{ null map[injected:true node:4]}})
+#e: 9, #h: 0
++++ Processing event +++
+#e: 10, #h: 0
+&{{ timer map[injected:true node:4]}}
+Injected - not sending to adv (&{{ timer map[injected:true node:4]}})
++++ Processing event +++
+#e: 11, #h: 0
++++ Processing event +++
+#e: 12, #h: 0
++++ Processing event +++
+#e: 13, #h: 0
++++ Processing event +++
+#e: 14, #h: 0
++++ Processing event +++
+&{{ net map[injected:true node:4]}}
+Injected - not sending to adv (&{{ net map[injected:true node:4]}})
+#e: 15, #h: 0
++++ Processing event +++
+&{{ crypto map[injected:true node:4]}}
+Injected - not sending to adv (&{{ net map[injected:true node:1]}})
+&{{ crypto map[injected:true node:1]}}
+Injected - not sending to adv (&{{ crypto map[injected:true node:4]}})
+&{{ crypto map[injected:true node:3]}}
+Injected - not sending to adv (&{{ crypto map[injected:true node:3]}})
+Injected - not sending to adv (&{{ crypto map[injected:true node:1]}})
+&{{ bcb map[injected:true node:3]}}
+#e: 16, #h: 0
++++ Processing event +++
+#e: 17, #h: 0
++++ Processing event +++
+#e: 18, #h: 0
++++ Processing event +++
+#e: 19, #h: 0
++++ Processing event +++
+&{{ bcb map[injected:true node:1]}}
+Injected - not sending to adv (&{{ bcb map[injected:true node:1]}})
+#e: 20, #h: 0
++++ Processing event +++
+#e: 21, #h: 0
++++ Processing event +++
+#e: 22, #h: 0
++++ Processing event +++
+&{{ null map[injected:true node:1]}}
+#e: 23, #h: 0
++++ Processing event +++
+Injected - not sending to adv (&{{ null map[injected:true node:1]}})
+&{{ timer map[injected:true node:1]}}
+Injected - not sending to adv (&{{ timer map[injected:true node:1]}})
+&{{ crypto map[injected:true node:0]}}
+Injected - not sending to adv (&{{ crypto map[injected:true node:0]}})
+Injected - not sending to adv (&{{ bcb map[injected:true node:3]}})
+&{{ null map[injected:true node:3]}}
+&{{ net map[injected:true node:2]}}
+Injected - not sending to adv (&{{ net map[injected:true node:2]}})
+&{{ bcb map[injected:true node:0]}}
+&{{ crypto map[injected:true node:2]}}
+#e: 24, #h: 0
++++ Processing event +++
+#e: 25, #h: 0
++++ Processing event +++
+Injected - not sending to adv (&{{ bcb map[injected:true node:0]}})
+Injected - not sending to adv (&{{ null map[injected:true node:3]}})
+Injected - not sending to adv (&{{ crypto map[injected:true node:2]}})
+&{{ bcb map[injected:true node:2]}}
+&{{ null map[injected:true node:0]}}
+Injected - not sending to adv (&{{ null map[injected:true node:0]}})
+Injected - not sending to adv (&{{ bcb map[injected:true node:2]}})
+&{{ timer map[injected:true node:0]}}
+Injected - not sending to adv (&{{ timer map[injected:true node:0]}})
+&{{ null map[injected:true node:2]}}
+Injected - not sending to adv (&{{ null map[injected:true node:2]}})
+&{{ net map[injected:true node:0]}}
+Injected - not sending to adv (&{{ net map[injected:true node:0]}})
+&{{ timer map[injected:true node:2]}}
+Injected - not sending to adv (&{{ timer map[injected:true node:2]}})
+&{{ timer map[injected:true node:3]}}
+Injected - not sending to adv (&{{ timer map[injected:true node:3]}})
+&{{ net map[injected:true node:3]}}
+Injected - not sending to adv (&{{ net map[injected:true node:3]}})
+Ran puppeteer
+&{{ timer map[node:2]} [0x140004ee270] 1s 18446744073709551615}
+&{{ timer map[node:3]} [0x140004ee360] 1s 18446744073709551615}
+&{{ timer map[node:4]} [0x140004ee450] 1s 18446744073709551615}
+&{{ timer map[node:0]} [0x140004ee540] 1s 18446744073709551615}
+#e: 26, #h: 0
++++ Processing event +++
+#e: 27, #h: 0
++++ Processing event +++
+#e: 28, #h: 0
++++ Processing event +++
+#e: 29, #h: 0
++++ Processing event +++
+&{{ timer map[injected:true node:3]} [0x140004ee360] 1s 18446744073709551615}
+Injected - not sending to adv (&{{ timer map[injected:true node:3]} [0x140004ee360] 1s 18446744073709551615})
+&{ null map[node:3]}
+#e: 30, #h: 1
++++ Processing event +++
+&{ null map[injected:true node:3]}
+Injected - not sending to adv (&{ null map[injected:true node:3]})
+&{{ timer map[injected:true node:4]} [0x140004ee450] 1s 18446744073709551615}
+Injected - not sending to adv (&{{ timer map[injected:true node:4]} [0x140004ee450] 1s 18446744073709551615})
+&{ null map[node:4]}
+#e: 31, #h: 2
++++ Processing event +++
+&{ null map[injected:true node:4]}
+Injected - not sending to adv (&{ null map[injected:true node:4]})
+&{{ bcb map[node:0]} [110 111 100 101 32 48 32 105 110 106 101 99 116 105 110 103]}
+#e: 32, #h: 0
++++ Processing event +++
+&{{ timer map[injected:true node:2]} [0x140004ee270] 1s 18446744073709551615}
+Injected - not sending to adv (&{{ timer map[injected:true node:2]} [0x140004ee270] 1s 18446744073709551615})
+&{ null map[node:2]}
+#e: 33, #h: 1
++++ Processing event +++
+&{ null map[injected:true node:2]}
+Injected - not sending to adv (&{ null map[injected:true node:2]})
+&{{ timer map[injected:true node:0]} [0x140004ee540] 1s 18446744073709551615}
+Injected - not sending to adv (&{{ timer map[injected:true node:0]} [0x140004ee540] 1s 18446744073709551615})
+&{{ bcb map[injected:true node:0]} [110 111 100 101 32 48 32 105 110 106 101 99 116 105 110 103]}
+Injected - not sending to adv (&{{ bcb map[injected:true node:0]} [110 111 100 101 32 48 32 105 110 106 101 99 116 105 110 103]})
+Received broadcast request
+&{{ net map[node:0]} [0 1 2 3 4] bcb 0x140004a2498}
+#e: 34, #h: 0
++++ Processing event +++
+&{{ net map[injected:true node:0]} [0 1 2 3 4] bcb 0x140004a2498}
+Injected - not sending to adv (&{{ net map[injected:true node:0]} [0 1 2 3 4] bcb 0x140004a2498})
+&{{ bcb map[node:4]} 0 {0x140004a2498 {map[0:8]}}}
+#e: 35, #h: 0
++++ Processing event +++
+&{{ bcb map[injected:true node:4]} 0 {0x140004a2498 {map[0:8]}}}
+Injected - not sending to adv (&{{ bcb map[injected:true node:4]} 0 {0x140004a2498 {map[0:8]}}})
+&{{ bcb map[node:0]} 0 {0x140004a2498 {map[0:8]}}}
+#e: 36, #h: 0
++++ Processing event +++
+&{{ bcb map[injected:true node:0]} 0 {0x140004a2498 {map[0:8]}}}
+Injected - not sending to adv (&{{ bcb map[injected:true node:0]} 0 {0x140004a2498 {map[0:8]}}})
+&{{ bcb map[node:2]} 0 {0x140004a2498 {map[0:8]}}}
+#e: 37, #h: 0
++++ Processing event +++
+&{{ bcb map[injected:true node:2]} 0 {0x140004a2498 {map[0:8]}}}
+Injected - not sending to adv (&{{ bcb map[injected:true node:2]} 0 {0x140004a2498 {map[0:8]}}})
+&{{ timer map[node:1]} [0x140004ee630] 1s 18446744073709551615}
+#e: 38, #h: 0
++++ Processing event +++
+&{{ timer map[injected:true node:1]} [0x140004ee630] 1s 18446744073709551615}
+Injected - not sending to adv (&{{ timer map[injected:true node:1]} [0x140004ee630] 1s 18446744073709551615})
+&{{ bcb map[node:1]} 0 {0x140004a2498 {map[0:8]}}}
+#e: 39, #h: 0
++++ Processing event +++
+&{{ bcb map[injected:true node:1]} 0 {0x140004a2498 {map[0:8]}}}
+&{{ bcb map[node:3]} 0 {0x140004a2498 {map[0:8]}}}
+Injected - not sending to adv (&{{ bcb map[injected:true node:1]} 0 {0x140004a2498 {map[0:8]}}})
+#e: 40, #h: 0
++++ Processing event +++
+&{{ bcb map[injected:true node:3]} 0 {0x140004a2498 {map[0:8]}}}
+Injected - not sending to adv (&{{ bcb map[injected:true node:3]} 0 {0x140004a2498 {map[0:8]}}})
+dest_module:"crypto" raw_metadata:{key:"node" value:"\"2\""} crypto:{sign_request:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} origin:{module:"bcb" dsl:{}}}}
+dest_module:"crypto" raw_metadata:{key:"node" value:"\"3\""} crypto:{sign_request:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} origin:{module:"bcb" dsl:{}}}}
+#e: 41, #h: 0
++++ Processing event +++
+#e: 42, #h: 0
++++ Processing event +++
+dest_module:"crypto" raw_metadata:{key:"node" value:"\"4\""} crypto:{sign_request:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} origin:{module:"bcb" dsl:{}}}}
+dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"2\""} crypto:{sign_request:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} origin:{module:"bcb" dsl:{}}}}
+#e: 43, #h: 0
++++ Processing event +++
+dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"3\""} crypto:{sign_request:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} origin:{module:"bcb" dsl:{}}}}
+Injected - not sending to adv (dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"2\""} crypto:{sign_request:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} origin:{module:"bcb" dsl:{}}}})
+Injected - not sending to adv (dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"3\""} crypto:{sign_request:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} origin:{module:"bcb" dsl:{}}}})
+dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"4\""} crypto:{sign_request:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} origin:{module:"bcb" dsl:{}}}}
+Injected - not sending to adv (dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"4\""} crypto:{sign_request:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} origin:{module:"bcb" dsl:{}}}})
+dest_module:"crypto" raw_metadata:{key:"node" value:"\"0\""} crypto:{sign_request:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} origin:{module:"bcb" dsl:{}}}}
+#e: 44, #h: 0
++++ Processing event +++
+dest_module:"crypto" raw_metadata:{key:"node" value:"\"1\""} crypto:{sign_request:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} origin:{module:"bcb" dsl:{}}}}
+dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{sign_request:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} origin:{module:"bcb" dsl:{}}}}
+&{ null map[node:1]}
+#e: 45, #h: 0
++++ Processing event +++
+#e: 46, #h: 1
+Injected - not sending to adv (dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{sign_request:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} origin:{module:"bcb" dsl:{}}}})
+dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"1\""} crypto:{sign_request:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} origin:{module:"bcb" dsl:{}}}}
+Injected - not sending to adv (dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"1\""} crypto:{sign_request:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} origin:{module:"bcb" dsl:{}}}})
+dest_module:"bcb" raw_metadata:{key:"node" value:"\"3\""} crypto:{sign_result:{signature:"0D\x02 .z\xa4\xe1\xf5w\x07y\xbbE\x87\xe1F\xa6\x00`\x10\x83\xbdNhF\x13\xfe}\xcd|\x02l\xb8\x04U\x02 3\x96L\xa9\x8c\xa4\x90~\x06\xdd\x16\xf4\x0b\x80!U\xad8\xb1\x14a\x94\xcal\xa3\x8a\x04e\nXM\xf5" origin:{module:"bcb" dsl:{}}}}
+dest_module:"bcb" raw_metadata:{key:"node" value:"\"0\""} crypto:{sign_result:{signature:"0E\x02 ,\xf6\xc4p~'zS\xb3S\xf22`\xdc\xf9\xf4\x8bώ\xf7\x1a4\xee\x93\xf2X+d\x93]C\xdb\x02!\x00\xef2Ý\xf5\xad\x8d\xa5Y\x912\xe9I\xde\xd4\xe1g\x1e9\x96\xfc\xb1\xa26\xa4\xb2\xd6k\x99(\xde\x0c" origin:{module:"bcb" dsl:{}}}}
++++ Processing event +++
+#e: 47, #h: 0
++++ Processing event +++
+#e: 48, #h: 0
++++ Processing event +++
+dest_module:"bcb" raw_metadata:{key:"node" value:"\"1\""} crypto:{sign_result:{signature:"0E\x02 ]J\xb0;Y\xa3\xbb\xdd`\x9f{nX\x0bF\x95\xd8=y\xff\xfe\xd6H\xa5\xf3y\xee\xc1\x1e\xfa\xe4\xc8\x02!\x00\x85\x8f?\xd6\xe6\x07\xfaE\r4\x8c\x81\x8eݮ[\xa2\xd0˃\xa8DӶ\xc22\x1d'\xba{\x96\x97" origin:{module:"bcb" dsl:{}}}}
+dest_module:"bcb" raw_metadata:{key:"node" value:"\"2\""} crypto:{sign_result:{signature:"0F\x02!\x00\xa5\x9a\xe3&G\x8f\xb3RZ\x82\xe3e\xec\xdd#iҔ\xb3S\xec\xeco\xac\xc6G\xb4%'\x83A\x92\x02!\x00\xf5\x8b\xaf\xa7[Pw4e\xbbB}\xa0\x07\xa5\xe41P\xe7I\xa9\nR\x85\x8d\x1c/\x92a\xcbo\x17" origin:{module:"bcb" dsl:{}}}}
+#e: 49, #h: 0
++++ Processing event +++
+#e: 50, #h: 0
++++ Processing event +++
+&{ null map[injected:true node:1]}
+Injected - not sending to adv (&{ null map[injected:true node:1]})
+dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"2\""} crypto:{sign_result:{signature:"0F\x02!\x00\xa5\x9a\xe3&G\x8f\xb3RZ\x82\xe3e\xec\xdd#iҔ\xb3S\xec\xeco\xac\xc6G\xb4%'\x83A\x92\x02!\x00\xf5\x8b\xaf\xa7[Pw4e\xbbB}\xa0\x07\xa5\xe41P\xe7I\xa9\nR\x85\x8d\x1c/\x92a\xcbo\x17" origin:{module:"bcb" dsl:{}}}}
+dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"1\""} crypto:{sign_result:{signature:"0E\x02 ]J\xb0;Y\xa3\xbb\xdd`\x9f{nX\x0bF\x95\xd8=y\xff\xfe\xd6H\xa5\xf3y\xee\xc1\x1e\xfa\xe4\xc8\x02!\x00\x85\x8f?\xd6\xe6\x07\xfaE\r4\x8c\x81\x8eݮ[\xa2\xd0˃\xa8DӶ\xc22\x1d'\xba{\x96\x97" origin:{module:"bcb" dsl:{}}}}
+Injected - not sending to adv (dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"2\""} crypto:{sign_result:{signature:"0F\x02!\x00\xa5\x9a\xe3&G\x8f\xb3RZ\x82\xe3e\xec\xdd#iҔ\xb3S\xec\xeco\xac\xc6G\xb4%'\x83A\x92\x02!\x00\xf5\x8b\xaf\xa7[Pw4e\xbbB}\xa0\x07\xa5\xe41P\xe7I\xa9\nR\x85\x8d\x1c/\x92a\xcbo\x17" origin:{module:"bcb" dsl:{}}}})
+Injected - not sending to adv (dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"1\""} crypto:{sign_result:{signature:"0E\x02 ]J\xb0;Y\xa3\xbb\xdd`\x9f{nX\x0bF\x95\xd8=y\xff\xfe\xd6H\xa5\xf3y\xee\xc1\x1e\xfa\xe4\xc8\x02!\x00\x85\x8f?\xd6\xe6\x07\xfaE\r4\x8c\x81\x8eݮ[\xa2\xd0˃\xa8DӶ\xc22\x1d'\xba{\x96\x97" origin:{module:"bcb" dsl:{}}}})
+&{{ net map[node:2]} [0] bcb 0x1400000f680}
+dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"3\""} crypto:{sign_result:{signature:"0D\x02 .z\xa4\xe1\xf5w\x07y\xbbE\x87\xe1F\xa6\x00`\x10\x83\xbdNhF\x13\xfe}\xcd|\x02l\xb8\x04U\x02 3\x96L\xa9\x8c\xa4\x90~\x06\xdd\x16\xf4\x0b\x80!U\xad8\xb1\x14a\x94\xcal\xa3\x8a\x04e\nXM\xf5" origin:{module:"bcb" dsl:{}}}}
+Injected - not sending to adv (dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"3\""} crypto:{sign_result:{signature:"0D\x02 .z\xa4\xe1\xf5w\x07y\xbbE\x87\xe1F\xa6\x00`\x10\x83\xbdNhF\x13\xfe}\xcd|\x02l\xb8\x04U\x02 3\x96L\xa9\x8c\xa4\x90~\x06\xdd\x16\xf4\x0b\x80!U\xad8\xb1\x14a\x94\xcal\xa3\x8a\x04e\nXM\xf5" origin:{module:"bcb" dsl:{}}}})
+&{{ net map[node:3]} [0] bcb 0x1400047b458}
+&{ null map[node:0]}
+&{{ net map[node:1]} [0] bcb 0x1400047b560}
+#e: 51, #h: 0
++++ Processing event +++
+#e: 52, #h: 1
++++ Processing event +++
+#e: 53, #h: 0
++++ Processing event +++
+#e: 54, #h: 0
++++ Processing event +++
+&{{ net map[injected:true node:2]} [0] bcb 0x1400000f680}
+Injected - not sending to adv (&{{ net map[injected:true node:2]} [0] bcb 0x1400000f680})
+dest_module:"bcb" raw_metadata:{key:"node" value:"\"4\""} crypto:{sign_result:{signature:"0E\x02 \x7f\xcc\x06\x0c\x98\x89\x7fJ\xff\xa6\xfa\xf4z\xad\xf5D\x95a\x85\x98FY\xfbp.\xec\xcf\xechg\xde\xd2\x02!\x00\x9f\x10<\xb4\x12\xc6b\xca\xc7\x18@K\xf4IC\xad\xc7i\xf6\xb5\xc5h\x8cLx\xfa\xa9\xc0\x1e\x82\xe3\xf3" origin:{module:"bcb" dsl:{}}}}
+#e: 55, #h: 0
++++ Processing event +++
+dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"4\""} crypto:{sign_result:{signature:"0E\x02 \x7f\xcc\x06\x0c\x98\x89\x7fJ\xff\xa6\xfa\xf4z\xad\xf5D\x95a\x85\x98FY\xfbp.\xec\xcf\xechg\xde\xd2\x02!\x00\x9f\x10<\xb4\x12\xc6b\xca\xc7\x18@K\xf4IC\xad\xc7i\xf6\xb5\xc5h\x8cLx\xfa\xa9\xc0\x1e\x82\xe3\xf3" origin:{module:"bcb" dsl:{}}}}
+Injected - not sending to adv (dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"4\""} crypto:{sign_result:{signature:"0E\x02 \x7f\xcc\x06\x0c\x98\x89\x7fJ\xff\xa6\xfa\xf4z\xad\xf5D\x95a\x85\x98FY\xfbp.\xec\xcf\xechg\xde\xd2\x02!\x00\x9f\x10<\xb4\x12\xc6b\xca\xc7\x18@K\xf4IC\xad\xc7i\xf6\xb5\xc5h\x8cLx\xfa\xa9\xc0\x1e\x82\xe3\xf3" origin:{module:"bcb" dsl:{}}}})
+&{{ net map[node:4]} [0] bcb 0x140006b91b8}
+#e: 56, #h: 0
++++ Processing event +++
+&{{ net map[injected:true node:4]} [0] bcb 0x140006b91b8}
+Injected - not sending to adv (&{{ net map[injected:true node:4]} [0] bcb 0x140006b91b8})
+dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{sign_result:{signature:"0E\x02 ,\xf6\xc4p~'zS\xb3S\xf22`\xdc\xf9\xf4\x8bώ\xf7\x1a4\xee\x93\xf2X+d\x93]C\xdb\x02!\x00\xef2Ý\xf5\xad\x8d\xa5Y\x912\xe9I\xde\xd4\xe1g\x1e9\x96\xfc\xb1\xa26\xa4\xb2\xd6k\x99(\xde\x0c" origin:{module:"bcb" dsl:{}}}}
+Injected - not sending to adv (dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{sign_result:{signature:"0E\x02 ,\xf6\xc4p~'zS\xb3S\xf22`\xdc\xf9\xf4\x8bώ\xf7\x1a4\xee\x93\xf2X+d\x93]C\xdb\x02!\x00\xef2Ý\xf5\xad\x8d\xa5Y\x912\xe9I\xde\xd4\xe1g\x1e9\x96\xfc\xb1\xa26\xa4\xb2\xd6k\x99(\xde\x0c" origin:{module:"bcb" dsl:{}}}})
+&{{ bcb map[node:0]} 4 {0x140006b91b8 {map[0:8 4:11]}}}
+#e: 57, #h: 0
++++ Processing event +++
+&{{ net map[injected:true node:1]} [0] bcb 0x1400047b560}
+Injected - not sending to adv (&{{ net map[injected:true node:1]} [0] bcb 0x1400047b560})
+&{{ net map[injected:true node:3]} [0] bcb 0x1400047b458}
+Injected - not sending to adv (&{{ net map[injected:true node:3]} [0] bcb 0x1400047b458})
+&{ null map[injected:true node:0]}
+Injected - not sending to adv (&{ null map[injected:true node:0]})
+&{{ bcb map[injected:true node:0]} 4 {0x140006b91b8 {map[0:8 4:11]}}}
+Injected - not sending to adv (&{{ bcb map[injected:true node:0]} 4 {0x140006b91b8 {map[0:8 4:11]}}})
+&{{ bcb map[node:0]} 2 {0x1400000f680 {map[0:8 2:11]}}}
+&{{ bcb map[node:0]} 1 {0x1400047b560 {map[0:8 1:11]}}}
+#e: 58, #h: 0
++++ Processing event +++
+#e: 59, #h: 0
++++ Processing event +++
+&{{ bcb map[node:0]} 3 {0x1400047b458 {map[0:8 3:11]}}}
+#e: 60, #h: 0
++++ Processing event +++
+&{{ net map[node:0]} [0] bcb 0x1400047bb48}
+&{{ bcb map[injected:true node:0]} 2 {0x1400000f680 {map[0:8 2:11]}}}
+Injected - not sending to adv (&{{ bcb map[injected:true node:0]} 2 {0x1400000f680 {map[0:8 2:11]}}})
+&{{ bcb map[injected:true node:0]} 1 {0x1400047b560 {map[0:8 1:11]}}}
+#e: 61, #h: 0
++++ Processing event +++
+Injected - not sending to adv (&{{ bcb map[injected:true node:0]} 1 {0x1400047b560 {map[0:8 1:11]}}})
+&{{ bcb map[injected:true node:0]} 3 {0x1400047b458 {map[0:8 3:11]}}}
+Injected - not sending to adv (&{{ bcb map[injected:true node:0]} 3 {0x1400047b458 {map[0:8 3:11]}}})
+dest_module:"crypto" raw_metadata:{key:"node" value:"\"0\""} crypto:{verify_sig:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signature:"0E\x02 \x7f\xcc\x06\x0c\x98\x89\x7fJ\xff\xa6\xfa\xf4z\xad\xf5D\x95a\x85\x98FY\xfbp.\xec\xcf\xechg\xde\xd2\x02!\x00\x9f\x10<\xb4\x12\xc6b\xca\xc7\x18@K\xf4IC\xad\xc7i\xf6\xb5\xc5h\x8cLx\xfa\xa9\xc0\x1e\x82\xe3\xf3" origin:{module:"bcb" dsl:{contextID:1}} node_id:"4"}}
+&{{ net map[injected:true node:0]} [0] bcb 0x1400047bb48}
+Injected - not sending to adv (&{{ net map[injected:true node:0]} [0] bcb 0x1400047bb48})
+&{{ bcb map[node:0]} 0 {0x1400047bb48 {map[0:17 1:11 2:11 3:11 4:11]}}}
+#e: 62, #h: 0
++++ Processing event +++
+#e: 63, #h: 0
++++ Processing event +++
+#e: 64, #h: 0
++++ Processing event +++
+#e: 65, #h: 0
++++ Processing event +++
+#e: 66, #h: 0
++++ Processing event +++
+dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{verify_sig:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signature:"0E\x02 \x7f\xcc\x06\x0c\x98\x89\x7fJ\xff\xa6\xfa\xf4z\xad\xf5D\x95a\x85\x98FY\xfbp.\xec\xcf\xechg\xde\xd2\x02!\x00\x9f\x10<\xb4\x12\xc6b\xca\xc7\x18@K\xf4IC\xad\xc7i\xf6\xb5\xc5h\x8cLx\xfa\xa9\xc0\x1e\x82\xe3\xf3" origin:{module:"bcb" dsl:{contextID:1}} node_id:"4"}}
+Injected - not sending to adv (dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{verify_sig:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signature:"0E\x02 \x7f\xcc\x06\x0c\x98\x89\x7fJ\xff\xa6\xfa\xf4z\xad\xf5D\x95a\x85\x98FY\xfbp.\xec\xcf\xechg\xde\xd2\x02!\x00\x9f\x10<\xb4\x12\xc6b\xca\xc7\x18@K\xf4IC\xad\xc7i\xf6\xb5\xc5h\x8cLx\xfa\xa9\xc0\x1e\x82\xe3\xf3" origin:{module:"bcb" dsl:{contextID:1}} node_id:"4"}})
+&{{ bcb map[injected:true node:0]} 0 {0x1400047bb48 {map[0:17 1:11 2:11 3:11 4:11]}}}
+Injected - not sending to adv (&{{ bcb map[injected:true node:0]} 0 {0x1400047bb48 {map[0:17 1:11 2:11 3:11 4:11]}}})
+dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{verify_sig:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signature:"0F\x02!\x00\xa5\x9a\xe3&G\x8f\xb3RZ\x82\xe3e\xec\xdd#iҔ\xb3S\xec\xeco\xac\xc6G\xb4%'\x83A\x92\x02!\x00\xf5\x8b\xaf\xa7[Pw4e\xbbB}\xa0\x07\xa5\xe41P\xe7I\xa9\nR\x85\x8d\x1c/\x92a\xcbo\x17" origin:{module:"bcb" dsl:{contextID:2}} node_id:"2"}}
+Injected - not sending to adv (dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{verify_sig:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signature:"0F\x02!\x00\xa5\x9a\xe3&G\x8f\xb3RZ\x82\xe3e\xec\xdd#iҔ\xb3S\xec\xeco\xac\xc6G\xb4%'\x83A\x92\x02!\x00\xf5\x8b\xaf\xa7[Pw4e\xbbB}\xa0\x07\xa5\xe41P\xe7I\xa9\nR\x85\x8d\x1c/\x92a\xcbo\x17" origin:{module:"bcb" dsl:{contextID:2}} node_id:"2"}})
+dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{verify_sig:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signature:"0E\x02 ]J\xb0;Y\xa3\xbb\xdd`\x9f{nX\x0bF\x95\xd8=y\xff\xfe\xd6H\xa5\xf3y\xee\xc1\x1e\xfa\xe4\xc8\x02!\x00\x85\x8f?\xd6\xe6\x07\xfaE\r4\x8c\x81\x8eݮ[\xa2\xd0˃\xa8DӶ\xc22\x1d'\xba{\x96\x97" origin:{module:"bcb" dsl:{contextID:3}} node_id:"1"}}
+Injected - not sending to adv (dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{verify_sig:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signature:"0E\x02 ]J\xb0;Y\xa3\xbb\xdd`\x9f{nX\x0bF\x95\xd8=y\xff\xfe\xd6H\xa5\xf3y\xee\xc1\x1e\xfa\xe4\xc8\x02!\x00\x85\x8f?\xd6\xe6\x07\xfaE\r4\x8c\x81\x8eݮ[\xa2\xd0˃\xa8DӶ\xc22\x1d'\xba{\x96\x97" origin:{module:"bcb" dsl:{contextID:3}} node_id:"1"}})
+dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{verify_sig:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signature:"0D\x02 .z\xa4\xe1\xf5w\x07y\xbbE\x87\xe1F\xa6\x00`\x10\x83\xbdNhF\x13\xfe}\xcd|\x02l\xb8\x04U\x02 3\x96L\xa9\x8c\xa4\x90~\x06\xdd\x16\xf4\x0b\x80!U\xad8\xb1\x14a\x94\xcal\xa3\x8a\x04e\nXM\xf5" origin:{module:"bcb" dsl:{contextID:4}} node_id:"3"}}
+Injected - not sending to adv (dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{verify_sig:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signature:"0D\x02 .z\xa4\xe1\xf5w\x07y\xbbE\x87\xe1F\xa6\x00`\x10\x83\xbdNhF\x13\xfe}\xcd|\x02l\xb8\x04U\x02 3\x96L\xa9\x8c\xa4\x90~\x06\xdd\x16\xf4\x0b\x80!U\xad8\xb1\x14a\x94\xcal\xa3\x8a\x04e\nXM\xf5" origin:{module:"bcb" dsl:{contextID:4}} node_id:"3"}})
+dest_module:"crypto" raw_metadata:{key:"node" value:"\"0\""} crypto:{verify_sig:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signature:"0E\x02 ,\xf6\xc4p~'zS\xb3S\xf22`\xdc\xf9\xf4\x8bώ\xf7\x1a4\xee\x93\xf2X+d\x93]C\xdb\x02!\x00\xef2Ý\xf5\xad\x8d\xa5Y\x912\xe9I\xde\xd4\xe1g\x1e9\x96\xfc\xb1\xa26\xa4\xb2\xd6k\x99(\xde\x0c" origin:{module:"bcb" dsl:{contextID:5}} node_id:"0"}}
+dest_module:"bcb" raw_metadata:{key:"node" value:"\"0\""} crypto:{sig_verified:{origin:{module:"bcb" dsl:{contextID:1}} node_id:"4"}}
+#e: 67, #h: 0
++++ Processing event +++
+#e: 68, #h: 0
++++ Processing event +++
+dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{verify_sig:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signature:"0E\x02 ,\xf6\xc4p~'zS\xb3S\xf22`\xdc\xf9\xf4\x8bώ\xf7\x1a4\xee\x93\xf2X+d\x93]C\xdb\x02!\x00\xef2Ý\xf5\xad\x8d\xa5Y\x912\xe9I\xde\xd4\xe1g\x1e9\x96\xfc\xb1\xa26\xa4\xb2\xd6k\x99(\xde\x0c" origin:{module:"bcb" dsl:{contextID:5}} node_id:"0"}}
+Injected - not sending to adv (dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{verify_sig:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signature:"0E\x02 ,\xf6\xc4p~'zS\xb3S\xf22`\xdc\xf9\xf4\x8bώ\xf7\x1a4\xee\x93\xf2X+d\x93]C\xdb\x02!\x00\xef2Ý\xf5\xad\x8d\xa5Y\x912\xe9I\xde\xd4\xe1g\x1e9\x96\xfc\xb1\xa26\xa4\xb2\xd6k\x99(\xde\x0c" origin:{module:"bcb" dsl:{contextID:5}} node_id:"0"}})
+dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{sig_verified:{origin:{module:"bcb" dsl:{contextID:1}} node_id:"4"}}
+Injected - not sending to adv (dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{sig_verified:{origin:{module:"bcb" dsl:{contextID:1}} node_id:"4"}})
+#e: 69, #h: 0
++++ Processing event +++
+#e: 70, #h: 0
++++ Processing event +++
+dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{sig_verified:{origin:{module:"bcb" dsl:{contextID:2}} node_id:"2"}}
+Injected - not sending to adv (dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{sig_verified:{origin:{module:"bcb" dsl:{contextID:2}} node_id:"2"}})
+dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{sig_verified:{origin:{module:"bcb" dsl:{contextID:3}} node_id:"1"}}
+Injected - not sending to adv (dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{sig_verified:{origin:{module:"bcb" dsl:{contextID:3}} node_id:"1"}})
+#e: 71, #h: 0
++++ Processing event +++
+#e: 72, #h: 0
++++ Processing event +++
+dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{sig_verified:{origin:{module:"bcb" dsl:{contextID:4}} node_id:"3"}}
+Injected - not sending to adv (dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{sig_verified:{origin:{module:"bcb" dsl:{contextID:4}} node_id:"3"}})
+dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{sig_verified:{origin:{module:"bcb" dsl:{contextID:5}} node_id:"0"}}
+Injected - not sending to adv (dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{sig_verified:{origin:{module:"bcb" dsl:{contextID:5}} node_id:"0"}})
+&{{ net map[node:0]} [0 1 2 3 4] bcb 0x14000882ff0}
+#e: 73, #h: 0
++++ Processing event +++
+&{{ net map[injected:true node:0]} [0 1 2 3 4] bcb 0x14000882ff0}
+Injected - not sending to adv (&{{ net map[injected:true node:0]} [0 1 2 3 4] bcb 0x14000882ff0})
+&{{ bcb map[node:4]} 0 {0x14000882ff0 {map[0:29 1:11 2:11 3:11 4:11]}}}
+#e: 74, #h: 0
++++ Processing event +++
+&{{ bcb map[injected:true node:4]} 0 {0x14000882ff0 {map[0:29 1:11 2:11 3:11 4:11]}}}
+Injected - not sending to adv (&{{ bcb map[injected:true node:4]} 0 {0x14000882ff0 {map[0:29 1:11 2:11 3:11 4:11]}}})
+&{{ bcb map[node:1]} 0 {0x14000882ff0 {map[0:29 1:11 2:11 3:11 4:11]}}}
+&{{ bcb map[node:2]} 0 {0x14000882ff0 {map[0:29 1:11 2:11 3:11 4:11]}}}
+#e: 75, #h: 0
++++ Processing event +++
+#e: 76, #h: 0
++++ Processing event +++
+&{{ bcb map[injected:true node:1]} 0 {0x14000882ff0 {map[0:29 1:11 2:11 3:11 4:11]}}}
+&{{ bcb map[node:0]} 0 {0x14000882ff0 {map[0:29 1:11 2:11 3:11 4:11]}}}
+Injected - not sending to adv (&{{ bcb map[injected:true node:1]} 0 {0x14000882ff0 {map[0:29 1:11 2:11 3:11 4:11]}}})
+#e: 77, #h: 0
++++ Processing event +++
+&{{ bcb map[injected:true node:0]} 0 {0x14000882ff0 {map[0:29 1:11 2:11 3:11 4:11]}}}
+Injected - not sending to adv (&{{ bcb map[injected:true node:0]} 0 {0x14000882ff0 {map[0:29 1:11 2:11 3:11 4:11]}}})
+&{{ bcb map[injected:true node:2]} 0 {0x14000882ff0 {map[0:29 1:11 2:11 3:11 4:11]}}}
+Injected - not sending to adv (&{{ bcb map[injected:true node:2]} 0 {0x14000882ff0 {map[0:29 1:11 2:11 3:11 4:11]}}})
+dest_module:"crypto" raw_metadata:{key:"node" value:"\"4\""} crypto:{verify_sigs:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signatures:"0E\x02 \x7f\xcc\x06\x0c\x98\x89\x7fJ\xff\xa6\xfa\xf4z\xad\xf5D\x95a\x85\x98FY\xfbp.\xec\xcf\xechg\xde\xd2\x02!\x00\x9f\x10<\xb4\x12\xc6b\xca\xc7\x18@K\xf4IC\xad\xc7i\xf6\xb5\xc5h\x8cLx\xfa\xa9\xc0\x1e\x82\xe3\xf3" signatures:"0F\x02!\x00\xa5\x9a\xe3&G\x8f\xb3RZ\x82\xe3e\xec\xdd#iҔ\xb3S\xec\xeco\xac\xc6G\xb4%'\x83A\x92\x02!\x00\xf5\x8b\xaf\xa7[Pw4e\xbbB}\xa0\x07\xa5\xe41P\xe7I\xa9\nR\x85\x8d\x1c/\x92a\xcbo\x17" signatures:"0E\x02 ]J\xb0;Y\xa3\xbb\xdd`\x9f{nX\x0bF\x95\xd8=y\xff\xfe\xd6H\xa5\xf3y\xee\xc1\x1e\xfa\xe4\xc8\x02!\x00\x85\x8f?\xd6\xe6\x07\xfaE\r4\x8c\x81\x8eݮ[\xa2\xd0˃\xa8DӶ\xc22\x1d'\xba{\x96\x97" signatures:"0D\x02 .z\xa4\xe1\xf5w\x07y\xbbE\x87\xe1F\xa6\x00`\x10\x83\xbdNhF\x13\xfe}\xcd|\x02l\xb8\x04U\x02 3\x96L\xa9\x8c\xa4\x90~\x06\xdd\x16\xf4\x0b\x80!U\xad8\xb1\x14a\x94\xcal\xa3\x8a\x04e\nXM\xf5" origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3"}}
+#e: 78, #h: 0
++++ Processing event +++
+&{{ bcb map[node:3]} 0 {0x14000882ff0 {map[0:29 1:11 2:11 3:11 4:11]}}}
+dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"4\""} crypto:{verify_sigs:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signatures:"0E\x02 \x7f\xcc\x06\x0c\x98\x89\x7fJ\xff\xa6\xfa\xf4z\xad\xf5D\x95a\x85\x98FY\xfbp.\xec\xcf\xechg\xde\xd2\x02!\x00\x9f\x10<\xb4\x12\xc6b\xca\xc7\x18@K\xf4IC\xad\xc7i\xf6\xb5\xc5h\x8cLx\xfa\xa9\xc0\x1e\x82\xe3\xf3" signatures:"0F\x02!\x00\xa5\x9a\xe3&G\x8f\xb3RZ\x82\xe3e\xec\xdd#iҔ\xb3S\xec\xeco\xac\xc6G\xb4%'\x83A\x92\x02!\x00\xf5\x8b\xaf\xa7[Pw4e\xbbB}\xa0\x07\xa5\xe41P\xe7I\xa9\nR\x85\x8d\x1c/\x92a\xcbo\x17" signatures:"0E\x02 ]J\xb0;Y\xa3\xbb\xdd`\x9f{nX\x0bF\x95\xd8=y\xff\xfe\xd6H\xa5\xf3y\xee\xc1\x1e\xfa\xe4\xc8\x02!\x00\x85\x8f?\xd6\xe6\x07\xfaE\r4\x8c\x81\x8eݮ[\xa2\xd0˃\xa8DӶ\xc22\x1d'\xba{\x96\x97" signatures:"0D\x02 .z\xa4\xe1\xf5w\x07y\xbbE\x87\xe1F\xa6\x00`\x10\x83\xbdNhF\x13\xfe}\xcd|\x02l\xb8\x04U\x02 3\x96L\xa9\x8c\xa4\x90~\x06\xdd\x16\xf4\x0b\x80!U\xad8\xb1\x14a\x94\xcal\xa3\x8a\x04e\nXM\xf5" origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3"}}
+dest_module:"crypto" raw_metadata:{key:"node" value:"\"1\""} crypto:{verify_sigs:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signatures:"0E\x02 \x7f\xcc\x06\x0c\x98\x89\x7fJ\xff\xa6\xfa\xf4z\xad\xf5D\x95a\x85\x98FY\xfbp.\xec\xcf\xechg\xde\xd2\x02!\x00\x9f\x10<\xb4\x12\xc6b\xca\xc7\x18@K\xf4IC\xad\xc7i\xf6\xb5\xc5h\x8cLx\xfa\xa9\xc0\x1e\x82\xe3\xf3" signatures:"0F\x02!\x00\xa5\x9a\xe3&G\x8f\xb3RZ\x82\xe3e\xec\xdd#iҔ\xb3S\xec\xeco\xac\xc6G\xb4%'\x83A\x92\x02!\x00\xf5\x8b\xaf\xa7[Pw4e\xbbB}\xa0\x07\xa5\xe41P\xe7I\xa9\nR\x85\x8d\x1c/\x92a\xcbo\x17" signatures:"0E\x02 ]J\xb0;Y\xa3\xbb\xdd`\x9f{nX\x0bF\x95\xd8=y\xff\xfe\xd6H\xa5\xf3y\xee\xc1\x1e\xfa\xe4\xc8\x02!\x00\x85\x8f?\xd6\xe6\x07\xfaE\r4\x8c\x81\x8eݮ[\xa2\xd0˃\xa8DӶ\xc22\x1d'\xba{\x96\x97" signatures:"0D\x02 .z\xa4\xe1\xf5w\x07y\xbbE\x87\xe1F\xa6\x00`\x10\x83\xbdNhF\x13\xfe}\xcd|\x02l\xb8\x04U\x02 3\x96L\xa9\x8c\xa4\x90~\x06\xdd\x16\xf4\x0b\x80!U\xad8\xb1\x14a\x94\xcal\xa3\x8a\x04e\nXM\xf5" origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3"}}
+#e: 79, #h: 0
++++ Processing event +++
+Injected - not sending to adv (dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"4\""} crypto:{verify_sigs:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signatures:"0E\x02 \x7f\xcc\x06\x0c\x98\x89\x7fJ\xff\xa6\xfa\xf4z\xad\xf5D\x95a\x85\x98FY\xfbp.\xec\xcf\xechg\xde\xd2\x02!\x00\x9f\x10<\xb4\x12\xc6b\xca\xc7\x18@K\xf4IC\xad\xc7i\xf6\xb5\xc5h\x8cLx\xfa\xa9\xc0\x1e\x82\xe3\xf3" signatures:"0F\x02!\x00\xa5\x9a\xe3&G\x8f\xb3RZ\x82\xe3e\xec\xdd#iҔ\xb3S\xec\xeco\xac\xc6G\xb4%'\x83A\x92\x02!\x00\xf5\x8b\xaf\xa7[Pw4e\xbbB}\xa0\x07\xa5\xe41P\xe7I\xa9\nR\x85\x8d\x1c/\x92a\xcbo\x17" signatures:"0E\x02 ]J\xb0;Y\xa3\xbb\xdd`\x9f{nX\x0bF\x95\xd8=y\xff\xfe\xd6H\xa5\xf3y\xee\xc1\x1e\xfa\xe4\xc8\x02!\x00\x85\x8f?\xd6\xe6\x07\xfaE\r4\x8c\x81\x8eݮ[\xa2\xd0˃\xa8DӶ\xc22\x1d'\xba{\x96\x97" signatures:"0D\x02 .z\xa4\xe1\xf5w\x07y\xbbE\x87\xe1F\xa6\x00`\x10\x83\xbdNhF\x13\xfe}\xcd|\x02l\xb8\x04U\x02 3\x96L\xa9\x8c\xa4\x90~\x06\xdd\x16\xf4\x0b\x80!U\xad8\xb1\x14a\x94\xcal\xa3\x8a\x04e\nXM\xf5" origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3"}})
+dest_module:"crypto" raw_metadata:{key:"node" value:"\"0\""} crypto:{verify_sigs:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signatures:"0E\x02 \x7f\xcc\x06\x0c\x98\x89\x7fJ\xff\xa6\xfa\xf4z\xad\xf5D\x95a\x85\x98FY\xfbp.\xec\xcf\xechg\xde\xd2\x02!\x00\x9f\x10<\xb4\x12\xc6b\xca\xc7\x18@K\xf4IC\xad\xc7i\xf6\xb5\xc5h\x8cLx\xfa\xa9\xc0\x1e\x82\xe3\xf3" signatures:"0F\x02!\x00\xa5\x9a\xe3&G\x8f\xb3RZ\x82\xe3e\xec\xdd#iҔ\xb3S\xec\xeco\xac\xc6G\xb4%'\x83A\x92\x02!\x00\xf5\x8b\xaf\xa7[Pw4e\xbbB}\xa0\x07\xa5\xe41P\xe7I\xa9\nR\x85\x8d\x1c/\x92a\xcbo\x17" signatures:"0E\x02 ]J\xb0;Y\xa3\xbb\xdd`\x9f{nX\x0bF\x95\xd8=y\xff\xfe\xd6H\xa5\xf3y\xee\xc1\x1e\xfa\xe4\xc8\x02!\x00\x85\x8f?\xd6\xe6\x07\xfaE\r4\x8c\x81\x8eݮ[\xa2\xd0˃\xa8DӶ\xc22\x1d'\xba{\x96\x97" signatures:"0D\x02 .z\xa4\xe1\xf5w\x07y\xbbE\x87\xe1F\xa6\x00`\x10\x83\xbdNhF\x13\xfe}\xcd|\x02l\xb8\x04U\x02 3\x96L\xa9\x8c\xa4\x90~\x06\xdd\x16\xf4\x0b\x80!U\xad8\xb1\x14a\x94\xcal\xa3\x8a\x04e\nXM\xf5" origin:{module:"bcb" dsl:{contextID:6}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3"}}
+#e: 80, #h: 0
++++ Processing event +++
+dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{verify_sigs:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signatures:"0E\x02 \x7f\xcc\x06\x0c\x98\x89\x7fJ\xff\xa6\xfa\xf4z\xad\xf5D\x95a\x85\x98FY\xfbp.\xec\xcf\xechg\xde\xd2\x02!\x00\x9f\x10<\xb4\x12\xc6b\xca\xc7\x18@K\xf4IC\xad\xc7i\xf6\xb5\xc5h\x8cLx\xfa\xa9\xc0\x1e\x82\xe3\xf3" signatures:"0F\x02!\x00\xa5\x9a\xe3&G\x8f\xb3RZ\x82\xe3e\xec\xdd#iҔ\xb3S\xec\xeco\xac\xc6G\xb4%'\x83A\x92\x02!\x00\xf5\x8b\xaf\xa7[Pw4e\xbbB}\xa0\x07\xa5\xe41P\xe7I\xa9\nR\x85\x8d\x1c/\x92a\xcbo\x17" signatures:"0E\x02 ]J\xb0;Y\xa3\xbb\xdd`\x9f{nX\x0bF\x95\xd8=y\xff\xfe\xd6H\xa5\xf3y\xee\xc1\x1e\xfa\xe4\xc8\x02!\x00\x85\x8f?\xd6\xe6\x07\xfaE\r4\x8c\x81\x8eݮ[\xa2\xd0˃\xa8DӶ\xc22\x1d'\xba{\x96\x97" signatures:"0D\x02 .z\xa4\xe1\xf5w\x07y\xbbE\x87\xe1F\xa6\x00`\x10\x83\xbdNhF\x13\xfe}\xcd|\x02l\xb8\x04U\x02 3\x96L\xa9\x8c\xa4\x90~\x06\xdd\x16\xf4\x0b\x80!U\xad8\xb1\x14a\x94\xcal\xa3\x8a\x04e\nXM\xf5" origin:{module:"bcb" dsl:{contextID:6}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3"}}
+Injected - not sending to adv (dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{verify_sigs:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signatures:"0E\x02 \x7f\xcc\x06\x0c\x98\x89\x7fJ\xff\xa6\xfa\xf4z\xad\xf5D\x95a\x85\x98FY\xfbp.\xec\xcf\xechg\xde\xd2\x02!\x00\x9f\x10<\xb4\x12\xc6b\xca\xc7\x18@K\xf4IC\xad\xc7i\xf6\xb5\xc5h\x8cLx\xfa\xa9\xc0\x1e\x82\xe3\xf3" signatures:"0F\x02!\x00\xa5\x9a\xe3&G\x8f\xb3RZ\x82\xe3e\xec\xdd#iҔ\xb3S\xec\xeco\xac\xc6G\xb4%'\x83A\x92\x02!\x00\xf5\x8b\xaf\xa7[Pw4e\xbbB}\xa0\x07\xa5\xe41P\xe7I\xa9\nR\x85\x8d\x1c/\x92a\xcbo\x17" signatures:"0E\x02 ]J\xb0;Y\xa3\xbb\xdd`\x9f{nX\x0bF\x95\xd8=y\xff\xfe\xd6H\xa5\xf3y\xee\xc1\x1e\xfa\xe4\xc8\x02!\x00\x85\x8f?\xd6\xe6\x07\xfaE\r4\x8c\x81\x8eݮ[\xa2\xd0˃\xa8DӶ\xc22\x1d'\xba{\x96\x97" signatures:"0D\x02 .z\xa4\xe1\xf5w\x07y\xbbE\x87\xe1F\xa6\x00`\x10\x83\xbdNhF\x13\xfe}\xcd|\x02l\xb8\x04U\x02 3\x96L\xa9\x8c\xa4\x90~\x06\xdd\x16\xf4\x0b\x80!U\xad8\xb1\x14a\x94\xcal\xa3\x8a\x04e\nXM\xf5" origin:{module:"bcb" dsl:{contextID:6}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3"}})
+&{{ bcb map[injected:true node:3]} 0 {0x14000882ff0 {map[0:29 1:11 2:11 3:11 4:11]}}}
+Injected - not sending to adv (&{{ bcb map[injected:true node:3]} 0 {0x14000882ff0 {map[0:29 1:11 2:11 3:11 4:11]}}})
+#e: 81, #h: 0
++++ Processing event +++
+dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"1\""} crypto:{verify_sigs:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signatures:"0E\x02 \x7f\xcc\x06\x0c\x98\x89\x7fJ\xff\xa6\xfa\xf4z\xad\xf5D\x95a\x85\x98FY\xfbp.\xec\xcf\xechg\xde\xd2\x02!\x00\x9f\x10<\xb4\x12\xc6b\xca\xc7\x18@K\xf4IC\xad\xc7i\xf6\xb5\xc5h\x8cLx\xfa\xa9\xc0\x1e\x82\xe3\xf3" signatures:"0F\x02!\x00\xa5\x9a\xe3&G\x8f\xb3RZ\x82\xe3e\xec\xdd#iҔ\xb3S\xec\xeco\xac\xc6G\xb4%'\x83A\x92\x02!\x00\xf5\x8b\xaf\xa7[Pw4e\xbbB}\xa0\x07\xa5\xe41P\xe7I\xa9\nR\x85\x8d\x1c/\x92a\xcbo\x17" signatures:"0E\x02 ]J\xb0;Y\xa3\xbb\xdd`\x9f{nX\x0bF\x95\xd8=y\xff\xfe\xd6H\xa5\xf3y\xee\xc1\x1e\xfa\xe4\xc8\x02!\x00\x85\x8f?\xd6\xe6\x07\xfaE\r4\x8c\x81\x8eݮ[\xa2\xd0˃\xa8DӶ\xc22\x1d'\xba{\x96\x97" signatures:"0D\x02 .z\xa4\xe1\xf5w\x07y\xbbE\x87\xe1F\xa6\x00`\x10\x83\xbdNhF\x13\xfe}\xcd|\x02l\xb8\x04U\x02 3\x96L\xa9\x8c\xa4\x90~\x06\xdd\x16\xf4\x0b\x80!U\xad8\xb1\x14a\x94\xcal\xa3\x8a\x04e\nXM\xf5" origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3"}}
+Injected - not sending to adv (dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"1\""} crypto:{verify_sigs:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signatures:"0E\x02 \x7f\xcc\x06\x0c\x98\x89\x7fJ\xff\xa6\xfa\xf4z\xad\xf5D\x95a\x85\x98FY\xfbp.\xec\xcf\xechg\xde\xd2\x02!\x00\x9f\x10<\xb4\x12\xc6b\xca\xc7\x18@K\xf4IC\xad\xc7i\xf6\xb5\xc5h\x8cLx\xfa\xa9\xc0\x1e\x82\xe3\xf3" signatures:"0F\x02!\x00\xa5\x9a\xe3&G\x8f\xb3RZ\x82\xe3e\xec\xdd#iҔ\xb3S\xec\xeco\xac\xc6G\xb4%'\x83A\x92\x02!\x00\xf5\x8b\xaf\xa7[Pw4e\xbbB}\xa0\x07\xa5\xe41P\xe7I\xa9\nR\x85\x8d\x1c/\x92a\xcbo\x17" signatures:"0E\x02 ]J\xb0;Y\xa3\xbb\xdd`\x9f{nX\x0bF\x95\xd8=y\xff\xfe\xd6H\xa5\xf3y\xee\xc1\x1e\xfa\xe4\xc8\x02!\x00\x85\x8f?\xd6\xe6\x07\xfaE\r4\x8c\x81\x8eݮ[\xa2\xd0˃\xa8DӶ\xc22\x1d'\xba{\x96\x97" signatures:"0D\x02 .z\xa4\xe1\xf5w\x07y\xbbE\x87\xe1F\xa6\x00`\x10\x83\xbdNhF\x13\xfe}\xcd|\x02l\xb8\x04U\x02 3\x96L\xa9\x8c\xa4\x90~\x06\xdd\x16\xf4\x0b\x80!U\xad8\xb1\x14a\x94\xcal\xa3\x8a\x04e\nXM\xf5" origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3"}})
+dest_module:"bcb" raw_metadata:{key:"node" value:"\"4\""} crypto:{sigs_verified:{origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3" errors:"" errors:"" errors:"" errors:"" all_ok:true}}
+#e: 82, #h: 0
++++ Processing event +++
+dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"4\""} crypto:{sigs_verified:{origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3" errors:"" errors:"" errors:"" errors:"" all_ok:true}}
+dest_module:"bcb" raw_metadata:{key:"node" value:"\"0\""} crypto:{sigs_verified:{origin:{module:"bcb" dsl:{contextID:6}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3" errors:"" errors:"" errors:"" errors:"" all_ok:true}}
+#e: 83, #h: 0
++++ Processing event +++
+Injected - not sending to adv (dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"4\""} crypto:{sigs_verified:{origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3" errors:"" errors:"" errors:"" errors:"" all_ok:true}})
+dest_module:"crypto" raw_metadata:{key:"node" value:"\"2\""} crypto:{verify_sigs:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signatures:"0E\x02 \x7f\xcc\x06\x0c\x98\x89\x7fJ\xff\xa6\xfa\xf4z\xad\xf5D\x95a\x85\x98FY\xfbp.\xec\xcf\xechg\xde\xd2\x02!\x00\x9f\x10<\xb4\x12\xc6b\xca\xc7\x18@K\xf4IC\xad\xc7i\xf6\xb5\xc5h\x8cLx\xfa\xa9\xc0\x1e\x82\xe3\xf3" signatures:"0F\x02!\x00\xa5\x9a\xe3&G\x8f\xb3RZ\x82\xe3e\xec\xdd#iҔ\xb3S\xec\xeco\xac\xc6G\xb4%'\x83A\x92\x02!\x00\xf5\x8b\xaf\xa7[Pw4e\xbbB}\xa0\x07\xa5\xe41P\xe7I\xa9\nR\x85\x8d\x1c/\x92a\xcbo\x17" signatures:"0E\x02 ]J\xb0;Y\xa3\xbb\xdd`\x9f{nX\x0bF\x95\xd8=y\xff\xfe\xd6H\xa5\xf3y\xee\xc1\x1e\xfa\xe4\xc8\x02!\x00\x85\x8f?\xd6\xe6\x07\xfaE\r4\x8c\x81\x8eݮ[\xa2\xd0˃\xa8DӶ\xc22\x1d'\xba{\x96\x97" signatures:"0D\x02 .z\xa4\xe1\xf5w\x07y\xbbE\x87\xe1F\xa6\x00`\x10\x83\xbdNhF\x13\xfe}\xcd|\x02l\xb8\x04U\x02 3\x96L\xa9\x8c\xa4\x90~\x06\xdd\x16\xf4\x0b\x80!U\xad8\xb1\x14a\x94\xcal\xa3\x8a\x04e\nXM\xf5" origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3"}}
+Delivered
+#e: 84, #h: 0
++++ Processing event +++
+dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{sigs_verified:{origin:{module:"bcb" dsl:{contextID:6}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3" errors:"" errors:"" errors:"" errors:"" all_ok:true}}
+dest_module:"crypto" raw_metadata:{key:"node" value:"\"3\""} crypto:{verify_sigs:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signatures:"0E\x02 \x7f\xcc\x06\x0c\x98\x89\x7fJ\xff\xa6\xfa\xf4z\xad\xf5D\x95a\x85\x98FY\xfbp.\xec\xcf\xechg\xde\xd2\x02!\x00\x9f\x10<\xb4\x12\xc6b\xca\xc7\x18@K\xf4IC\xad\xc7i\xf6\xb5\xc5h\x8cLx\xfa\xa9\xc0\x1e\x82\xe3\xf3" signatures:"0F\x02!\x00\xa5\x9a\xe3&G\x8f\xb3RZ\x82\xe3e\xec\xdd#iҔ\xb3S\xec\xeco\xac\xc6G\xb4%'\x83A\x92\x02!\x00\xf5\x8b\xaf\xa7[Pw4e\xbbB}\xa0\x07\xa5\xe41P\xe7I\xa9\nR\x85\x8d\x1c/\x92a\xcbo\x17" signatures:"0E\x02 ]J\xb0;Y\xa3\xbb\xdd`\x9f{nX\x0bF\x95\xd8=y\xff\xfe\xd6H\xa5\xf3y\xee\xc1\x1e\xfa\xe4\xc8\x02!\x00\x85\x8f?\xd6\xe6\x07\xfaE\r4\x8c\x81\x8eݮ[\xa2\xd0˃\xa8DӶ\xc22\x1d'\xba{\x96\x97" signatures:"0D\x02 .z\xa4\xe1\xf5w\x07y\xbbE\x87\xe1F\xa6\x00`\x10\x83\xbdNhF\x13\xfe}\xcd|\x02l\xb8\x04U\x02 3\x96L\xa9\x8c\xa4\x90~\x06\xdd\x16\xf4\x0b\x80!U\xad8\xb1\x14a\x94\xcal\xa3\x8a\x04e\nXM\xf5" origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3"}}
+#e: 85, #h: 0
++++ Processing event +++
+&{{ null map[node:4]} [110 111 100 101 32 48 32 105 110 106 101 99 116 105 110 103]}
+dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"3\""} crypto:{verify_sigs:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signatures:"0E\x02 \x7f\xcc\x06\x0c\x98\x89\x7fJ\xff\xa6\xfa\xf4z\xad\xf5D\x95a\x85\x98FY\xfbp.\xec\xcf\xechg\xde\xd2\x02!\x00\x9f\x10<\xb4\x12\xc6b\xca\xc7\x18@K\xf4IC\xad\xc7i\xf6\xb5\xc5h\x8cLx\xfa\xa9\xc0\x1e\x82\xe3\xf3" signatures:"0F\x02!\x00\xa5\x9a\xe3&G\x8f\xb3RZ\x82\xe3e\xec\xdd#iҔ\xb3S\xec\xeco\xac\xc6G\xb4%'\x83A\x92\x02!\x00\xf5\x8b\xaf\xa7[Pw4e\xbbB}\xa0\x07\xa5\xe41P\xe7I\xa9\nR\x85\x8d\x1c/\x92a\xcbo\x17" signatures:"0E\x02 ]J\xb0;Y\xa3\xbb\xdd`\x9f{nX\x0bF\x95\xd8=y\xff\xfe\xd6H\xa5\xf3y\xee\xc1\x1e\xfa\xe4\xc8\x02!\x00\x85\x8f?\xd6\xe6\x07\xfaE\r4\x8c\x81\x8eݮ[\xa2\xd0˃\xa8DӶ\xc22\x1d'\xba{\x96\x97" signatures:"0D\x02 .z\xa4\xe1\xf5w\x07y\xbbE\x87\xe1F\xa6\x00`\x10\x83\xbdNhF\x13\xfe}\xcd|\x02l\xb8\x04U\x02 3\x96L\xa9\x8c\xa4\x90~\x06\xdd\x16\xf4\x0b\x80!U\xad8\xb1\x14a\x94\xcal\xa3\x8a\x04e\nXM\xf5" origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3"}}
+dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"2\""} crypto:{verify_sigs:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signatures:"0E\x02 \x7f\xcc\x06\x0c\x98\x89\x7fJ\xff\xa6\xfa\xf4z\xad\xf5D\x95a\x85\x98FY\xfbp.\xec\xcf\xechg\xde\xd2\x02!\x00\x9f\x10<\xb4\x12\xc6b\xca\xc7\x18@K\xf4IC\xad\xc7i\xf6\xb5\xc5h\x8cLx\xfa\xa9\xc0\x1e\x82\xe3\xf3" signatures:"0F\x02!\x00\xa5\x9a\xe3&G\x8f\xb3RZ\x82\xe3e\xec\xdd#iҔ\xb3S\xec\xeco\xac\xc6G\xb4%'\x83A\x92\x02!\x00\xf5\x8b\xaf\xa7[Pw4e\xbbB}\xa0\x07\xa5\xe41P\xe7I\xa9\nR\x85\x8d\x1c/\x92a\xcbo\x17" signatures:"0E\x02 ]J\xb0;Y\xa3\xbb\xdd`\x9f{nX\x0bF\x95\xd8=y\xff\xfe\xd6H\xa5\xf3y\xee\xc1\x1e\xfa\xe4\xc8\x02!\x00\x85\x8f?\xd6\xe6\x07\xfaE\r4\x8c\x81\x8eݮ[\xa2\xd0˃\xa8DӶ\xc22\x1d'\xba{\x96\x97" signatures:"0D\x02 .z\xa4\xe1\xf5w\x07y\xbbE\x87\xe1F\xa6\x00`\x10\x83\xbdNhF\x13\xfe}\xcd|\x02l\xb8\x04U\x02 3\x96L\xa9\x8c\xa4\x90~\x06\xdd\x16\xf4\x0b\x80!U\xad8\xb1\x14a\x94\xcal\xa3\x8a\x04e\nXM\xf5" origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3"}}
+#e: 86, #h: 0
++++ Processing event +++
+Injected - not sending to adv (dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"3\""} crypto:{verify_sigs:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signatures:"0E\x02 \x7f\xcc\x06\x0c\x98\x89\x7fJ\xff\xa6\xfa\xf4z\xad\xf5D\x95a\x85\x98FY\xfbp.\xec\xcf\xechg\xde\xd2\x02!\x00\x9f\x10<\xb4\x12\xc6b\xca\xc7\x18@K\xf4IC\xad\xc7i\xf6\xb5\xc5h\x8cLx\xfa\xa9\xc0\x1e\x82\xe3\xf3" signatures:"0F\x02!\x00\xa5\x9a\xe3&G\x8f\xb3RZ\x82\xe3e\xec\xdd#iҔ\xb3S\xec\xeco\xac\xc6G\xb4%'\x83A\x92\x02!\x00\xf5\x8b\xaf\xa7[Pw4e\xbbB}\xa0\x07\xa5\xe41P\xe7I\xa9\nR\x85\x8d\x1c/\x92a\xcbo\x17" signatures:"0E\x02 ]J\xb0;Y\xa3\xbb\xdd`\x9f{nX\x0bF\x95\xd8=y\xff\xfe\xd6H\xa5\xf3y\xee\xc1\x1e\xfa\xe4\xc8\x02!\x00\x85\x8f?\xd6\xe6\x07\xfaE\r4\x8c\x81\x8eݮ[\xa2\xd0˃\xa8DӶ\xc22\x1d'\xba{\x96\x97" signatures:"0D\x02 .z\xa4\xe1\xf5w\x07y\xbbE\x87\xe1F\xa6\x00`\x10\x83\xbdNhF\x13\xfe}\xcd|\x02l\xb8\x04U\x02 3\x96L\xa9\x8c\xa4\x90~\x06\xdd\x16\xf4\x0b\x80!U\xad8\xb1\x14a\x94\xcal\xa3\x8a\x04e\nXM\xf5" origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3"}})
+&{{ null map[injected:true node:4]} [110 111 100 101 32 48 32 105 110 106 101 99 116 105 110 103]}
+Injected - not sending to adv (&{{ null map[injected:true node:4]} [110 111 100 101 32 48 32 105 110 106 101 99 116 105 110 103]})
+Injected - not sending to adv (dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"0\""} crypto:{sigs_verified:{origin:{module:"bcb" dsl:{contextID:6}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3" errors:"" errors:"" errors:"" errors:"" all_ok:true}})
+Delivered
+&{{ null map[node:0]} [110 111 100 101 32 48 32 105 110 106 101 99 116 105 110 103]}
+#e: 87, #h: 0
++++ Processing event +++
+Injected - not sending to adv (dest_module:"crypto" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"2\""} crypto:{verify_sigs:{data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} data:{data:"testing instance" data:"ECHO" data:"node 0 injecting"} signatures:"0E\x02 \x7f\xcc\x06\x0c\x98\x89\x7fJ\xff\xa6\xfa\xf4z\xad\xf5D\x95a\x85\x98FY\xfbp.\xec\xcf\xechg\xde\xd2\x02!\x00\x9f\x10<\xb4\x12\xc6b\xca\xc7\x18@K\xf4IC\xad\xc7i\xf6\xb5\xc5h\x8cLx\xfa\xa9\xc0\x1e\x82\xe3\xf3" signatures:"0F\x02!\x00\xa5\x9a\xe3&G\x8f\xb3RZ\x82\xe3e\xec\xdd#iҔ\xb3S\xec\xeco\xac\xc6G\xb4%'\x83A\x92\x02!\x00\xf5\x8b\xaf\xa7[Pw4e\xbbB}\xa0\x07\xa5\xe41P\xe7I\xa9\nR\x85\x8d\x1c/\x92a\xcbo\x17" signatures:"0E\x02 ]J\xb0;Y\xa3\xbb\xdd`\x9f{nX\x0bF\x95\xd8=y\xff\xfe\xd6H\xa5\xf3y\xee\xc1\x1e\xfa\xe4\xc8\x02!\x00\x85\x8f?\xd6\xe6\x07\xfaE\r4\x8c\x81\x8eݮ[\xa2\xd0˃\xa8DӶ\xc22\x1d'\xba{\x96\x97" signatures:"0D\x02 .z\xa4\xe1\xf5w\x07y\xbbE\x87\xe1F\xa6\x00`\x10\x83\xbdNhF\x13\xfe}\xcd|\x02l\xb8\x04U\x02 3\x96L\xa9\x8c\xa4\x90~\x06\xdd\x16\xf4\x0b\x80!U\xad8\xb1\x14a\x94\xcal\xa3\x8a\x04e\nXM\xf5" origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3"}})
+&{{ null map[injected:true node:0]} [110 111 100 101 32 48 32 105 110 106 101 99 116 105 110 103]}
+Injected - not sending to adv (&{{ null map[injected:true node:0]} [110 111 100 101 32 48 32 105 110 106 101 99 116 105 110 103]})
+dest_module:"bcb" raw_metadata:{key:"node" value:"\"1\""} crypto:{sigs_verified:{origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3" errors:"" errors:"" errors:"" errors:"" all_ok:true}}
+#e: 88, #h: 0
++++ Processing event +++
+dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"1\""} crypto:{sigs_verified:{origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3" errors:"" errors:"" errors:"" errors:"" all_ok:true}}
+dest_module:"bcb" raw_metadata:{key:"node" value:"\"3\""} crypto:{sigs_verified:{origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3" errors:"" errors:"" errors:"" errors:"" all_ok:true}}
+Injected - not sending to adv (dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"1\""} crypto:{sigs_verified:{origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3" errors:"" errors:"" errors:"" errors:"" all_ok:true}})
+#e: 89, #h: 0
++++ Processing event +++
+dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"3\""} crypto:{sigs_verified:{origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3" errors:"" errors:"" errors:"" errors:"" all_ok:true}}
+Injected - not sending to adv (dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"3\""} crypto:{sigs_verified:{origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3" errors:"" errors:"" errors:"" errors:"" all_ok:true}})
+Delivered
+&{{ null map[node:1]} [110 111 100 101 32 48 32 105 110 106 101 99 116 105 110 103]}
+#e: 90, #h: 0
++++ Processing event +++
+Delivered
+&{{ null map[node:3]} [110 111 100 101 32 48 32 105 110 106 101 99 116 105 110 103]}
+#e: 91, #h: 0
++++ Processing event +++
+&{{ null map[injected:true node:1]} [110 111 100 101 32 48 32 105 110 106 101 99 116 105 110 103]}
+Injected - not sending to adv (&{{ null map[injected:true node:1]} [110 111 100 101 32 48 32 105 110 106 101 99 116 105 110 103]})
+&{{ null map[injected:true node:3]} [110 111 100 101 32 48 32 105 110 106 101 99 116 105 110 103]}
+Injected - not sending to adv (&{{ null map[injected:true node:3]} [110 111 100 101 32 48 32 105 110 106 101 99 116 105 110 103]})
+dest_module:"bcb" raw_metadata:{key:"node" value:"\"2\""} crypto:{sigs_verified:{origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3" errors:"" errors:"" errors:"" errors:"" all_ok:true}}
+#e: 92, #h: 0
++++ Processing event +++
+dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"2\""} crypto:{sigs_verified:{origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3" errors:"" errors:"" errors:"" errors:"" all_ok:true}}
+Injected - not sending to adv (dest_module:"bcb" raw_metadata:{key:"injected" value:"true"} raw_metadata:{key:"node" value:"\"2\""} crypto:{sigs_verified:{origin:{module:"bcb" dsl:{contextID:1}} node_ids:"4" node_ids:"2" node_ids:"1" node_ids:"3" errors:"" errors:"" errors:"" errors:"" all_ok:true}})
+Delivered
+&{{ null map[node:2]} [110 111 100 101 32 48 32 105 110 106 101 99 116 105 110 103]}
+#e: 93, #h: 0
++++ Processing event +++
+&{{ null map[injected:true node:2]} [110 111 100 101 32 48 32 105 110 106 101 99 116 105 110 103]}
+Injected - not sending to adv (&{{ null map[injected:true node:2]} [110 111 100 101 32 48 32 105 110 106 101 99 116 105 110 103]})
+&{ null map[node:3]}
+&{ null map[node:2]}
+&{ null map[node:4]}
+#e: 94, #h: 1
++++ Processing event +++
+#e: 95, #h: 2
++++ Processing event +++
+#e: 96, #h: 3
++++ Processing event +++
+&{ null map[injected:true node:3]}
+Injected - not sending to adv (&{ null map[injected:true node:3]})
+&{ null map[injected:true node:2]}
+Injected - not sending to adv (&{ null map[injected:true node:2]})
+&{ null map[injected:true node:4]}
+Injected - not sending to adv (&{ null map[injected:true node:4]})
+&{ null map[node:1]}
+#e: 97, #h: 4
++++ Processing event +++
+&{ null map[injected:true node:1]}
+Injected - not sending to adv (&{ null map[injected:true node:1]})
+&{ null map[node:0]}
+#e: 98, #h: 5
++++ Processing event +++
+&{ null map[injected:true node:0]}
+Injected - not sending to adv (&{ null map[injected:true node:0]})
+&{ null map[node:3]}
+&{ null map[node:4]}
+&{ null map[node:2]}
+#e: 99, #h: 6
++++ Processing event +++
+#e: 100, #h: 7
++++ Processing event +++
+#e: 101, #h: 8
+&{ null map[injected:true node:3]}
+&{ null map[injected:true node:4]}
+Injected - not sending to adv (&{ null map[injected:true node:4]})
+Injected - not sending to adv (&{ null map[injected:true node:3]})
++++ Processing event +++
+&{ null map[injected:true node:2]}
+Injected - not sending to adv (&{ null map[injected:true node:2]})
+&{ null map[node:1]}
+#e: 102, #h: 9
++++ Processing event +++
+&{ null map[injected:true node:1]}
+Injected - not sending to adv (&{ null map[injected:true node:1]})
+&{ null map[node:0]}
+#e: 103, #h: 10
++++ Processing event +++
+&{ null map[injected:true node:0]}
+Injected - not sending to adv (&{ null map[injected:true node:0]})
+&{ null map[node:3]}
+&{ null map[node:4]}
+&{ null map[node:2]}
+#e: 104, #h: 11
+wrapping up...
+CA done
+node shutdown received
+node 3 done
+node 2 done
+node 0 done
+node 4 done
+node 1 done
+node wg done
+Run nodes done
+done?
+Experiment done
+Starting analysis
+Results:
+validity was success - expected: success
+integrity was success - expected: success
+consistency was success - expected: success
+--- PASS: Test_CANoByz (4.03s)
+    --- PASS: Test_CANoByz/no_byz (4.03s)
+PASS
+ok  	github.com/filecoin-project/mir/samples/bcb-native/testing2	4.257s

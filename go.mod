@@ -31,6 +31,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/mattn/go-sqlite3 v1.14.16
+	github.com/mroth/weightedrand/v2 v2.1.0
 	github.com/multiformats/go-multiaddr v0.9.0
 	github.com/reactivex/rxgo/v2 v2.5.0
 	github.com/spf13/cobra v1.5.0

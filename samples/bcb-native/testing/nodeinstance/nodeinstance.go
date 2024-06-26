@@ -1,8 +1,11 @@
 package nodeinstance
 
 import (
+	"context"
+
 	"github.com/filecoin-project/mir"
-	"github.com/filecoin-project/mir/adversary"
+	"github.com/filecoin-project/mir/fuzzer/cortexcreeper"
+	"github.com/filecoin-project/mir/fuzzer/nodeinstance"
 	"github.com/filecoin-project/mir/pkg/crypto"
 	mirCrypto "github.com/filecoin-project/mir/pkg/crypto"
 	"github.com/filecoin-project/mir/pkg/deploytest"
@@ -22,6 +25,7 @@ type BcbNodeInstance struct {
 	nodeID          stdtypes.NodeID
 	transportModule *deploytest.FakeLink
 	config          BcbNodeInstanceConfig
+	cortexCreeper   cortexcreeper.CortexCreeper
 }
 
 type BcbNodeInstanceConfig struct {
@@ -36,7 +40,18 @@ func (bi *BcbNodeInstance) GetNode() *mir.Node {
 	return bi.node
 }
 
+func (bi *BcbNodeInstance) Run(ctx context.Context) error {
+	go bi.cortexCreeper.RunInjector(ctx) // ignoring error for now
+	return bi.node.Run(ctx)
+}
+
+func (bi *BcbNodeInstance) Stop() {
+	bi.cortexCreeper.StopInjector()
+	bi.node.Stop()
+}
+
 func (bi *BcbNodeInstance) Setup() error {
+	bi.cortexCreeper.Setup(bi.node)
 	bi.transportModule.Connect(&trantorpbtypes.Membership{})
 	return nil
 }
@@ -46,7 +61,7 @@ func (bi *BcbNodeInstance) Cleanup() error {
 	return nil
 }
 
-func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig, cortexCreeper adversary.CortexCreeper, logger logging.Logger) (adversary.NodeInstance, error) {
+func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig, cortexCreeper cortexcreeper.CortexCreeper, logger logging.Logger) (nodeinstance.NodeInstance, error) {
 	nodeIDs := make([]stdtypes.NodeID, config.NumberOfNodes)
 	for i := 0; i < config.NumberOfNodes; i++ {
 		nodeIDs[i] = stdtypes.NewNodeIDFromInt(i)
@@ -82,7 +97,7 @@ func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig,
 		return nil, es.Errorf("error setting up interceptor: %w", err)
 	}
 
-	interceptor := eventlog.MultiInterceptor(vcinterceptor.New(nodeID), &utilinterceptors.NodeIdMetadataInterceptor{NodeID: nodeID}, cortexCreeper, eventLogger)
+	interceptor := eventlog.MultiInterceptor(vcinterceptor.New(nodeID), &utilinterceptors.NodeIdMetadataInterceptor{NodeID: nodeID}, eventLogger, cortexCreeper)
 
 	// setup crypto
 	keyPairs, err := crypto.GenerateKeys(config.NumberOfNodes, 42)
@@ -112,6 +127,7 @@ func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig,
 		nodeID:          nodeID,
 		transportModule: transportModule,
 		config:          config,
+		cortexCreeper:   cortexCreeper,
 	}
 
 	return &instance, nil

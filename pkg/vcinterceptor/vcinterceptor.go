@@ -21,6 +21,8 @@ import (
 
 const vcKey = "vc"
 
+// NOTE: this is just an interceptor so no concurrency - why did I bother with mutexes?
+
 type VectorClockInterceptor struct {
 	nodeID  stdtypes.NodeID
 	vc      vectorclock.VectorClock

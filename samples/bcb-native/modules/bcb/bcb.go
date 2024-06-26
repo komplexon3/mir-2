@@ -1,6 +1,8 @@
 package bcb
 
 import (
+	"fmt"
+
 	es "github.com/go-errors/errors"
 	"github.com/pkg/errors"
 
@@ -77,6 +79,7 @@ func NewModule(mc ModuleConfig, params *ModuleParams, nodeID stdtypes.NodeID, lo
 	}
 
 	dsl.UponEvent(m, func(br *events.BroadcastRequest) error {
+		fmt.Println("Received broadcast request")
 		data := br.Data
 		if nodeID != params.Leader {
 			return es.Errorf("only the leader node can receive requests")
@@ -155,6 +158,7 @@ func NewModule(mc ModuleConfig, params *ModuleParams, nodeID stdtypes.NodeID, lo
 	cryptopbdsl.UponSigsVerified(m, func(_ []stdtypes.NodeID, _ []error, allOK bool, context *verifyFinalContext) error {
 		if allOK && !state.delivered {
 			state.delivered = true
+			fmt.Println("Delivered")
 			dsl.EmitEvent(m, events.NewDeliver(mc.Consumer, context.data))
 		}
 		return nil

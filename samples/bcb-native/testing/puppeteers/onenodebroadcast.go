@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/filecoin-project/mir/adversary"
+	"github.com/filecoin-project/mir/fuzzer/nodeinstance"
 	bcbevents "github.com/filecoin-project/mir/samples/bcb-native/events"
 	"github.com/filecoin-project/mir/stdtypes"
 )
@@ -20,13 +20,11 @@ func NewOneNodeBroadcast(nodeId stdtypes.NodeID) *OneNodeBroadcast {
 	}
 }
 
-func (onb *OneNodeBroadcast) Run(nodeInstances map[stdtypes.NodeID]adversary.NodeInstance) error {
+func (onb *OneNodeBroadcast) Run(nodeInstances map[stdtypes.NodeID]nodeinstance.NodeInstance) error {
 	ctx := context.Background()
 	time.Sleep(time.Second)
 	nodeInstance := nodeInstances[onb.node]
 	node := nodeInstance.GetNode()
 	msg := fmt.Sprintf("node %s injecting", node.ID)
-	node.InjectEvents(ctx, stdtypes.ListOf(bcbevents.NewBroadcastRequest("broadcast", []byte(msg))))
-
-	return nil
+	return node.InjectEvents(ctx, stdtypes.ListOf(bcbevents.NewBroadcastRequest("bcb", []byte(msg))))
 }

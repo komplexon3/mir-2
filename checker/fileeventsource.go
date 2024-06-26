@@ -1,6 +1,7 @@
 package checker
 
 import (
+	"fmt"
 	"os"
 	"slices"
 
@@ -75,7 +76,7 @@ func GetEventsFromFileSortedByVectorClock(serializedDecoders []func(sEvt []byte)
 func getVC(e stdtypes.Event) *vectorclock.VectorClock {
 	v, err := e.GetMetadata("vc")
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("error: %v, event: %v", err, e))
 	}
 	vc, ok := v.(map[string]interface{})
 	if !ok {

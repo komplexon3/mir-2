@@ -2,6 +2,7 @@ package stdevents
 
 import (
 	"fmt"
+	"maps"
 
 	"github.com/filecoin-project/mir/stdtypes"
 )
@@ -59,6 +60,8 @@ func WrapInRaw(e stdtypes.Event) (*Raw, error) {
 
 func (e *Raw) SetMetadata(key string, value interface{}) (stdtypes.Event, error) {
 	newE := *e
-	newE.Metadata[key] = value
+	metadata := maps.Clone(newE.Metadata)
+	metadata[key] = value
+	newE.Metadata = metadata
 	return &newE, nil
 }

@@ -116,6 +116,7 @@ func run() error {
 			Leader:      nodeIDs[leaderNode],
 		},
 		args.OwnID,
+		logger,
 	)
 
 	// control module reads the user input from the console and processes it.

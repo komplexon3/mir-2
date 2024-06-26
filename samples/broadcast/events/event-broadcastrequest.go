@@ -2,6 +2,7 @@ package events
 
 import (
 	"fmt"
+	"maps"
 
 	"github.com/filecoin-project/mir/stdtypes"
 	"github.com/google/uuid"
@@ -48,6 +49,8 @@ func (br *BroadcastRequest) ToString() string {
 
 func (e *BroadcastRequest) SetMetadata(key string, value interface{}) (stdtypes.Event, error) {
 	newE := *e
-	newE.Metadata[key] = value
+	metadata := maps.Clone(newE.Metadata)
+	metadata[key] = value
+	newE.Metadata = metadata
 	return &newE, nil
 }

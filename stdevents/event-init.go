@@ -2,6 +2,7 @@ package stdevents
 
 import (
 	"fmt"
+	"maps"
 
 	"github.com/filecoin-project/mir/stdtypes"
 )
@@ -49,6 +50,8 @@ func (e *Init) ToString() string {
 
 func (e *Init) SetMetadata(key string, value interface{}) (stdtypes.Event, error) {
 	newE := *e
-	newE.Metadata[key] = value
+	metadata := maps.Clone(newE.Metadata)
+	metadata[key] = value
+	newE.Metadata = metadata
 	return &newE, nil
 }

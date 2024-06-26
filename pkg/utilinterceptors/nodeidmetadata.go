@@ -20,5 +20,5 @@ func (i *NodeIdMetadataInterceptor) Intercept(events *stdtypes.EventList) (*stdt
 		newEvents.PushBack(nEv)
 	}
 
-	return events, nil
+	return newEvents, nil
 }

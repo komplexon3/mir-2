@@ -2,6 +2,7 @@ package stdevents
 
 import (
 	"fmt"
+	"maps"
 	"time"
 
 	es "github.com/go-errors/errors"
@@ -111,6 +112,8 @@ func (e *TimerRepeat) ToString() string {
 
 func (e *TimerRepeat) SetMetadata(key string, value interface{}) (stdtypes.Event, error) {
 	newE := *e
-	newE.Metadata[key] = value
+	metadata := maps.Clone(newE.Metadata)
+	metadata[key] = value
+	newE.Metadata = metadata
 	return &newE, nil
 }
