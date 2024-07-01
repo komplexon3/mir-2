@@ -2,7 +2,6 @@ package cortexcreeper
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/filecoin-project/mir"
 	"github.com/filecoin-project/mir/pkg/eventlog"
@@ -43,11 +42,16 @@ func (cc *CortexCreeper) Run(ctx context.Context) error {
 
 	for {
 		select {
-		case newEvts := <-cc.eventsOut:
+		case evts := <-cc.eventsOut:
 			// hard coded only one event
 			// TODO: handle multiple events
-			ev, _ := newEvts.Slice()[0].SetMetadata("injected", true)
-			cc.node.InjectEvents(ctx, stdtypes.ListOf(ev))
+			markedEvts := stdtypes.EmptyList()
+			evtsIter := evts.Iterator()
+			for e := evtsIter.Next(); e != nil; e = evtsIter.Next() {
+				markedE, _ := e.SetMetadata("injected", true)
+				markedEvts.PushBack(markedE)
+			}
+			cc.node.InjectEvents(ctx, markedEvts)
 		case <-ctx.Done():
 			defer close(cc.abort)
 			cc.abort <- struct{}{}
@@ -63,12 +67,9 @@ func (cc *CortexCreeper) StopInjector() {
 }
 
 func (cc *CortexCreeper) Intercept(evts *stdtypes.EventList) (*stdtypes.EventList, error) {
-	// if it is from adv, forward directly - for now, we always know that these lists only contain one element
-	// TODO: handle multi element
-	if evts.Len() == 1 {
-		fmt.Printf("%v\n", evts.Slice()[0])
+	// forward directly if injected, if one element is injected then all in the list are so we must only check one
+	if evts.Len() >= 1 {
 		if _, err := evts.Slice()[0].GetMetadata("injected"); err == nil {
-			fmt.Printf("Injected - not sending to adv (%v)\n", evts.Slice()[0])
 			return evts, nil
 		}
 	}

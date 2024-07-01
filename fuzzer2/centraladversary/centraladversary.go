@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
 	"sync"
 	"time"
 
@@ -14,24 +15,47 @@ import (
 	"github.com/filecoin-project/mir/fuzzer2/nodeinstance"
 	"github.com/filecoin-project/mir/fuzzer2/puppeteer"
 	"github.com/filecoin-project/mir/pkg/logging"
+	"github.com/filecoin-project/mir/pkg/util/maputil"
+	broadcastevents "github.com/filecoin-project/mir/samples/broadcast/events"
 	"github.com/filecoin-project/mir/stdevents"
 	"github.com/filecoin-project/mir/stdtypes"
 
 	es "github.com/go-errors/errors"
 )
 
+var (
+	MaxEventsOrHeartbeatShutdown = es.Errorf("Shutting down because max events or max inactive heartbeats has been exceeded.")
+)
+
+type ActionTraceEntry struct {
+	node                stdtypes.NodeID
+	afterByzantineNodes []stdtypes.NodeID
+	actionLog           string
+}
+
 type Adversary struct {
-	nodeInstances  map[stdtypes.NodeID]nodeinstance.NodeInstance
-	cortexCreepers []*cortexcreeper.CortexCreeper
-	actionSelector actions.Actions
+	nodeIds           []stdtypes.NodeID
+	nodeInstances     map[stdtypes.NodeID]nodeinstance.NodeInstance
+	cortexCreepers    []*cortexcreeper.CortexCreeper
+	actionSelector    actions.Actions
+	eventsOfInterest  map[reflect.Type]bool
+	byzantineNodes    []stdtypes.NodeID
+	maxByzantineNodes int
+	actionTrace       []ActionTraceEntry
 }
 
 func NewAdversary[T interface{}](
 	createNodeInstance nodeinstance.NodeInstanceCreationFunc[T],
 	nodeConfigs nodeinstance.NodeConfigs[T],
+	eventsOfInterest []stdtypes.Event,
 	weightedActions []actions.WeightedAction,
+	maxByzantineNodes int,
 	logger logging.Logger,
 ) (*Adversary, error) {
+
+	if maxByzantineNodes > len(nodeConfigs) {
+		return nil, es.Errorf("Cannot allow for more byzantine nodes than the number of nodes in the system.")
+	}
 
 	nodeInstances := make(map[stdtypes.NodeID]nodeinstance.NodeInstance)
 	cortexCreepers := make([]*cortexcreeper.CortexCreeper, 0, len(nodeConfigs))
@@ -53,7 +77,12 @@ func NewAdversary[T interface{}](
 		return nil, err
 	}
 
-	return &Adversary{nodeInstances, cortexCreepers, actionSelector}, nil
+	eventTypesOfInterest := make(map[reflect.Type]bool, len(eventsOfInterest))
+	for _, e := range eventsOfInterest {
+		eventTypesOfInterest[reflect.TypeOf(e)] = true
+	}
+
+	return &Adversary{maputil.GetKeys(nodeInstances), nodeInstances, cortexCreepers, actionSelector, eventTypesOfInterest, make([]stdtypes.NodeID, 0), maxByzantineNodes, make([]ActionTraceEntry, 0)}, nil
 }
 
 func (a *Adversary) RunNodes(ctx context.Context) error {
@@ -81,9 +110,7 @@ func (a *Adversary) RunNodes(ctx context.Context) error {
 					fmt.Printf("Node %s failed with error: %v", nodeId, err)
 				}
 			case <-nodesContext.Done():
-
 			}
-			fmt.Printf("node %s done\n", nodeId)
 		}()
 	}
 
@@ -102,7 +129,6 @@ func (a *Adversary) RunNodes(ctx context.Context) error {
 		)
 	}
 	<-nodesContext.Done()
-	fmt.Println("node shutdown received")
 
 	wg.Wait()
 	fmt.Println("node wg done")
@@ -110,8 +136,7 @@ func (a *Adversary) RunNodes(ctx context.Context) error {
 	return nil
 }
 
-func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, ctx context.Context) {
-	fmt.Println("Running CA")
+func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, ctx context.Context) error {
 	eventCount := 0
 	heartbeatCount := 0
 
@@ -131,7 +156,7 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, ctx
 		ind, value, _ := reflect.Select(selectCases)
 		if ind == 0 {
 			// context was cancelled
-			return
+			return nil
 		}
 
 		// process this event
@@ -145,18 +170,76 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, ctx
 				heartbeatCount = 0
 			}
 
-			fmt.Printf("#e: %d, #h: %d\n", eventCount, heartbeatCount)
-
 			if heartbeatCount > maxHearbeatsInactive || eventCount > maxEvents {
-				fmt.Println("wrapping up...")
-				return
+				return MaxEventsOrHeartbeatShutdown
 			}
 
-			fmt.Println("+++ Processing event +++")
-			// TODO: do stuff -> right now we are simply injecting the events
-			a.cortexCreepers[ind-1].PushEvents(stdtypes.ListOf(event))
-		}
+			// TODO: figure out how to actually do this filtering
+			// hardcoding for now...
 
+			// if not event of interest, just push and continue
+			// eventType := reflect.TypeOf(event)
+			// if _, ok := a.eventsOfInterest[eventType]; !ok {
+			// 	fmt.Printf("Forwarding %v\n", event)
+			// 	a.cortexCreepers[ind-1].PushEvents(stdtypes.ListOf(event))
+			// 	continue
+			// }
+
+			// hardcoded tmp solution
+			switch event.(type) {
+			case *broadcastevents.BroadcastRequest:
+				if !a.nodeIsPermittedToTakeByzantineAction(a.nodeIds[ind-1]) {
+					a.cortexCreepers[ind-1].PushEvents(stdtypes.ListOf(event))
+					continue
+				}
+			case *broadcastevents.Deliver:
+				if !a.nodeIsPermittedToTakeByzantineAction(a.nodeIds[ind-1]) {
+					a.cortexCreepers[ind-1].PushEvents(stdtypes.ListOf(event))
+					continue
+				}
+			case *stdevents.SendMessage:
+			case *stdevents.MessageReceived:
+			default:
+				a.cortexCreepers[ind-1].PushEvents(stdtypes.ListOf(event))
+				continue
+			}
+			// ^ check if can take byzantine action
+
+			// otherwise pick an action to apply to this event
+			action := a.actionSelector.SelectAction()
+			newEvents, wasByzantine, actionLog, err := action(event)
+			if err != nil {
+				return err
+			}
+			if wasByzantine {
+				a.registerNodeTookByzantineAction(a.nodeIds[ind-1])
+			}
+
+			// ignore "" bc this signifies noop - not the best solution but works for now
+			if actionLog != "" {
+				a.actionTrace = append(a.actionTrace, ActionTraceEntry{
+					node:                a.nodeIds[ind-1],
+					afterByzantineNodes: slices.Clone(a.byzantineNodes),
+					actionLog:           actionLog,
+				})
+			}
+
+			a.cortexCreepers[ind-1].PushEvents(newEvents)
+		}
+	}
+}
+
+func (a *Adversary) nodeIsPermittedToTakeByzantineAction(nodeId stdtypes.NodeID) bool {
+	if len(a.byzantineNodes) < a.maxByzantineNodes {
+		return true
+	}
+
+	return slices.Contains(a.byzantineNodes, nodeId)
+}
+
+func (a *Adversary) registerNodeTookByzantineAction(nodeId stdtypes.NodeID) {
+	if !slices.Contains(a.byzantineNodes, nodeId) {
+		a.byzantineNodes = append(a.byzantineNodes, nodeId)
 	}
 }
 
@@ -170,30 +253,45 @@ func (a *Adversary) RunExperiment(puppeteer puppeteer.Puppeteer, maxEvents, maxH
 		wg.Add(1)
 		defer wg.Done()
 		nodesErr <- a.RunNodes(ctx)
-		fmt.Println("Run nodes done")
 	}()
 
+	caErr := make(chan error)
 	go func() {
 		wg.Add(1)
 		defer wg.Done()
 		defer cancel() // cancel to stop nodes when adv had enough
-		a.RunCentralAdversary(maxEvents, maxHeartbeatsInactive, ctx)
-		fmt.Println("CA done")
+		caErr <- a.RunCentralAdversary(maxEvents, maxHeartbeatsInactive, ctx)
 	}()
 
 	err := puppeteer.Run(a.nodeInstances)
-	fmt.Println("Ran puppeteer")
 	if err != nil {
 		return err
 	}
 
-	err = <-nodesErr
-	if err != nil {
-		return err
+	select {
+	case err = <-nodesErr:
+		if err != nil {
+			return err
+		}
+	case err = <-caErr:
+		if err != nil {
+			return err
+		}
 	}
 
 	wg.Wait()
-	fmt.Println("done?")
 
 	return nil
+}
+
+func (a *Adversary) GetByzantineNodes() []stdtypes.NodeID {
+	return a.byzantineNodes
+}
+
+func (a *Adversary) GetActionLogString() string {
+	logStr := ""
+	for _, al := range a.actionTrace {
+		logStr += fmt.Sprintf("Node %s took action: %v\nbyzNodes: %v\n\n", al.node, al.actionLog, al.afterByzantineNodes)
+	}
+	return logStr
 }

@@ -38,7 +38,6 @@ type CATestConfig struct {
 	Sender             stdtypes.NodeID
 	CreateNodeInstance ni.NodeInstanceCreationFunc[nodeinstance.BcbNodeInstanceConfig]
 	Puppeteer          puppeteer.Puppeteer
-	Description        string // for report, should describe this config
 	ExpectedResult     map[string]checker.CheckerResult
 }
 
@@ -48,7 +47,6 @@ var catests = map[string]CATestConfig{
 		Sender:             stdtypes.NodeID("0"),
 		CreateNodeInstance: nodeinstance.CreateBcbNodeInstance,
 		Puppeteer:          puppeteers.NewOneNodeBroadcast(stdtypes.NodeID("0")),
-		Description:        "0/5 byzantine nodes, node 0 sender (non-byz)",
 		ExpectedResult: map[string]checker.CheckerResult{
 			"validity":    checker.SUCCESS,
 			"integrity":   checker.SUCCESS,
@@ -58,7 +56,9 @@ var catests = map[string]CATestConfig{
 }
 
 func Test_CANoByz(t *testing.T) {
-	RunCATest(t, "no byz")
+	for range 20 {
+		RunCATest(t, "no byz")
+	}
 }
 
 func RunCATest(t *testing.T, testName string) {
@@ -85,15 +85,47 @@ func RunCATest(t *testing.T, testName string) {
 		for _, nodeID := range test.Nodes {
 			nodeConfigs[nodeID] = config
 		}
-		weightedActions := []actions.WeightedAction{actions.NewWeightedAction(func(e stdtypes.Event) (*stdtypes.EventList, error) { return stdtypes.ListOf(e), nil }, 1)}
-		panicIfErr(err)
-		adv, err := centraladversay.NewAdversary(test.CreateNodeInstance, nodeConfigs, weightedActions, logger)
+		weightedActions := []actions.WeightedAction{
+			actions.NewWeightedAction(func(e stdtypes.Event) (*stdtypes.EventList, bool, string, error) {
+				return stdtypes.ListOf(e), false, "", nil
+			}, 10),
+			actions.NewWeightedAction(func(e stdtypes.Event) (*stdtypes.EventList, bool, string, error) {
+				// byzantine if not network event
+				byzantine := false
+				switch e.(type) {
+				case *stdevents.SendMessage:
+				case *stdevents.MessageReceived:
+				default:
+					byzantine = true
+				}
+
+				return stdtypes.EmptyList(), byzantine, fmt.Sprintf("dropped event %s", e.ToString()), nil
+			}, 1),
+			actions.NewWeightedAction(func(e stdtypes.Event) (*stdtypes.EventList, bool, string, error) {
+				byzantine := false
+				switch e.(type) {
+				case *stdevents.SendMessage:
+				case *stdevents.MessageReceived:
+				default:
+					byzantine = true
+				}
+
+				e2, err := e.SetMetadata("duplicated", true)
+				if err != nil {
+					// TODO: should a failed action just be a "noop"
+					return nil, false, "", err
+				}
+				return stdtypes.ListOf(e, e2), byzantine, fmt.Sprintf("duplicated event %v", e.ToString()), nil
+			}, 1),
+		}
+
+		eventsOfInterest := []stdtypes.Event{&broadcastevents.Deliver{}, &broadcastevents.BroadcastRequest{}}
+
+		// TODO: set maxByzantineNodes correctly
+		adv, err := centraladversay.NewAdversary(test.CreateNodeInstance, nodeConfigs, eventsOfInterest, weightedActions, len(nodeConfigs)/2, logger)
 		panicIfErr(err)
 
 		adv.RunExperiment(test.Puppeteer, MAX_EVENTS, MAX_HEARTBEATS_INACTIVE)
-		fmt.Println("Experiment done")
-
-		// time.Sleep(time.Second)
 
 		// property checking
 		files := make([]string, 0, len(test.Nodes))
@@ -106,7 +138,7 @@ func RunCATest(t *testing.T, testName string) {
 
 		systemConfig := &testmodules.SystemConfig{
 			AllNodes:       test.Nodes,
-			ByzantineNodes: []stdtypes.NodeID{},
+			ByzantineNodes: adv.GetByzantineNodes(),
 		}
 
 		m := map[stdtypes.ModuleID]modules.Module{
@@ -140,7 +172,7 @@ func RunCATest(t *testing.T, testName string) {
 
 		results, _ := c.GetResults()
 
-		resultStr := "Results:\n"
+		resultStr := fmt.Sprintf("Results: (%s)\n", reportDir)
 		for label, res := range results {
 			resultStr = fmt.Sprintf("%s%s was %s - expected: %s\n", resultStr, label, res.String(), test.ExpectedResult[label])
 			// NOTE: doesn't guarantee that the all expected res are checked... but that is ok for now
@@ -158,7 +190,8 @@ func RunCATest(t *testing.T, testName string) {
 			}
 			return string(commit)
 		}()
-		resultStr = fmt.Sprintf("%s\n\n%s\n\nDescription: %s\n\nCommit: %s", testName, resultStr, test.Description, commit)
+		resultStr = fmt.Sprintf("%s\n\n%s\n\nCommit: %s\n\n", testName, resultStr, commit)
+		resultStr += adv.GetActionLogString()
 		panicIfErr(os.WriteFile(path.Join(reportDir, "report.txt"), []byte(resultStr), 0644))
 
 	})
