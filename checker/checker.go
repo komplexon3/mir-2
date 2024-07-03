@@ -12,9 +12,18 @@ import (
 	"github.com/filecoin-project/mir/stdtypes"
 )
 
+type checkerStatus int64
+
+const (
+	NOT_STARTED checkerStatus = iota
+	RUNNING
+	FINISHED
+)
+
 type Checker struct {
 	properties []*property
-	executed   bool // NOTE: is this actually providing any value?
+	status     checkerStatus
+	cDone      chan struct{}
 }
 
 type CheckerResult int64
@@ -55,7 +64,7 @@ func newProperty(name string, module modules.PassiveModule) *property {
 		name,
 		module,
 		make(chan stdtypes.Event),
-		make(chan struct{}),
+		make(chan struct{}, 1),
 		false,
 		NOT_READY,
 	}
@@ -65,7 +74,8 @@ func newProperty(name string, module modules.PassiveModule) *property {
 func NewChecker(properties modules.Modules) (*Checker, error) {
 	checker := &Checker{
 		properties: make([]*property, 0, len(properties)),
-		executed:   false,
+		status:     NOT_STARTED,
+		cDone:      make(chan struct{}),
 	}
 
 	for key, cond := range properties {
@@ -80,7 +90,7 @@ func NewChecker(properties modules.Modules) (*Checker, error) {
 }
 
 func (c *Checker) GetResults() (map[string]CheckerResult, error) {
-	if !c.executed {
+	if c.status != FINISHED {
 		return nil, fmt.Errorf("no results available, run analysis first")
 	}
 
@@ -93,14 +103,19 @@ func (c *Checker) GetResults() (map[string]CheckerResult, error) {
 	return results, nil
 }
 
-func (c *Checker) RunAnalysis(eventChan chan stdtypes.Event) error {
+func (c *Checker) Start() error {
+	if c.status != NOT_STARTED {
+		return es.Errorf("Cannot start checker. Checker is either finished or already running.")
+	}
+
 	if len(c.properties) == 0 {
 		return fmt.Errorf("no properties registered")
 	}
 
+	c.status = RUNNING
 	var wg sync.WaitGroup
 
-	for _, cc := range c.properties {
+	for _, p := range c.properties {
 		wg.Add(1)
 		go func(cc *property) {
 			defer func() {
@@ -132,19 +147,24 @@ func (c *Checker) RunAnalysis(eventChan chan stdtypes.Event) error {
 				}
 			}
 
-		}(cc)
+		}(p)
 	}
 
-	for e := range eventChan {
-		for _, property := range c.properties {
-			if !property.done {
-				// TODO: this seeems very 'meh...' -> read up on 'closing' patterns
-				select {
-				case <-property.doneC:
-				case property.eventChan <- e:
-				}
-			}
-		}
+	wg.Wait()
+
+	c.cDone <- struct{}{}
+	c.status = FINISHED
+
+	return nil
+}
+
+func (c *Checker) Stop() error {
+	if c.status == FINISHED {
+		return es.Errorf("Already finished")
+	}
+
+	if c.status == NOT_STARTED {
+		return es.Errorf("Analysis has not started yet.")
 	}
 
 	// send done event to all -> initiate post processing if necessary
@@ -160,9 +180,47 @@ func (c *Checker) RunAnalysis(eventChan chan stdtypes.Event) error {
 		close(property.eventChan)
 	}
 
-	// nomore events, stop all property runners
-	wg.Wait()
-	c.executed = true
+	// wait on done signal from "runtime"
+	<-c.cDone
+
+	return nil
+}
+
+func (c *Checker) NextEvent(event stdtypes.Event) error {
+	if c.status != RUNNING {
+		return es.Errorf("Cannot process event. Checker is not running.")
+	}
+
+	for _, property := range c.properties {
+		if !property.done {
+			// TODO: this seeems very 'meh...' -> read up on 'closing' patterns
+			select {
+			case <-property.doneC:
+			case property.eventChan <- event:
+			}
+		}
+	}
+
+	return nil
+}
+
+// "legacy" to not break some of the old tests
+func (c *Checker) RunAnalysis(eventChan chan stdtypes.Event) error {
+	errChan := make(chan error)
+	go func() {
+		errChan <- c.Start()
+	}()
+
+	for event := range eventChan {
+		c.NextEvent(event)
+	}
+
+	c.Stop()
+
+	err := <-errChan
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/filecoin-project/mir"
+	"github.com/filecoin-project/mir/checker"
 	"github.com/filecoin-project/mir/fuzzer2/actions"
 	"github.com/filecoin-project/mir/fuzzer2/centraladversary/cortexcreeper"
 	"github.com/filecoin-project/mir/fuzzer2/heartbeat"
@@ -36,12 +37,13 @@ type ActionTraceEntry struct {
 type Adversary struct {
 	nodeIds           []stdtypes.NodeID
 	nodeInstances     map[stdtypes.NodeID]nodeinstance.NodeInstance
-	cortexCreepers    []*cortexcreeper.CortexCreeper
+	cortexCreepers    map[stdtypes.NodeID]*cortexcreeper.CortexCreeper
 	actionSelector    actions.Actions
 	eventsOfInterest  map[reflect.Type]bool
 	byzantineNodes    []stdtypes.NodeID
 	maxByzantineNodes int
 	actionTrace       []ActionTraceEntry
+	checker           *checker.Checker
 }
 
 func NewAdversary[T interface{}](
@@ -58,13 +60,13 @@ func NewAdversary[T interface{}](
 	}
 
 	nodeInstances := make(map[stdtypes.NodeID]nodeinstance.NodeInstance)
-	cortexCreepers := make([]*cortexcreeper.CortexCreeper, 0, len(nodeConfigs))
+	cortexCreepers := make(map[stdtypes.NodeID]*cortexcreeper.CortexCreeper, len(nodeConfigs))
 
 	for nodeID, config := range nodeConfigs {
 		nodeLogger := logging.Decorate(logger, string(nodeID)+" ")
 		// nodeLogger := logger
 		cortexCreeper := cortexcreeper.NewCortexCreeper()
-		cortexCreepers = append(cortexCreepers, cortexCreeper)
+		cortexCreepers[nodeID] = cortexCreeper
 		nodeInstance, err := createNodeInstance(nodeID, config, cortexCreeper, nodeLogger)
 		if err != nil {
 			return nil, es.Errorf("Failed to create node instance with id %s: %v", nodeID, err)
@@ -82,7 +84,18 @@ func NewAdversary[T interface{}](
 		eventTypesOfInterest[reflect.TypeOf(e)] = true
 	}
 
-	return &Adversary{maputil.GetKeys(nodeInstances), nodeInstances, cortexCreepers, actionSelector, eventTypesOfInterest, make([]stdtypes.NodeID, 0), maxByzantineNodes, make([]ActionTraceEntry, 0)}, nil
+	return &Adversary{
+		maputil.GetKeys(nodeInstances),
+		nodeInstances,
+		cortexCreepers,
+		actionSelector,
+		eventTypesOfInterest,
+		make([]stdtypes.NodeID, 0),
+		maxByzantineNodes,
+		make([]ActionTraceEntry,
+			0),
+		nil, // checker
+	}, nil
 }
 
 func (a *Adversary) RunNodes(ctx context.Context) error {
@@ -140,13 +153,17 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, ctx
 	eventCount := 0
 	heartbeatCount := 0
 
+	// slice of cortex creepers ordered by nodeIds to easily reference them to the select cases
+	ccsNodeIds := maputil.GetSortedKeys(a.cortexCreepers)
+	ccs := maputil.GetValuesOf(a.cortexCreepers, ccsNodeIds)
+
 	for {
-		selectCases := make([]reflect.SelectCase, 0, len(a.cortexCreepers)+1)
+		selectCases := make([]reflect.SelectCase, 0, len(ccs)+1)
 		selectCases = append(selectCases, reflect.SelectCase{
 			Dir:  reflect.SelectRecv,
 			Chan: reflect.ValueOf(ctx.Done()),
 		})
-		for _, cc := range a.cortexCreepers {
+		for _, cc := range ccs {
 			selectCases = append(selectCases, reflect.SelectCase{
 				Dir:  reflect.SelectRecv,
 				Chan: reflect.ValueOf(cc.GetEventsIn()),
@@ -174,6 +191,8 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, ctx
 				return MaxEventsOrHeartbeatShutdown
 			}
 
+			sourceNodeID := ccsNodeIds[ind-1]
+
 			// TODO: figure out how to actually do this filtering
 			// hardcoding for now...
 
@@ -189,18 +208,18 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, ctx
 			switch event.(type) {
 			case *broadcastevents.BroadcastRequest:
 				if !a.nodeIsPermittedToTakeByzantineAction(a.nodeIds[ind-1]) {
-					a.cortexCreepers[ind-1].PushEvents(stdtypes.ListOf(event))
+					a.pushEvents(sourceNodeID, stdtypes.ListOf(event))
 					continue
 				}
 			case *broadcastevents.Deliver:
 				if !a.nodeIsPermittedToTakeByzantineAction(a.nodeIds[ind-1]) {
-					a.cortexCreepers[ind-1].PushEvents(stdtypes.ListOf(event))
+					a.pushEvents(sourceNodeID, stdtypes.ListOf(event))
 					continue
 				}
 			case *stdevents.SendMessage:
 			case *stdevents.MessageReceived:
 			default:
-				a.cortexCreepers[ind-1].PushEvents(stdtypes.ListOf(event))
+				a.pushEvents(sourceNodeID, stdtypes.ListOf(event))
 				continue
 			}
 			// ^ check if can take byzantine action
@@ -212,7 +231,7 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, ctx
 				return err
 			}
 			if wasByzantine {
-				a.registerNodeTookByzantineAction(a.nodeIds[ind-1])
+				a.registerNodeTookByzantineAction(sourceNodeID)
 			}
 
 			// ignore "" bc this signifies noop - not the best solution but works for now
@@ -224,9 +243,22 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, ctx
 				})
 			}
 
-			a.cortexCreepers[ind-1].PushEvents(newEvents)
+			a.pushEvents(sourceNodeID, newEvents)
 		}
 	}
+}
+
+func (a *Adversary) pushEvents(nodeID stdtypes.NodeID, events *stdtypes.EventList) {
+	if a.checker != nil {
+		// if there's a checker, duplicate the events and have the checker look at them
+		eIter := events.Iterator()
+		for e := eIter.Next(); e != nil; e = eIter.Next() {
+			a.checker.NextEvent(e)
+		}
+	}
+	// TODO: we know that this cc exists, should I still check to make sure?
+	cc := a.cortexCreepers[nodeID]
+	cc.PushEvents(events)
 }
 
 func (a *Adversary) nodeIsPermittedToTakeByzantineAction(nodeId stdtypes.NodeID) bool {
@@ -247,21 +279,37 @@ func (a *Adversary) RunExperiment(puppeteer puppeteer.Puppeteer, maxEvents, maxH
 	ctx, cancel := context.WithCancel(context.Background())
 	wg := sync.WaitGroup{}
 	defer cancel()
+	if a.checker != nil {
+		defer a.checker.Stop()
+	}
 
 	nodesErr := make(chan error)
+	caErr := make(chan error)
+	checkerErr := make(chan error)
+
 	go func() {
 		wg.Add(1)
 		defer wg.Done()
+		defer close(nodesErr)
 		nodesErr <- a.RunNodes(ctx)
 	}()
 
-	caErr := make(chan error)
 	go func() {
 		wg.Add(1)
 		defer wg.Done()
-		defer cancel() // cancel to stop nodes when adv had enough
+		defer close(caErr)
+		// defer cancel() // cancel to stop nodes when adv had enough
 		caErr <- a.RunCentralAdversary(maxEvents, maxHeartbeatsInactive, ctx)
 	}()
+
+	if a.checker != nil {
+		go func() {
+			wg.Add(1)
+			defer wg.Done()
+			defer close(checkerErr)
+			checkerErr <- a.checker.Start()
+		}()
+	}
 
 	err := puppeteer.Run(a.nodeInstances)
 	if err != nil {
@@ -271,11 +319,15 @@ func (a *Adversary) RunExperiment(puppeteer puppeteer.Puppeteer, maxEvents, maxH
 	select {
 	case err = <-nodesErr:
 		if err != nil {
-			return err
+			return es.Errorf("Nodes runtime (CA) error: %v", err)
 		}
 	case err = <-caErr:
 		if err != nil {
-			return err
+			return es.Errorf("Central Adversary error: %v", err)
+		}
+	case err = <-caErr:
+		if err != nil {
+			return es.Errorf("Checker error: %v", err)
 		}
 	}
 
