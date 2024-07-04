@@ -1,4 +1,4 @@
-package testmodules
+package properties
 
 import (
 	"bytes"
@@ -6,7 +6,6 @@ import (
 
 	bcbevents "github.com/filecoin-project/mir/samples/bcb-native/events"
 	"github.com/filecoin-project/mir/stdtypes"
-	"github.com/google/uuid"
 
 	checkerevents "github.com/filecoin-project/mir/checker/events"
 	"github.com/filecoin-project/mir/pkg/dsl"

@@ -7,4 +7,4 @@ type Actions interface {
 }
 
 // Returns: events to forward/inject, whether or not this makes this node byzantine, what to log this action as, error
-type Action func(event stdtypes.Event) (*stdtypes.EventList, bool, string, error)
+type Action func(event stdtypes.Event) (*stdtypes.EventList, string, error)

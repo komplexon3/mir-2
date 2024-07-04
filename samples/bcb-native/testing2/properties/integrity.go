@@ -1,4 +1,4 @@
-package testmodules
+package properties
 
 import (
 	"bytes"
@@ -7,7 +7,6 @@ import (
 
 	bcbevents "github.com/filecoin-project/mir/samples/bcb-native/events"
 	"github.com/filecoin-project/mir/stdtypes"
-	"github.com/google/uuid"
 
 	checkerevents "github.com/filecoin-project/mir/checker/events"
 	"github.com/filecoin-project/mir/pkg/dsl"
@@ -42,9 +41,7 @@ func NewIntegrity(sc SystemConfig, logger logging.Logger) dsl.Module {
 		broadcastDeliverTracker: make(map[stdtypes.NodeID]bool, len(sc.AllNodes)),
 	}
 
-	for _, nodeId := range sc.AllNodes {
-		v.broadcastDeliverTracker[nodeId] = make(map[uuid.UUID]bool)
-	}
+	v.broadcastDeliverTracker = make(map[stdtypes.NodeID]bool)
 
 	dsl.UponEvent(m, v.handleBroadcastRequest)
 	dsl.UponEvent(m, v.handleDeliver)
@@ -57,12 +54,12 @@ func NewIntegrity(sc SystemConfig, logger logging.Logger) dsl.Module {
 func (i *Integrity) handleBroadcastRequest(e *bcbevents.BroadcastRequest) error {
 	nodeID := getNodeIdFromMetadata(e)
 	if nodeID == i.systemConfig.Sender {
-		broadcastRequest = e.Data
+		i.broadcastRequest = e.Data
 	}
 	return nil
 }
 
-func (i *Integrity) handleDeliver(e *broadcastevents.Deliver) error {
+func (i *Integrity) handleDeliver(e *bcbevents.Deliver) error {
 	nodeID := getNodeIdFromMetadata(e)
 
 	if _, ok := i.broadcastDeliverTracker[nodeID]; ok {
@@ -71,18 +68,18 @@ func (i *Integrity) handleDeliver(e *broadcastevents.Deliver) error {
 		dsl.EmitEvent(i.m, checkerevents.NewFailureEvent())
 	} else if i.byzantineSender {
 		// must not be delivered before so all ok, just note that we delivered something
-		i.boradcastDeliverTracker[nodeId] = true
-	} else if i.broadcastRequest != nil {
+		i.broadcastDeliverTracker[nodeID] = true
+	} else if i.broadcastRequest == nil {
 		fmt.Printf("Node %s delivered a value before anything was broadcasted", nodeID)
 		// fail
 		dsl.EmitEvent(i.m, checkerevents.NewFailureEvent())
-	} else if !bytes.Equal(broadcastRequest, e.Data) {
+	} else if !bytes.Equal(i.broadcastRequest, e.Data) {
 		fmt.Printf("Node %s delivered a value different from what the honest sender broadcasted", nodeID)
 		// fail
 		dsl.EmitEvent(i.m, checkerevents.NewFailureEvent())
 	} else {
 		// all ok, just note that we delivered something
-		i.boradcastDeliverTracker[nodeId] = true
+		i.broadcastDeliverTracker[nodeID] = true
 	}
 
 	return nil

@@ -1,4 +1,4 @@
-package testmodules
+package properties
 
 import (
 	"bytes"
@@ -6,7 +6,6 @@ import (
 
 	bcbevents "github.com/filecoin-project/mir/samples/bcb-native/events"
 	"github.com/filecoin-project/mir/stdtypes"
-	"github.com/google/uuid"
 
 	checkerevents "github.com/filecoin-project/mir/checker/events"
 	"github.com/filecoin-project/mir/pkg/dsl"
@@ -36,7 +35,7 @@ func NewValidity(sc SystemConfig, logger logging.Logger) dsl.Module {
 		byzantineSender: slices.Contains(sc.ByzantineNodes, sc.Sender),
 
 		broadcastRequest:        nil,
-		broadcastDeliverTracker: make(map[uuid.UUID]map[stdtypes.NodeID][]byte),
+		broadcastDeliverTracker: make(map[stdtypes.NodeID][]byte),
 	}
 
 	dsl.UponEvent(m, v.handleBroadcastRequest)
@@ -49,14 +48,13 @@ func NewValidity(sc SystemConfig, logger logging.Logger) dsl.Module {
 
 func (v *Validity) handleBroadcastRequest(e *bcbevents.BroadcastRequest) error {
 	nodeID := getNodeIdFromMetadata(e)
-	if nodeId == v.systemConfig.Sender {
+	if nodeID == v.systemConfig.Sender {
 		v.broadcastRequest = e.Data
 	}
-	v.broadcastRequests[e.BroadcastID] = broadcastRequest{data: e.Data, node: nodeID}
 	return nil
 }
 
-func (v *Validity) handleDeliver(e *broadcastevents.Deliver) error {
+func (v *Validity) handleDeliver(e *bcbevents.Deliver) error {
 	nodeID := getNodeIdFromMetadata(e)
 
 	v.broadcastDeliverTracker[nodeID] = e.Data
@@ -65,7 +63,7 @@ func (v *Validity) handleDeliver(e *broadcastevents.Deliver) error {
 
 func (v *Validity) handleFinal(e *checkerevents.FinalEvent) error {
 	// if sender byz or if honest sender didn't broadcast, success
-	if v.byzantineSender || !v.broadcastRequest {
+	if v.byzantineSender || v.broadcastRequest == nil {
 		dsl.EmitEvent(v.m, checkerevents.NewSuccessEvent())
 		return nil
 	}
@@ -77,7 +75,7 @@ func (v *Validity) handleFinal(e *checkerevents.FinalEvent) error {
 
 	// only checking non byzantine nodes
 	for _, nonByzantineNode := range nonByzantineNodes {
-		deliveredValue, ok := bd[nonByzantineNode]
+		deliveredValue, ok := v.broadcastDeliverTracker[nonByzantineNode]
 		if !ok || !bytes.Equal(v.broadcastRequest, deliveredValue) {
 			dsl.EmitEvent(v.m, checkerevents.NewFailureEvent())
 		}

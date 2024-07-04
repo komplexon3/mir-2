@@ -35,15 +35,13 @@ type ActionTraceEntry struct {
 }
 
 type Adversary struct {
-	nodeIds           []stdtypes.NodeID
-	nodeInstances     map[stdtypes.NodeID]nodeinstance.NodeInstance
-	cortexCreepers    map[stdtypes.NodeID]*cortexcreeper.CortexCreeper
-	actionSelector    actions.Actions
-	eventsOfInterest  map[reflect.Type]bool
-	byzantineNodes    []stdtypes.NodeID
-	maxByzantineNodes int
-	actionTrace       []ActionTraceEntry
-	checker           *checker.Checker
+	nodeIds          []stdtypes.NodeID
+	nodeInstances    map[stdtypes.NodeID]nodeinstance.NodeInstance
+	cortexCreepers   map[stdtypes.NodeID]*cortexcreeper.CortexCreeper
+	actionSelector   actions.Actions
+	eventsOfInterest map[reflect.Type]bool
+	byzantineNodes   []stdtypes.NodeID
+	actionTrace      []ActionTraceEntry
 }
 
 func NewAdversary[T interface{}](
@@ -51,12 +49,15 @@ func NewAdversary[T interface{}](
 	nodeConfigs nodeinstance.NodeConfigs[T],
 	eventsOfInterest []stdtypes.Event,
 	weightedActions []actions.WeightedAction,
-	maxByzantineNodes int,
+	byzantineNodes []stdtypes.NodeID,
 	logger logging.Logger,
 ) (*Adversary, error) {
 
-	if maxByzantineNodes > len(nodeConfigs) {
-		return nil, es.Errorf("Cannot allow for more byzantine nodes than the number of nodes in the system.")
+	nodeIDs := maputil.GetKeys(nodeConfigs)
+	for _, byzNodeID := range byzantineNodes {
+		if !slices.Contains(nodeIDs, byzNodeID) {
+			return nil, es.Errorf("Cannot use node %s as a byzantine node as there is no node config for this node.", byzNodeID)
+		}
 	}
 
 	nodeInstances := make(map[stdtypes.NodeID]nodeinstance.NodeInstance)
@@ -90,11 +91,9 @@ func NewAdversary[T interface{}](
 		cortexCreepers,
 		actionSelector,
 		eventTypesOfInterest,
-		make([]stdtypes.NodeID, 0),
-		maxByzantineNodes,
+		byzantineNodes,
 		make([]ActionTraceEntry,
 			0),
-		nil, // checker
 	}, nil
 }
 
@@ -144,12 +143,11 @@ func (a *Adversary) RunNodes(ctx context.Context) error {
 	<-nodesContext.Done()
 
 	wg.Wait()
-	fmt.Println("node wg done")
 
 	return nil
 }
 
-func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, ctx context.Context) error {
+func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, checker *checker.Checker, ctx context.Context) error {
 	eventCount := 0
 	heartbeatCount := 0
 
@@ -208,30 +206,26 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, ctx
 			switch event.(type) {
 			case *broadcastevents.BroadcastRequest:
 				if !a.nodeIsPermittedToTakeByzantineAction(a.nodeIds[ind-1]) {
-					a.pushEvents(sourceNodeID, stdtypes.ListOf(event))
+					a.pushEvents(sourceNodeID, stdtypes.ListOf(event), checker)
 					continue
 				}
 			case *broadcastevents.Deliver:
 				if !a.nodeIsPermittedToTakeByzantineAction(a.nodeIds[ind-1]) {
-					a.pushEvents(sourceNodeID, stdtypes.ListOf(event))
+					a.pushEvents(sourceNodeID, stdtypes.ListOf(event), checker)
 					continue
 				}
 			case *stdevents.SendMessage:
 			case *stdevents.MessageReceived:
 			default:
-				a.pushEvents(sourceNodeID, stdtypes.ListOf(event))
+				a.pushEvents(sourceNodeID, stdtypes.ListOf(event), checker)
 				continue
 			}
-			// ^ check if can take byzantine action
 
 			// otherwise pick an action to apply to this event
 			action := a.actionSelector.SelectAction()
-			newEvents, wasByzantine, actionLog, err := action(event)
+			newEvents, actionLog, err := action(event)
 			if err != nil {
 				return err
-			}
-			if wasByzantine {
-				a.registerNodeTookByzantineAction(sourceNodeID)
 			}
 
 			// ignore "" bc this signifies noop - not the best solution but works for now
@@ -243,17 +237,18 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, ctx
 				})
 			}
 
-			a.pushEvents(sourceNodeID, newEvents)
+			a.pushEvents(sourceNodeID, newEvents, checker)
 		}
 	}
 }
 
-func (a *Adversary) pushEvents(nodeID stdtypes.NodeID, events *stdtypes.EventList) {
-	if a.checker != nil {
+func (a *Adversary) pushEvents(nodeID stdtypes.NodeID, events *stdtypes.EventList, checker *checker.Checker) {
+	if checker != nil {
 		// if there's a checker, duplicate the events and have the checker look at them
 		eIter := events.Iterator()
 		for e := eIter.Next(); e != nil; e = eIter.Next() {
-			a.checker.NextEvent(e)
+			// TODO: must be duplicated! Don't want checker to possibly affect the system
+			checker.NextEvent(e)
 		}
 	}
 	// TODO: we know that this cc exists, should I still check to make sure?
@@ -262,25 +257,15 @@ func (a *Adversary) pushEvents(nodeID stdtypes.NodeID, events *stdtypes.EventLis
 }
 
 func (a *Adversary) nodeIsPermittedToTakeByzantineAction(nodeId stdtypes.NodeID) bool {
-	if len(a.byzantineNodes) < a.maxByzantineNodes {
-		return true
-	}
-
 	return slices.Contains(a.byzantineNodes, nodeId)
 }
 
-func (a *Adversary) registerNodeTookByzantineAction(nodeId stdtypes.NodeID) {
-	if !slices.Contains(a.byzantineNodes, nodeId) {
-		a.byzantineNodes = append(a.byzantineNodes, nodeId)
-	}
-}
-
-func (a *Adversary) RunExperiment(puppeteer puppeteer.Puppeteer, maxEvents, maxHeartbeatsInactive int) error {
+func (a *Adversary) RunExperiment(puppeteer puppeteer.Puppeteer, checker *checker.Checker, maxEvents, maxHeartbeatsInactive int) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	wg := sync.WaitGroup{}
 	defer cancel()
-	if a.checker != nil {
-		defer a.checker.Stop()
+	if checker != nil {
+		defer checker.Stop()
 	}
 
 	nodesErr := make(chan error)
@@ -299,15 +284,15 @@ func (a *Adversary) RunExperiment(puppeteer puppeteer.Puppeteer, maxEvents, maxH
 		defer wg.Done()
 		defer close(caErr)
 		// defer cancel() // cancel to stop nodes when adv had enough
-		caErr <- a.RunCentralAdversary(maxEvents, maxHeartbeatsInactive, ctx)
+		caErr <- a.RunCentralAdversary(maxEvents, maxHeartbeatsInactive, checker, ctx)
 	}()
 
-	if a.checker != nil {
+	if checker != nil {
 		go func() {
 			wg.Add(1)
 			defer wg.Done()
 			defer close(checkerErr)
-			checkerErr <- a.checker.Start()
+			checkerErr <- checker.Start()
 		}()
 	}
 

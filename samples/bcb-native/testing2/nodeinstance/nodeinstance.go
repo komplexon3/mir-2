@@ -34,7 +34,6 @@ type BcbNodeInstanceConfig struct {
 	NumberOfNodes int
 	Leader        stdtypes.NodeID
 	FakeTransport *deploytest.FakeTransport
-	LogPath       string
 }
 
 func (bi *BcbNodeInstance) GetNode() *mir.Node {
@@ -93,12 +92,7 @@ func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig,
 		logger,
 	)
 
-	eventLogger, err := eventlog.NewRecorder(nodeID, config.LogPath, logger)
-	if err != nil {
-		return nil, es.Errorf("error setting up interceptor: %w", err)
-	}
-
-	interceptor := eventlog.MultiInterceptor(&utilinterceptors.NodeIdMetadataInterceptor{NodeID: nodeID}, cortexCreeper, vcinterceptor.New(nodeID), eventLogger)
+	interceptor := eventlog.MultiInterceptor(&utilinterceptors.NodeIdMetadataInterceptor{NodeID: nodeID}, cortexCreeper, vcinterceptor.New(nodeID))
 
 	// setup crypto
 	keyPairs, err := crypto.GenerateKeys(config.NumberOfNodes, 42)
