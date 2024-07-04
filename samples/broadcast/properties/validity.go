@@ -11,6 +11,7 @@ import (
 	checkerevents "github.com/filecoin-project/mir/checker/events"
 	"github.com/filecoin-project/mir/pkg/dsl"
 	"github.com/filecoin-project/mir/pkg/logging"
+	"github.com/filecoin-project/mir/pkg/util/sliceutil"
 )
 
 type Validity struct {
@@ -61,7 +62,7 @@ func (v *Validity) handleDeliver(e *broadcastevents.Deliver) error {
 
 func (v *Validity) handleFinal(e *checkerevents.FinalEvent) error {
 	// checking that all nodes delivered the broadcasted value
-	nonByzantineNodes := slices.DeleteFunc(v.systemConfig.AllNodes, func(n stdtypes.NodeID) bool {
+	nonByzantineNodes := sliceutil.Filter(v.systemConfig.AllNodes, func(_ int, n stdtypes.NodeID) bool {
 		return slices.Contains(v.systemConfig.ByzantineNodes, n)
 	})
 

@@ -80,24 +80,36 @@ func RunCATest(t *testing.T, testName string) {
 		}
 		instanceUID := []byte("testing instance")
 		nodeConfigs := make(map[stdtypes.NodeID]nodeinstance.BcbNodeInstanceConfig, len(test.Nodes))
-		config := nodeinstance.BcbNodeInstanceConfig{InstanceUID: instanceUID, NumberOfNodes: len(test.Nodes), Leader: test.Sender, FakeTransport: deploytest.NewFakeTransport(nodeWeights)}
+		fmt.Println(test.Nodes)
+		config := nodeinstance.BcbNodeInstanceConfig{InstanceUID: instanceUID, NumberOfNodes: len(test.Nodes), Leader: test.Sender, FakeTransport: deploytest.NewFakeTransport(nodeWeights), ReportPath: reportDir}
 		for _, nodeID := range test.Nodes {
+			fmt.Println(nodeID)
 			nodeConfigs[nodeID] = config
 		}
 		weightedActions := []actions.WeightedAction{
-			actions.NewWeightedAction(func(e stdtypes.Event) (*stdtypes.EventList, string, error) {
-				return stdtypes.ListOf(e), "", nil
+			actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, error) {
+				return "",
+					map[stdtypes.NodeID]*stdtypes.EventList{
+						sourceNode: stdtypes.ListOf(e),
+					},
+					nil
 			}, 10),
-			actions.NewWeightedAction(func(e stdtypes.Event) (*stdtypes.EventList, string, error) {
-				return stdtypes.EmptyList(), fmt.Sprintf("dropped event %s", e.ToString()), nil
+			actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, error) {
+				return fmt.Sprintf("dropped event %s", e.ToString()),
+					nil,
+					nil
 			}, 1),
-			actions.NewWeightedAction(func(e stdtypes.Event) (*stdtypes.EventList, string, error) {
+			actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, error) {
 				e2, err := e.SetMetadata("duplicated", true)
 				if err != nil {
 					// TODO: should a failed action just be a "noop"
-					return nil, "", err
+					return "", nil, err
 				}
-				return stdtypes.ListOf(e, e2), fmt.Sprintf("duplicated event %v", e.ToString()), nil
+				return fmt.Sprintf("duplicated event %v", e.ToString()),
+					map[stdtypes.NodeID]*stdtypes.EventList{
+						sourceNode: stdtypes.ListOf(e, e2),
+					},
+					nil
 			}, 1),
 		}
 
@@ -110,7 +122,7 @@ func RunCATest(t *testing.T, testName string) {
 		systemConfig := &properties.SystemConfig{
 			AllNodes:       test.Nodes,
 			Sender:         test.Sender,
-			ByzantineNodes: adv.GetByzantineNodes(),
+			ByzantineNodes: test.ByzantineNodes,
 		}
 
 		m := map[stdtypes.ModuleID]modules.Module{

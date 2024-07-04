@@ -11,6 +11,7 @@ import (
 	checkerevents "github.com/filecoin-project/mir/checker/events"
 	"github.com/filecoin-project/mir/pkg/dsl"
 	"github.com/filecoin-project/mir/pkg/logging"
+	"github.com/filecoin-project/mir/pkg/util/sliceutil"
 )
 
 type Consistency struct {
@@ -52,7 +53,7 @@ func (c *Consistency) handleDeliver(e *broadcastevents.Deliver) error {
 
 func (c *Consistency) handleFinal(e *checkerevents.FinalEvent) error {
 	// first non-byzantine node
-	nonByzantineNodes := slices.DeleteFunc(c.systemConfig.AllNodes, func(n stdtypes.NodeID) bool {
+	nonByzantineNodes := sliceutil.Filter(c.systemConfig.AllNodes, func(_ int, n stdtypes.NodeID) bool {
 		return slices.Contains(c.systemConfig.ByzantineNodes, n)
 	})
 

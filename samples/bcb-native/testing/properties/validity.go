@@ -2,15 +2,16 @@ package testmodules
 
 import (
 	"bytes"
+	"fmt"
 	"slices"
 
 	bcbevents "github.com/filecoin-project/mir/samples/bcb-native/events"
 	"github.com/filecoin-project/mir/stdtypes"
-	"github.com/google/uuid"
 
 	checkerevents "github.com/filecoin-project/mir/checker/events"
 	"github.com/filecoin-project/mir/pkg/dsl"
 	"github.com/filecoin-project/mir/pkg/logging"
+	"github.com/filecoin-project/mir/pkg/util/sliceutil"
 )
 
 type Validity struct {
@@ -36,7 +37,7 @@ func NewValidity(sc SystemConfig, logger logging.Logger) dsl.Module {
 		byzantineSender: slices.Contains(sc.ByzantineNodes, sc.Sender),
 
 		broadcastRequest:        nil,
-		broadcastDeliverTracker: make(map[uuid.UUID]map[stdtypes.NodeID][]byte),
+		broadcastDeliverTracker: make(map[stdtypes.NodeID][]byte),
 	}
 
 	dsl.UponEvent(m, v.handleBroadcastRequest)
@@ -49,14 +50,13 @@ func NewValidity(sc SystemConfig, logger logging.Logger) dsl.Module {
 
 func (v *Validity) handleBroadcastRequest(e *bcbevents.BroadcastRequest) error {
 	nodeID := getNodeIdFromMetadata(e)
-	if nodeId == v.systemConfig.Sender {
+	if nodeID == v.systemConfig.Sender {
 		v.broadcastRequest = e.Data
 	}
-	v.broadcastRequests[e.BroadcastID] = broadcastRequest{data: e.Data, node: nodeID}
 	return nil
 }
 
-func (v *Validity) handleDeliver(e *broadcastevents.Deliver) error {
+func (v *Validity) handleDeliver(e *bcbevents.Deliver) error {
 	nodeID := getNodeIdFromMetadata(e)
 
 	v.broadcastDeliverTracker[nodeID] = e.Data
@@ -65,20 +65,30 @@ func (v *Validity) handleDeliver(e *broadcastevents.Deliver) error {
 
 func (v *Validity) handleFinal(e *checkerevents.FinalEvent) error {
 	// if sender byz or if honest sender didn't broadcast, success
-	if v.byzantineSender || !v.broadcastRequest {
+	fmt.Println(v.broadcastRequest)
+	for nodeID, val := range v.broadcastDeliverTracker {
+		fmt.Printf("%s - %v, ", nodeID, val)
+	}
+	fmt.Println()
+	if v.byzantineSender || v.broadcastRequest == nil {
 		dsl.EmitEvent(v.m, checkerevents.NewSuccessEvent())
 		return nil
 	}
 
 	// checking that all nodes delivered the broadcasted value
-	nonByzantineNodes := slices.DeleteFunc(v.systemConfig.AllNodes, func(n stdtypes.NodeID) bool {
+	nonByzantineNodes := sliceutil.Filter(v.systemConfig.AllNodes, func(_ int, n stdtypes.NodeID) bool {
 		return slices.Contains(v.systemConfig.ByzantineNodes, n)
 	})
 
+	fmt.Println("all nodes", v.systemConfig.AllNodes)
+	fmt.Println("byz nodes", v.systemConfig.ByzantineNodes)
+	fmt.Println("non byz nodes", nonByzantineNodes)
+
 	// only checking non byzantine nodes
 	for _, nonByzantineNode := range nonByzantineNodes {
-		deliveredValue, ok := bd[nonByzantineNode]
+		deliveredValue, ok := v.broadcastDeliverTracker[nonByzantineNode]
 		if !ok || !bytes.Equal(v.broadcastRequest, deliveredValue) {
+			fmt.Printf("node %s: ok %t, equal %t\n", nonByzantineNode, ok, bytes.Equal(v.broadcastRequest, deliveredValue))
 			dsl.EmitEvent(v.m, checkerevents.NewFailureEvent())
 		}
 	}

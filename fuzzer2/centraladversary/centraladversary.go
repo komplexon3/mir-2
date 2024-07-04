@@ -223,7 +223,7 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, che
 
 			// otherwise pick an action to apply to this event
 			action := a.actionSelector.SelectAction()
-			newEvents, actionLog, err := action(event)
+			actionLog, newEvents, err := action(event, sourceNodeID, a.byzantineNodes)
 			if err != nil {
 				return err
 			}
@@ -237,7 +237,11 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, che
 				})
 			}
 
-			a.pushEvents(sourceNodeID, newEvents, checker)
+			// TODO: check for nil?
+			for injectNodeID, injectEvents := range newEvents {
+				fmt.Printf("%s (%s) - injecting v\n", injectNodeID, sourceNodeID)
+				a.pushEvents(injectNodeID, injectEvents, checker)
+			}
 		}
 	}
 }
