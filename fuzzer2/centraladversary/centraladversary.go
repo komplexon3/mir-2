@@ -35,19 +35,17 @@ type ActionTraceEntry struct {
 }
 
 type Adversary struct {
-	nodeIds          []stdtypes.NodeID
-	nodeInstances    map[stdtypes.NodeID]nodeinstance.NodeInstance
-	cortexCreepers   map[stdtypes.NodeID]*cortexcreeper.CortexCreeper
-	actionSelector   actions.Actions
-	eventsOfInterest map[reflect.Type]bool
-	byzantineNodes   []stdtypes.NodeID
-	actionTrace      []ActionTraceEntry
+	nodeIds        []stdtypes.NodeID
+	nodeInstances  map[stdtypes.NodeID]nodeinstance.NodeInstance
+	cortexCreepers map[stdtypes.NodeID]*cortexcreeper.CortexCreeper
+	actionSelector actions.Actions
+	byzantineNodes []stdtypes.NodeID
+	actionTrace    []ActionTraceEntry
 }
 
 func NewAdversary[T interface{}](
 	createNodeInstance nodeinstance.NodeInstanceCreationFunc[T],
 	nodeConfigs nodeinstance.NodeConfigs[T],
-	eventsOfInterest []stdtypes.Event,
 	weightedActions []actions.WeightedAction,
 	byzantineNodes []stdtypes.NodeID,
 	logger logging.Logger,
@@ -80,17 +78,11 @@ func NewAdversary[T interface{}](
 		return nil, err
 	}
 
-	eventTypesOfInterest := make(map[reflect.Type]bool, len(eventsOfInterest))
-	for _, e := range eventsOfInterest {
-		eventTypesOfInterest[reflect.TypeOf(e)] = true
-	}
-
 	return &Adversary{
 		maputil.GetKeys(nodeInstances),
 		nodeInstances,
 		cortexCreepers,
 		actionSelector,
-		eventTypesOfInterest,
 		byzantineNodes,
 		make([]ActionTraceEntry,
 			0),
@@ -239,7 +231,6 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, che
 
 			// TODO: check for nil?
 			for injectNodeID, injectEvents := range newEvents {
-				fmt.Printf("%s (%s) - injecting v\n", injectNodeID, sourceNodeID)
 				a.pushEvents(injectNodeID, injectEvents, checker)
 			}
 		}

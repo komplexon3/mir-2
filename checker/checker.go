@@ -12,6 +12,9 @@ import (
 	"github.com/filecoin-project/mir/stdtypes"
 )
 
+type Property = modules.PassiveModule
+type Properties = map[string]modules.PassiveModule
+
 type checkerStatus int64
 
 const (
@@ -71,7 +74,7 @@ func newProperty(name string, module modules.PassiveModule) *property {
 
 }
 
-func NewChecker(properties modules.Modules) (*Checker, error) {
+func NewChecker(properties Properties) (*Checker, error) {
 	checker := &Checker{
 		properties: make([]*property, 0, len(properties)),
 		status:     NOT_STARTED,
