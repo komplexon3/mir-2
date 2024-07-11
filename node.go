@@ -252,49 +252,84 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 
 	// observe if node is active
 	// TODO: cancel/shutdown
-	go func() {
+	go func(ctx context.Context) {
 		for {
-			var pWg sync.WaitGroup
-			var cWg sync.WaitGroup
-			// no events in queues atm
 			n.Config.Logger.Log(logging.LevelTrace, "waiting on no events in")
-			continueChan := <-n.noEvents
-			n.Config.Logger.Log(logging.LevelTrace, "no evts on event in - pausing...")
-			// NOTE: I really dislike that we are stopping all workers - maybe we can add an 'abort if new event on event in'
-			for _, pc := range n.pauseChans {
-				pWg.Add(1)
-				go func(pChan chan struct{}, wg *sync.WaitGroup) {
-					defer wg.Done()
-					pChan <- struct{}{}
-				}(pc, &pWg)
-			}
-			pWg.Wait()
-			// at this point, no passive modules should be processing data
-			// it could be that some of the modules created events in the mean time (before being blocked by the lock)
-			// in this case, the channel wouldn't be empty
-			if len(n.eventsIn) == 0 {
-				// all but network are inactive
-				n.Config.Logger.Log(logging.LevelTrace, "no events in eventsIn", "buffer", n.pendingEvents.totalEvents)
-				n.Config.Logger.Log(logging.LevelWarn, "IDLE")
-				if n.inactiveNotificationChan != nil {
-					n.continueNotificationChan = make(chan struct{})
-					n.inactiveNotificationChan <- n.continueNotificationChan
+			select {
+			case <-ctx.Done():
+				return
+			case continueEventLoopChan := <-n.noEvents:
+				pWg := sync.WaitGroup{}
+				pCtx, pCancel := context.WithCancel(ctx)
+				pauseCounter := make(chan struct{}, len(n.modules))
+				defer close(pauseCounter)
+				// no events in queues atm
+				n.Config.Logger.Log(logging.LevelTrace, "no evts on event in - pausing...")
+				// NOTE: I really dislike that we are stopping all workers - maybe we can add an 'abort if new event on event in'
+				for _, pc := range n.pauseChans {
+					pWg.Add(1)
+					go func(pChan chan chan struct{}, wg *sync.WaitGroup, pCtx context.Context, pCancel context.CancelFunc) {
+						continueModuleChan := make(chan struct{})
+						defer wg.Done()
+						defer close(continueModuleChan)
+						select {
+						case <-pCtx.Done():
+							return
+						case pChan <- continueModuleChan:
+							// if this (or another) module created events during the pausing procedure, abort
+							if len(n.eventsIn) > 0 {
+								pCancel()
+							} else {
+								pauseCounter <- struct{}{}
+							}
+							<-pCtx.Done()
+							continueModuleChan <- struct{}{}
+						}
+					}(pc, &pWg, pCtx, pCancel)
 				}
-			} else {
-				n.Config.Logger.Log(logging.LevelTrace, "events in eventIn - not idle", "buffer", n.pendingEvents.totalEvents, "eventsIn", len(n.eventsIn))
+
+				allNodesIdle := true
+				count := 0
+
+				// TODO: should I add a timeout based abort?
+			CounterLoop:
+				for {
+					select {
+					case <-pauseCounter:
+						count++
+						if count == len(n.modules) {
+							// all modules are now inactive and there are no events in eventsIn
+							break CounterLoop
+						}
+					case <-pCtx.Done():
+						allNodesIdle = false
+						// no need to restart modules as they should already be running
+						break CounterLoop
+					}
+				}
+
+				if allNodesIdle {
+					n.Config.Logger.Log(logging.LevelTrace, "no events in eventsIn", "buffer", n.pendingEvents.totalEvents)
+					n.Config.Logger.Log(logging.LevelWarn, "IDLE")
+					if n.inactiveNotificationChan != nil {
+						n.Config.Logger.Log(logging.LevelTrace, "idle - sending notification...")
+						n.continueNotificationChan = make(chan struct{})
+						n.inactiveNotificationChan <- n.continueNotificationChan
+						n.Config.Logger.Log(logging.LevelTrace, "idle - notification sent")
+					} else {
+						n.Config.Logger.Log(logging.LevelTrace, "idle but no notification channel")
+					}
+				} else {
+					n.Config.Logger.Log(logging.LevelTrace, "events in eventIn - not idle", "buffer", n.pendingEvents.totalEvents, "eventsIn", len(n.eventsIn))
+				}
+
+				// restart the modules if they haven't aborted before
+				pCancel()
+				pWg.Wait()
+				continueEventLoopChan <- struct{}{}
 			}
-			// continue 'idle' state
-			for _, pc := range n.pauseChans {
-				cWg.Add(1)
-				go func(pChan chan struct{}, wg *sync.WaitGroup) {
-					defer wg.Done()
-					pChan <- struct{}{}
-				}(pc, &cWg)
-			}
-			cWg.Wait()
-			continueChan <- struct{}{}
 		}
-	}()
+	}(ctx)
 
 	// This loop shovels events between the appropriate channels, until a stopping condition is satisfied.
 	var returnErr error
@@ -311,6 +346,7 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 			n.noEvents <- continueChan
 			// block until done
 			<-continueChan
+			close(continueChan)
 		}
 
 		// Initialize slices of select cases and the corresponding reactions to each case being selected.
@@ -430,7 +466,7 @@ func (n *Node) startModules(ctx context.Context, wg *sync.WaitGroup) {
 
 		// For each module, we start a worker function reads a single work item (EventList) and processes it.
 		wg.Add(1)
-		go func(mID stdtypes.ModuleID, m modules.Module, workChan chan *stdtypes.EventList, pauseChan chan struct{}) {
+		go func(mID stdtypes.ModuleID, m modules.Module, workChan chan *stdtypes.EventList, pauseChan chan chan struct{}) {
 			n.Config.Logger.Log(logging.LevelInfo, "module started", "ID", mID.String())
 			defer n.Config.Logger.Log(logging.LevelInfo, "module finished", "ID", mID.String())
 			defer wg.Done()

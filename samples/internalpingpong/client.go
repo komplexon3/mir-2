@@ -15,6 +15,8 @@ import (
 	"github.com/filecoin-project/mir/samples/internalpingpong/pingpong"
 )
 
+const numModules = 10
+
 func main() {
 	if err := run(); err != nil {
 		fmt.Println(err)
@@ -27,22 +29,24 @@ func run() error {
 	var logger logging.Logger
 	logger = logging.ConsoleTraceLogger // Print trace-level info.
 
-	aModule := pingpong.NewModule(pingpong.ModuleConfig{
-		Self:  stdtypes.ModuleID("A"),
-		Other: stdtypes.ModuleID("B"),
-	}, logger)
-	bModule := pingpong.NewModule(pingpong.ModuleConfig{
-		Self:  stdtypes.ModuleID("B"),
-		Other: stdtypes.ModuleID("A"),
-	}, logger)
-
-	m := map[stdtypes.ModuleID]modules.Module{
-		"A": aModule,
-		"B": bModule,
+	modules := make(modules.Modules, numModules)
+	for i := range numModules {
+		mID := stdtypes.ModuleID(fmt.Sprint(i))
+		otherModuleIDs := make([]stdtypes.ModuleID, 0, numModules-1)
+		for j := range numModules {
+			if i == j {
+				continue
+			}
+			otherModuleIDs = append(otherModuleIDs, stdtypes.ModuleID(fmt.Sprint(j)))
+		}
+		modules[mID] = pingpong.NewModule(pingpong.ModuleConfig{
+			Self:   mID,
+			Others: otherModuleIDs,
+		}, logger)
 	}
 
 	// create a Mir node
-	node, err := mir.NewNode("internalpingpongtest", mir.DefaultNodeConfig().WithLogger(logger), m, nil)
+	node, err := mir.NewNode("internalpingpongtest", mir.DefaultNodeConfig().WithLogger(logger), modules, nil)
 	if err != nil {
 		return es.Errorf("error creating a Mir node: %w", err)
 	}

@@ -13,13 +13,13 @@ import (
 	"github.com/filecoin-project/mir/pkg/modules"
 )
 
-type pauseChans map[stdtypes.ModuleID]chan struct{}
+type pauseChans map[stdtypes.ModuleID]chan chan struct{}
 
 func newPauseChans(modules modules.Modules) pauseChans {
-	pc := make(map[stdtypes.ModuleID]chan struct{}, len(modules))
+	pc := make(map[stdtypes.ModuleID]chan chan struct{}, len(modules))
 
 	for moduleID := range modules {
-		pc[moduleID] = make(chan struct{})
+		pc[moduleID] = make(chan chan struct{})
 	}
 
 	return pc
@@ -62,7 +62,7 @@ func (n *Node) processModuleEvents(
 	module modules.Module,
 	eventSource <-chan *stdtypes.EventList,
 	eventSink chan<- *stdtypes.EventList,
-	pause <-chan struct{},
+	pause <-chan chan struct{},
 	sw *Stopwatch,
 ) (bool, error) {
 	var eventsIn *stdtypes.EventList
@@ -72,9 +72,9 @@ func (n *Node) processModuleEvents(
 
 	// Read input.
 	select {
-	case <-pause:
+	case continueChan := <-pause:
 		n.Config.Logger.Log(logging.LevelTrace, "pausing module", "module", name)
-		<-pause
+		<-continueChan
 		n.Config.Logger.Log(logging.LevelTrace, "continue module", "module", name)
 		return true, nil
 	case eventsIn, inputOpen = <-eventSource:
