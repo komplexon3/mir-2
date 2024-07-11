@@ -1,181 +1,103 @@
 0 - node process started
 1 - node process started
-0 - module started ID=A
-0 - module waiting on input module=A
-1 - module started ID=A
 1 - waiting on no events in
-1 - module started ID=B
-1 - module waiting on input module=B
-1 - module started ID=transport
-1 - module waiting on input module=transport
 1 - no evts on event in - pausing...
-0 - module started ID=B
-0 - module waiting on input module=B
-1 - module waiting on input module=A
-1 - events in eventIn - not idle buffer=0 eventsIn=1
 0 - waiting on no events in
 0 - no evts on event in - pausing...
-1 - pausing module module=transport
-1 - continue module module=transport
-1 - module waiting on input module=transport
+1 - module started ID=A
+1 - module waiting on input module=A
+1 - pausing module module=A
+1 - continue module module=A
+1 - module waiting on input module=A
+0 - module started ID=B
+0 - module waiting on input module=B
 0 - pausing module module=B
 0 - continue module module=B
 0 - module waiting on input module=B
-0 - events in eventIn - not idle buffer=0 eventsIn=1
-0 - pausing module module=A
-0 - continue module module=A
-0 - module waiting on input module=A
-1 - pausing module module=B
-1 - continue module module=B
+1 - module started ID=transport
+1 - module waiting on input module=transport
+1 - module started ID=B
 1 - module waiting on input module=B
-1 - waiting on no events in
-1 - reaction new events in
-0 - waiting on no events in
-1 - intercepting events #=3
-1 - done intercepting events, added to pending events
-0 - reaction new events in
-0 - intercepting events #=3
-0 - done intercepting events, added to pending events
-0 - reaction pending events module=A events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"A","Metadata":{}}}
-0 - reaction pending events module=B events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"B","Metadata":{}}}
-0 - new events to process module=B events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"B","Metadata":{}}}
-0 - Event for module B: {"EvType":"Init","EvData":{"SrcModule":"","DestModule":"B","Metadata":{}}}
-0 - Initiating ping pong - sent ping pong module=B
-0 - module waiting on input module=B
-1 - reaction pending events module=B events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"B","Metadata":{}}}
-1 - reaction pending events module=A events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"A","Metadata":{}}}
-1 - reaction pending events module=transport events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{}}}
-1 - no evts on event in - pausing...
-1 - new events to process module=B events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"B","Metadata":{}}}
-1 - Event for module B: {"EvType":"Init","EvData":{"SrcModule":"","DestModule":"B","Metadata":{}}}
-1 - Initiating ping pong - sent ping pong module=B
-1 - module waiting on input module=B
-1 - pausing module module=B
 0 - module started ID=transport
 0 - module waiting on input module=transport
-0 - new events to process module=transport events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{}}}
-0 - Event for module transport: {"EvType":"Init","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{}}}
-0 - module waiting on input module=transport
-0 - reaction pending events module=transport events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{}}}
-0 - no evts on event in - pausing...
-0 - new events to process module=A events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"A","Metadata":{}}}
-0 - Event for module A: {"EvType":"Init","EvData":{"SrcModule":"","DestModule":"A","Metadata":{}}}
-0 - Sent ping pong srcModule=A destNode=1 destModule=B
-0 - Sent ping pong to internally srcModule=A destModule=B
-0 - Initiating ping pong - sent ping pong module=A
+0 - module started ID=A
 0 - module waiting on input module=A
-1 - new events to process module=transport events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{}}}
-1 - Event for module transport: {"EvType":"Init","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{}}}
-1 - module waiting on input module=transport
-1 - pausing module module=transport
-0 - pausing module module=transport
-0 - continue module module=transport
-0 - module waiting on input module=transport
+1 - events in eventIn - not idle buffer=0 eventsIn=1
+1 - waiting on no events in
+1 - reaction new events in
+1 - intercepting events #=3
+1 - done intercepting events, added to pending events
+1 - reaction pending events module=transport events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{}}}
+1 - reaction pending events module=A events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"A","Metadata":{}}}
+1 - reaction pending events module=B events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"B","Metadata":{}}}
+1 - no evts on event in - pausing...
 1 - new events to process module=A events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"A","Metadata":{}}}
 1 - Event for module A: {"EvType":"Init","EvData":{"SrcModule":"","DestModule":"A","Metadata":{}}}
 1 - Sent ping pong srcModule=A destNode=0 destModule=B
-1 - Sent ping pong to internally srcModule=A destModule=B
 1 - Initiating ping pong - sent ping pong module=A
 1 - module waiting on input module=A
 1 - pausing module module=A
 1 - continue module module=A
 1 - module waiting on input module=A
-0 - pausing module module=A
-0 - continue module module=A
-0 - module waiting on input module=A
+1 - new events to process module=B events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"B","Metadata":{}}}
+1 - Event for module B: {"EvType":"Init","EvData":{"SrcModule":"","DestModule":"B","Metadata":{}}}
+1 - Initiating ping pong - sent ping pong module=B
+1 - module waiting on input module=B
+1 - new events to process module=transport events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{}}}
+1 - Event for module transport: {"EvType":"Init","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{}}}
+1 - module waiting on input module=transport
 0 - events in eventIn - not idle buffer=0 eventsIn=1
 0 - waiting on no events in
 0 - reaction new events in
-0 - intercepting events #=2
+0 - intercepting events #=3
 0 - done intercepting events, added to pending events
-0 - reaction pending events module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}, {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
+0 - reaction pending events module=transport events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{}}}
+0 - reaction pending events module=A events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"A","Metadata":{}}}
+0 - reaction pending events module=B events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"B","Metadata":{}}}
 0 - no evts on event in - pausing...
 1 - events in eventIn - not idle buffer=0 eventsIn=1
-1 - continue module module=transport
-1 - module waiting on input module=transport
 1 - waiting on no events in
 1 - reaction new events in
-1 - intercepting events #=2
+1 - intercepting events #=1
 1 - done intercepting events, added to pending events
-1 - reaction pending events module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}, {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
+1 - reaction pending events module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
 1 - no evts on event in - pausing...
-0 - new events to process module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}, {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
-0 - Event for module transport: {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
-0 - Event for module transport: {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
-0 - module waiting on input module=transport
-0 - pausing module module=transport
-0 - no events in eventsIn buffer=0
-0 - IDLE
-0 - idle - sending notification...
-0 - idle - notification sent
-1 - continue module module=B
-1 - module waiting on input module=B
-1 - pausing module module=B
-S - Node 0 inactive
-0 - continue module module=transport
-0 - module waiting on input module=transport
-0 - pausing module module=B
-0 - continue module module=B
-0 - module waiting on input module=B
-0 - pausing module module=A
-0 - continue module module=A
-0 - module waiting on input module=A
-0 - waiting on no events in
-0 - reaction new events in
-0 - intercepting events #=1
-0 - done intercepting events, added to pending events
-0 - reaction pending events module=A events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
-0 - no evts on event in - pausing...
-1 - new events to process module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}, {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
+1 - new events to process module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
 1 - Event for module transport: {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
-1 - Event for module transport: {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
 1 - module waiting on input module=transport
 1 - pausing module module=transport
+0 - new events to process module=B events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"B","Metadata":{}}}
+0 - Event for module B: {"EvType":"Init","EvData":{"SrcModule":"","DestModule":"B","Metadata":{}}}
+0 - Initiating ping pong - sent ping pong module=B
+0 - module waiting on input module=B
+0 - pausing module module=B
+1 - no events in eventsIn buffer=0
+1 - IDLE
+1 - idle - sending notification...
+1 - idle - notification sent
 1 - continue module module=transport
 1 - module waiting on input module=transport
-S - Node 0 active
-0 - new events to process module=A events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
-0 - Event for module A: {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
-0 - Received message sender=0 msg=&{{ B map[]} 0 A 0}
-0 - Received ping pong module=A
+0 - new events to process module=transport events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{}}}
+0 - Event for module transport: {"EvType":"Init","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{}}}
+0 - module waiting on input module=transport
 0 - pausing module module=transport
+0 - continue module module=transport
+0 - module waiting on input module=transport
 1 - pausing module module=A
-1 - events in eventIn - not idle buffer=0 eventsIn=2
+1 - pausing module module=B
+S - Node 1 inactive
 1 - continue module module=B
 1 - module waiting on input module=B
 1 - waiting on no events in
-1 - reaction new events in
-1 - intercepting events #=1
-1 - done intercepting events, added to pending events
-1 - reaction new events in
-1 - intercepting events #=1
-1 - done intercepting events, added to pending events
-0 - pausing module module=B
+0 - new events to process module=A events=[{"EvType":"Init","EvData":{"SrcModule":"","DestModule":"A","Metadata":{}}}
+0 - Event for module A: {"EvType":"Init","EvData":{"SrcModule":"","DestModule":"A","Metadata":{}}}
+0 - Sent ping pong srcModule=A destNode=1 destModule=B
+0 - Initiating ping pong - sent ping pong module=A
+0 - module waiting on input module=A
+0 - continue module module=B
+0 - module waiting on input module=B
 1 - continue module module=A
 1 - module waiting on input module=A
-1 - new events to process module=A events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}, {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
-1 - Event for module A: {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
-1 - Event for module A: {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
-1 - Received message sender=0 msg=&{{ B map[]} 0 A 0}
-1 - Received ping pong module=A
-1 - reaction pending events module=A events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}, {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
-1 - no evts on event in - pausing...
-1 - pausing module module=transport
-1 - pausing module module=B
-1 - Sent ping pong srcModule=A destNode=0 destModule=B
-1 - Sent ping pong as event srcModule=A destModule=B
-1 - Received message sender=1 msg=&{{ B map[]} 1 A 0}
-0 - Sent ping pong srcModule=A destNode=1 destModule=A
-0 - Sent ping pong as event srcModule=A destModule=A
-0 - module waiting on input module=A
-0 - pausing module module=A
-0 - continue module module=A
-0 - module waiting on input module=A
-1 - Received ping pong module=A
-0 - continue module module=transport
-0 - module waiting on input module=transport
-0 - continue module module=B
-0 - module waiting on input module=B
 0 - events in eventIn - not idle buffer=0 eventsIn=2
 0 - waiting on no events in
 0 - reaction new events in
@@ -191,167 +113,412 @@ S - Node 0 active
 0 - pausing module module=transport
 0 - continue module module=transport
 0 - module waiting on input module=transport
-0 - waiting on no events in
-0 - reaction new events in
-0 - intercepting events #=2
-0 - done intercepting events, added to pending events
-0 - reaction pending events module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
-0 - new events to process module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
-0 - Event for module transport: {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
-0 - module waiting on input module=transport
-0 - Sent ping pong srcModule=A destNode=1 destModule=B
-0 - Sent ping pong to internally srcModule=A destModule=B
-1 - Sent ping pong srcModule=A destNode=0 destModule=A
-0 - reaction new events in
-0 - intercepting events #=2
-0 - done intercepting events, added to pending events
-1 - Sent ping pong as event srcModule=A destModule=A
-0 - reaction pending events module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}, {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
-1 - module waiting on input module=A
-1 - pausing module module=A
-0 - module waiting on input module=A
-0 - new events to process module=A events=[{"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"InitiatorNode":"0","InitiatorModule":"A","SeqNr":1}}
-0 - Event for module A: {"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"InitiatorNode":"0","InitiatorModule":"A","SeqNr":1}}
-1 - continue module module=A
-1 - module waiting on input module=A
-1 - events in eventIn - not idle buffer=0 eventsIn=2
-1 - waiting on no events in
-1 - continue module module=B
-1 - module waiting on input module=B
-1 - reaction new events in
-1 - intercepting events #=1
-1 - done intercepting events, added to pending events
-0 - new events to process module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}, {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
-0 - Event for module transport: {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
-0 - Event for module transport: {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
-0 - module waiting on input module=transport
-0 - reaction pending events module=A events=[{"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"InitiatorNode":"0","InitiatorModule":"A","SeqNr":1}}
-0 - 1 rounds over, lets chill module=A
-0 - module waiting on input module=A
-1 - continue module module=transport
-1 - module waiting on input module=transport
-1 - reaction pending events module=A events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
-1 - no evts on event in - pausing...
-1 - pausing module module=transport
-1 - new events to process module=A events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
-1 - Event for module A: {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
-1 - Received message sender=0 msg=&{{ A map[]} 0 A 1}
-1 - 1 rounds over, lets chill module=A
-1 - module waiting on input module=A
-0 - no evts on event in - pausing...
-0 - events in eventIn - not idle buffer=0 eventsIn=1
-1 - continue module module=transport
-1 - module waiting on input module=transport
-1 - pausing module module=B
-1 - continue module module=B
-1 - module waiting on input module=B
-0 - pausing module module=A
-0 - continue module module=A
-0 - module waiting on input module=A
-0 - pausing module module=transport
-0 - continue module module=transport
-0 - module waiting on input module=transport
-0 - waiting on no events in
-0 - reaction new events in
-0 - intercepting events #=1
-0 - done intercepting events, added to pending events
-1 - events in eventIn - not idle buffer=0 eventsIn=2
-1 - waiting on no events in
-0 - reaction pending events module=A events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
-0 - no evts on event in - pausing...
-0 - new events to process module=A events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
-0 - Event for module A: {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
-0 - Received message sender=0 msg=&{{ B map[]} 1 A 1}
-0 - 1 rounds over, lets chill module=A
-0 - module waiting on input module=A
-0 - pausing module module=A
-0 - no events in eventsIn buffer=0
-0 - IDLE
-0 - idle - sending notification...
-0 - idle - notification sent
-1 - reaction new events in
-1 - intercepting events #=4
-1 - done intercepting events, added to pending events
-1 - reaction pending events module=A events=[{"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"InitiatorNode":"1","InitiatorModule":"A","SeqNr":1}}
-0 - pausing module module=transport
-0 - continue module module=transport
-1 - new events to process module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}, {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
-0 - continue module module=A
-0 - module waiting on input module=A
-1 - reaction pending events module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}, {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
-1 - reaction new events in
-1 - intercepting events #=1
-1 - done intercepting events, added to pending events
-1 - reaction pending events module=B events=[{"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"InitiatorNode":"0","InitiatorModule":"A","SeqNr":1}}
-0 - module waiting on input module=transport
-S - Node 0 inactive
 0 - pausing module module=B
 0 - continue module module=B
 0 - module waiting on input module=B
 0 - waiting on no events in
-1 - new events to process module=A events=[{"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"InitiatorNode":"1","InitiatorModule":"A","SeqNr":1}}
-1 - Event for module A: {"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"InitiatorNode":"1","InitiatorModule":"A","SeqNr":1}}
-1 - Event for module transport: {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
-1 - new events to process module=B events=[{"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"InitiatorNode":"0","InitiatorModule":"A","SeqNr":1}}
-1 - Event for module B: {"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"InitiatorNode":"0","InitiatorModule":"A","SeqNr":1}}
-1 - 1 rounds over, lets chill module=B
-1 - module waiting on input module=B
-1 - 1 rounds over, lets chill module=A
-1 - module waiting on input module=A
-1 - new events to process module=A events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
-1 - Event for module A: {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
-1 - Received message sender=0 msg=&{{ B map[]} 1 A 1}
-1 - 1 rounds over, lets chill module=A
-1 - module waiting on input module=A
-1 - Event for module transport: {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
-1 - reaction pending events module=A events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
+0 - reaction new events in
+0 - intercepting events #=1
+0 - done intercepting events, added to pending events
+0 - reaction pending events module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
+0 - no evts on event in - pausing...
+0 - new events to process module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
+0 - Event for module transport: {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
+0 - module waiting on input module=transport
+0 - pausing module module=transport
+1 - reaction new events in
+1 - intercepting events #=1
+1 - done intercepting events, added to pending events
+1 - reaction pending events module=A events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
 1 - no evts on event in - pausing...
+0 - pausing module module=B
+S - Node 1 active
+1 - new events to process module=A events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
+1 - Event for module A: {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjB9fQ=="}}
+1 - Received message sender=0 msg=&{{ B map[]} 0 A 0}
+1 - Received ping pong module=A
 1 - pausing module module=B
+1 - pausing module module=transport
+0 - Sent ping pong as event srcModule=A destModule=B
+0 - module waiting on input module=A
+0 - pausing module module=A
+1 - Sent ping pong to internally srcModule=A destModule=A
+0 - events in eventIn - not idle buffer=0 eventsIn=1
+0 - waiting on no events in
+1 - module waiting on input module=A
+0 - reaction new events in
+0 - intercepting events #=1
+0 - done intercepting events, added to pending events
+1 - continue module module=B
+1 - module waiting on input module=B
+0 - continue module module=B
+0 - module waiting on input module=B
+0 - new events to process module=B events=[{"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"InitiatorNode":"1","InitiatorModule":"A","SeqNr":1}}
+0 - Event for module B: {"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"InitiatorNode":"1","InitiatorModule":"A","SeqNr":1}}
+0 - continue module module=transport
+0 - module waiting on input module=transport
+1 - pausing module module=A
+1 - continue module module=A
+1 - module waiting on input module=A
+0 - continue module module=A
+0 - module waiting on input module=A
+1 - events in eventIn - not idle buffer=0 eventsIn=1
+1 - waiting on no events in
+1 - continue module module=transport
+1 - module waiting on input module=transport
+0 - reaction pending events module=B events=[{"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"InitiatorNode":"1","InitiatorModule":"A","SeqNr":1}}
+0 - no evts on event in - pausing...
+0 - Received ping pong module=B
+1 - reaction new events in
+1 - intercepting events #=1
+1 - done intercepting events, added to pending events
+0 - pausing module module=transport
+0 - pausing module module=A
+1 - reaction pending events module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
+1 - no evts on event in - pausing...
+1 - new events to process module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
+1 - Event for module transport: {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"A","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
+1 - module waiting on input module=transport
+1 - pausing module module=A
+1 - continue module module=A
+1 - module waiting on input module=A
+1 - pausing module module=B
+1 - continue module module=B
+1 - module waiting on input module=B
+1 - pausing module module=transport
+1 - continue module module=transport
+1 - module waiting on input module=transport
+1 - events in eventIn - not idle buffer=0 eventsIn=1
+1 - waiting on no events in
+1 - reaction new events in
+1 - intercepting events #=1
+1 - done intercepting events, added to pending events
+1 - reaction pending events module=A events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
+1 - no evts on event in - pausing...
+1 - new events to process module=A events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
+1 - Event for module A: {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
+1 - Received message sender=1 msg=&{{ A map[]} 0 A 1}
+1 - Received ping pong module=A
+1 - pausing module module=transport
+1 - pausing module module=B
+0 - Sent ping pong to internally srcModule=B destModule=A
+0 - module waiting on input module=B
+0 - pausing module module=B
+0 - continue module module=B
+0 - module waiting on input module=B
+0 - continue module module=A
+0 - module waiting on input module=A
+0 - events in eventIn - not idle buffer=0 eventsIn=1
+0 - waiting on no events in
+1 - Sent ping pong as event srcModule=A destModule=B
+1 - module waiting on input module=A
+1 - pausing module module=A
+1 - continue module module=A
+1 - module waiting on input module=A
+0 - reaction new events in
+0 - intercepting events #=1
+0 - done intercepting events, added to pending events
+0 - continue module module=transport
+0 - module waiting on input module=transport
+0 - new events to process module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"B","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjJ9fQ=="}}
+0 - Event for module transport: {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"B","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjJ9fQ=="}}
+0 - module waiting on input module=transport
+1 - continue module module=B
+1 - module waiting on input module=B
+1 - events in eventIn - not idle buffer=0 eventsIn=1
+1 - waiting on no events in
+1 - continue module module=transport
+1 - module waiting on input module=transport
+0 - reaction pending events module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"B","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjJ9fQ=="}}
+0 - no evts on event in - pausing...
+0 - events in eventIn - not idle buffer=0 eventsIn=1
+1 - reaction new events in
+1 - intercepting events #=1
+1 - done intercepting events, added to pending events
+0 - pausing module module=A
+0 - continue module module=A
+0 - module waiting on input module=A
+1 - reaction pending events module=B events=[{"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"InitiatorNode":"0","InitiatorModule":"A","SeqNr":2}}
+1 - no evts on event in - pausing...
+1 - new events to process module=B events=[{"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"InitiatorNode":"0","InitiatorModule":"A","SeqNr":2}}
+1 - Event for module B: {"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"InitiatorNode":"0","InitiatorModule":"A","SeqNr":2}}
+0 - pausing module module=transport
+0 - continue module module=transport
+0 - module waiting on input module=transport
+0 - waiting on no events in
+0 - reaction new events in
+0 - intercepting events #=1
+0 - done intercepting events, added to pending events
+0 - reaction pending events module=B events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjJ9fQ=="}}
+0 - no evts on event in - pausing...
+1 - pausing module module=A
+1 - pausing module module=transport
+1 - Received ping pong module=B
+0 - new events to process module=B events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjJ9fQ=="}}
+0 - Event for module B: {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjJ9fQ=="}}
+0 - Received message sender=0 msg=&{{ A map[]} 1 A 2}
+0 - Received ping pong module=B
+0 - pausing module module=transport
+0 - pausing module module=A
+0 - Sent ping pong srcModule=B destNode=1 destModule=A
+0 - module waiting on input module=B
+0 - pausing module module=B
+0 - continue module module=B
+0 - module waiting on input module=B
+1 - Sent ping pong as event srcModule=B destModule=B
+1 - module waiting on input module=B
+0 - continue module module=A
+1 - continue module module=transport
+0 - events in eventIn - not idle buffer=0 eventsIn=1
+1 - continue module module=A
+1 - module waiting on input module=A
+0 - waiting on no events in
+0 - reaction new events in
+0 - intercepting events #=1
+0 - done intercepting events, added to pending events
+0 - module waiting on input module=A
+1 - module waiting on input module=transport
+1 - pausing module module=B
+1 - continue module module=B
+1 - module waiting on input module=B
+0 - continue module module=transport
+0 - module waiting on input module=transport
+0 - new events to process module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"B","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjN9fQ=="}}
+0 - Event for module transport: {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"B","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjN9fQ=="}}
+0 - module waiting on input module=transport
+1 - events in eventIn - not idle buffer=0 eventsIn=1
+1 - waiting on no events in
+1 - reaction new events in
+1 - intercepting events #=1
+1 - done intercepting events, added to pending events
+1 - reaction new events in
+1 - intercepting events #=1
+1 - done intercepting events, added to pending events
+1 - reaction pending events module=B events=[{"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"InitiatorNode":"0","InitiatorModule":"A","SeqNr":3}}, {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjN9fQ=="}}
+0 - reaction pending events module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"B","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjN9fQ=="}}
+0 - no evts on event in - pausing...
+1 - new events to process module=B events=[{"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"InitiatorNode":"0","InitiatorModule":"A","SeqNr":3}}, {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjN9fQ=="}}
+1 - Event for module B: {"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"InitiatorNode":"0","InitiatorModule":"A","SeqNr":3}}
+1 - no evts on event in - pausing...
+1 - pausing module module=transport
+0 - no events in eventsIn buffer=0
+0 - IDLE
+0 - idle - sending notification...
+0 - idle - notification sent
+1 - pausing module module=A
+0 - pausing module module=A
+0 - pausing module module=B
+1 - Event for module B: {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjN9fQ=="}}
+1 - Received ping pong module=B
+0 - pausing module module=transport
+0 - continue module module=transport
+0 - module waiting on input module=transport
+S - Node 0 inactive
+0 - continue module module=B
+0 - module waiting on input module=B
+0 - waiting on no events in
+0 - continue module module=A
+0 - module waiting on input module=A
+1 - Sent ping pong as event srcModule=B destModule=B
+1 - Received message sender=0 msg=&{{ A map[]} 1 A 3}
+1 - Received ping pong module=B
+1 - Sent ping pong srcModule=B destNode=0 destModule=A
+1 - module waiting on input module=B
+1 - pausing module module=B
+1 - events in eventIn - not idle buffer=0 eventsIn=1
+1 - continue module module=transport
+1 - module waiting on input module=transport
+1 - waiting on no events in
+1 - continue module module=A
+1 - module waiting on input module=A
+1 - continue module module=B
+1 - module waiting on input module=B
+1 - reaction new events in
+1 - intercepting events #=2
+1 - done intercepting events, added to pending events
+1 - reaction pending events module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"B","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjR9fQ=="}}
+1 - reaction pending events module=B events=[{"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"InitiatorNode":"0","InitiatorModule":"A","SeqNr":4}}
+1 - new events to process module=B events=[{"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"InitiatorNode":"0","InitiatorModule":"A","SeqNr":4}}
+1 - Event for module B: {"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"InitiatorNode":"0","InitiatorModule":"A","SeqNr":4}}
+1 - Received ping pong module=B
+1 - new events to process module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"B","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjR9fQ=="}}
+1 - Event for module transport: {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"B","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjR9fQ=="}}
+1 - module waiting on input module=transport
+1 - no evts on event in - pausing...
+0 - reaction new events in
+0 - intercepting events #=1
+1 - pausing module module=transport
+1 - pausing module module=A
+0 - done intercepting events, added to pending events
+0 - reaction pending events module=B events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjR9fQ=="}}
+0 - new events to process module=B events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjR9fQ=="}}
+0 - Event for module B: {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjR9fQ=="}}
+0 - Received message sender=1 msg=&{{ A map[]} 1 A 4}
+0 - no evts on event in - pausing...
+S - Node 0 active
+0 - Received ping pong module=B
+0 - pausing module module=transport
+0 - pausing module module=A
+0 - Sent ping pong srcModule=B destNode=1 destModule=B
+0 - module waiting on input module=B
+0 - pausing module module=B
+1 - Sent ping pong to internally srcModule=B destModule=A
+1 - module waiting on input module=B
+1 - pausing module module=B
+0 - continue module module=B
+0 - continue module module=A
+1 - continue module module=B
+1 - module waiting on input module=B
+1 - continue module module=A
+1 - continue module module=transport
+0 - module waiting on input module=B
+0 - continue module module=transport
+0 - module waiting on input module=transport
+1 - module waiting on input module=A
+0 - module waiting on input module=A
+0 - events in eventIn - not idle buffer=0 eventsIn=1
+0 - waiting on no events in
+1 - events in eventIn - not idle buffer=0 eventsIn=1
+1 - waiting on no events in
+0 - reaction new events in
+0 - intercepting events #=1
+1 - module waiting on input module=transport
+1 - reaction new events in
+1 - intercepting events #=1
+1 - done intercepting events, added to pending events
+0 - done intercepting events, added to pending events
+0 - reaction pending events module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"B","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjV9fQ=="}}
+0 - no evts on event in - pausing...
+1 - reaction pending events module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"B","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjV9fQ=="}}
+0 - pausing module module=B
+1 - no evts on event in - pausing...
+0 - new events to process module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"B","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjV9fQ=="}}
+0 - Event for module transport: {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"B","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjV9fQ=="}}
+0 - module waiting on input module=transport
+0 - pausing module module=transport
+0 - no events in eventsIn buffer=0
+0 - IDLE
+0 - idle - sending notification...
+0 - idle - notification sent
+0 - pausing module module=A
+0 - continue module module=A
+0 - module waiting on input module=A
+S - Node 0 inactive
+0 - continue module module=transport
+0 - module waiting on input module=transport
+0 - waiting on no events in
+1 - new events to process module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"B","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjV9fQ=="}}
+1 - Event for module transport: {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"B","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjV9fQ=="}}
+0 - continue module module=B
+0 - module waiting on input module=B
+1 - pausing module module=A
+1 - pausing module module=B
+1 - module waiting on input module=transport
+1 - pausing module module=transport
+1 - continue module module=transport
+1 - module waiting on input module=transport
+1 - events in eventIn - not idle buffer=0 eventsIn=2
+1 - waiting on no events in
+1 - continue module module=B
+1 - module waiting on input module=B
+1 - continue module module=A
+1 - module waiting on input module=A
+1 - reaction new events in
+1 - intercepting events #=1
+1 - done intercepting events, added to pending events
+1 - reaction new events in
+1 - intercepting events #=1
+1 - done intercepting events, added to pending events
+1 - reaction pending events module=B events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjV9fQ=="}}, {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjV9fQ=="}}
+1 - no evts on event in - pausing...
+1 - new events to process module=B events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjV9fQ=="}}, {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjV9fQ=="}}
+1 - pausing module module=transport
+1 - Event for module B: {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"Sender":"0","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjV9fQ=="}}
+1 - Event for module B: {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjV9fQ=="}}
+1 - Received message sender=0 msg=&{{ B map[]} 1 A 5}
+1 - Received ping pong module=B
+1 - pausing module module=A
+1 - Sent ping pong to internally srcModule=B destModule=B
+1 - Received message sender=1 msg=&{{ A map[]} 0 A 5}
+1 - Received ping pong module=B
+1 - Sent ping pong srcModule=B destNode=0 destModule=B
+1 - module waiting on input module=B
+1 - pausing module module=B
+1 - continue module module=B
+1 - module waiting on input module=B
+1 - events in eventIn - not idle buffer=0 eventsIn=1
+1 - waiting on no events in
+1 - reaction new events in
+1 - intercepting events #=2
+1 - done intercepting events, added to pending events
+1 - continue module module=A
+1 - module waiting on input module=A
+1 - continue module module=transport
+1 - module waiting on input module=transport
+1 - new events to process module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"B","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjZ9fQ=="}}, {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"B","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjZ9fQ=="}}
+1 - Event for module transport: {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"B","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjZ9fQ=="}}
+1 - Event for module transport: {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"B","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjZ9fQ=="}}
 1 - module waiting on input module=transport
 0 - reaction new events in
 0 - intercepting events #=1
 0 - done intercepting events, added to pending events
-1 - pausing module module=transport
-S - Node 0 active
-0 - reaction new events in
-0 - intercepting events #=1
-0 - done intercepting events, added to pending events
-0 - reaction pending events module=A events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}, {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
+0 - reaction pending events module=B events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjZ9fQ=="}}
+0 - new events to process module=B events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjZ9fQ=="}}
+0 - Event for module B: {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjZ9fQ=="}}
+1 - reaction pending events module=transport events=[{"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["1"],"RemoteDestModule":"B","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjZ9fQ=="}}, {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"transport","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"B","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjZ9fQ=="}}
+1 - no evts on event in - pausing...
 0 - no evts on event in - pausing...
+1 - events in eventIn - not idle buffer=0 eventsIn=1
+S - Node 0 active
+0 - Received message sender=1 msg=&{{ B map[]} 0 A 6}
+0 - 6 rounds over, lets chill module=B
+0 - module waiting on input module=B
+0 - pausing module module=B
+0 - no events in eventsIn buffer=0
+0 - IDLE
+0 - idle - sending notification...
+0 - idle - notification sent
+0 - pausing module module=transport
+0 - continue module module=transport
+0 - module waiting on input module=transport
+S - Node 0 inactive
+0 - pausing module module=A
+0 - continue module module=A
+0 - module waiting on input module=A
+0 - continue module module=B
+0 - module waiting on input module=B
+1 - pausing module module=A
+1 - continue module module=A
+1 - module waiting on input module=A
+1 - pausing module module=transport
+1 - continue module module=transport
+0 - waiting on no events in
+1 - module waiting on input module=transport
+1 - waiting on no events in
+1 - reaction new events in
+1 - intercepting events #=1
+1 - done intercepting events, added to pending events
+1 - reaction pending events module=B events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjZ9fQ=="}}
+1 - no evts on event in - pausing...
+1 - new events to process module=B events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjZ9fQ=="}}
+1 - Event for module B: {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjZ9fQ=="}}
+1 - Received message sender=1 msg=&{{ B map[]} 1 A 6}
+1 - 6 rounds over, lets chill module=B
+1 - module waiting on input module=B
+1 - pausing module module=transport
 1 - no events in eventsIn buffer=0
 1 - IDLE
 1 - idle - sending notification...
 1 - idle - notification sent
-1 - continue module module=B
-1 - module waiting on input module=B
-0 - pausing module module=B
-0 - pausing module module=transport
-S - Node 1 inactive
-0 - new events to process module=A events=[{"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}, {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
-0 - Event for module A: {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQiIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjAiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
-1 - pausing module module=A
-0 - Event for module A: {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"Sender":"1","Payload":"eyJFdlR5cGUiOiJQaW5nUG9uZyIsIkV2RGF0YSI6eyJTcmNNb2R1bGUiOiIiLCJEZXN0TW9kdWxlIjoiQSIsIk1ldGFkYXRhIjp7fSwiSW5pdGlhdG9yTm9kZSI6IjEiLCJJbml0aWF0b3JNb2R1bGUiOiJBIiwiU2VxTnIiOjF9fQ=="}}
-1 - waiting on no events in
-1 - continue module module=A
-1 - module waiting on input module=A
-0 - Received message sender=1 msg=&{{ B map[]} 0 A 1}
-0 - 1 rounds over, lets chill module=A
-0 - Received message sender=1 msg=&{{ A map[]} 1 A 1}
-0 - 1 rounds over, lets chill module=A
-0 - module waiting on input module=A
-0 - pausing module module=A
-0 - no events in eventsIn buffer=0
-0 - IDLE
-0 - idle - sending notification...
-0 - idle - notification sent
-0 - continue module module=transport
-0 - module waiting on input module=transport
 1 - continue module module=transport
 1 - module waiting on input module=transport
-S - Node 0 inactive
+1 - pausing module module=B
+1 - continue module module=B
+1 - pausing module module=A
+1 - continue module module=A
+1 - module waiting on input module=A
+S - Node 1 inactive
 S - === Both nodes inactive ===
-0 - continue module module=A
-0 - module waiting on input module=A
-0 - waiting on no events in
-0 - continue module module=B
-0 - module waiting on input module=B
+1 - module waiting on input module=B
+1 - waiting on no events in
+S - =-= Idle =-=

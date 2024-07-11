@@ -76,7 +76,7 @@ func NewModule(mc ModuleConfig, logger logging.Logger) modules.PassiveModule {
 
 func (p *ppm) handlePingPong(pp *events.PingPong) error {
 
-	const reps uint64 = 1
+	const reps uint64 = 6
 	if pp.SeqNr >= reps {
 		p.logger.Log(logging.LevelTrace, fmt.Sprintf("%d rounds over, lets chill", reps), "module", p.mc.Self)
 		return nil
@@ -90,24 +90,10 @@ func (p *ppm) handlePingPong(pp *events.PingPong) error {
 
 func (p *ppm) sendPingPong(pp *events.PingPong) {
 	// send to this node or the node, if going to the same node, 50/50
-	stddsl.SendMessage(p.m, p.mc.Transport, p.mc.Self, pp, p.mc.OtherNode)
-	p.logger.Log(logging.LevelTrace, "Sent ping pong", "srcModule", p.mc.Self, "destNode", p.mc.OtherNode, "destModule", pp.Dest())
-
-	if rand.Float32() > 0.5 {
-		// or "send" to this node
-		p.logger.Log(logging.LevelTrace, "Sent ping pong to internally", "srcModule", p.mc.Self, "destModule", pp.Dest())
-		stddsl.SendMessage(p.m, p.mc.Transport, p.mc.Self, pp, p.mc.SelfNode)
-	} else {
-		// or deliver directly to this node
-		p.logger.Log(logging.LevelTrace, "Sent ping pong as event", "srcModule", p.mc.Self, "destModule", pp.Dest())
-		dsl.EmitEvent(p.m, pp)
-	}
-
+	// stddsl.SendMessage(p.m, p.mc.Transport, p.mc.Self, pp, p.mc.OtherNode)
+	// p.logger.Log(logging.LevelTrace, "Sent ping pong", "srcModule", p.mc.Self, "destNode", p.mc.OtherNode, "destModule", pp.Dest())
+	//
 	// if rand.Float32() > 0.5 {
-	// 	// send to another node
-	// 	stddsl.SendMessage(p.m, p.mc.Transport, p.mc.Self, pp, p.mc.OtherNode)
-	// 	p.logger.Log(logging.LevelTrace, "Sent ping pong", "srcModule", p.mc.Self, "destNode", p.mc.OtherNode, "destModule", pp.Dest())
-	// } else if rand.Float32() > 0.5 {
 	// 	// or "send" to this node
 	// 	p.logger.Log(logging.LevelTrace, "Sent ping pong to internally", "srcModule", p.mc.Self, "destModule", pp.Dest())
 	// 	stddsl.SendMessage(p.m, p.mc.Transport, p.mc.Self, pp, p.mc.SelfNode)
@@ -116,4 +102,18 @@ func (p *ppm) sendPingPong(pp *events.PingPong) {
 	// 	p.logger.Log(logging.LevelTrace, "Sent ping pong as event", "srcModule", p.mc.Self, "destModule", pp.Dest())
 	// 	dsl.EmitEvent(p.m, pp)
 	// }
+
+	if rand.Float32() > 0.5 {
+		// send to another node
+		stddsl.SendMessage(p.m, p.mc.Transport, p.mc.Self, pp, p.mc.OtherNode)
+		p.logger.Log(logging.LevelTrace, "Sent ping pong", "srcModule", p.mc.Self, "destNode", p.mc.OtherNode, "destModule", pp.Dest())
+	} else if rand.Float32() > 0.5 {
+		// or "send" to this node
+		p.logger.Log(logging.LevelTrace, "Sent ping pong to internally", "srcModule", p.mc.Self, "destModule", pp.Dest())
+		stddsl.SendMessage(p.m, p.mc.Transport, p.mc.Self, pp, p.mc.SelfNode)
+	} else {
+		// or deliver directly to this node
+		p.logger.Log(logging.LevelTrace, "Sent ping pong as event", "srcModule", p.mc.Self, "destModule", pp.Dest())
+		dsl.EmitEvent(p.m, pp)
+	}
 }

@@ -265,7 +265,7 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 				defer close(pauseCounter)
 				// no events in queues atm
 				n.Config.Logger.Log(logging.LevelTrace, "no evts on event in - pausing...")
-				// NOTE: I really dislike that we are stopping all workers - maybe we can add an 'abort if new event on event in'
+				// TODO: don't (ab)use cancel for regular control flow - add "stop"/"done" channel
 				for _, pc := range n.pauseChans {
 					pWg.Add(1)
 					go func(pChan chan chan struct{}, wg *sync.WaitGroup, pCtx context.Context, pCancel context.CancelFunc) {
