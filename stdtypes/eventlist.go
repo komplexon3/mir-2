@@ -153,6 +153,23 @@ func (el *EventList) Filter(predicate func(event Event) bool) *EventList {
 	return filtered
 }
 
+func (el *EventList) String() string {
+	if el.list == nil {
+		return ""
+	}
+
+	if el.Len() == 0 {
+		return "[]"
+	}
+
+	curr := el.list.Front()
+	str := "[" + curr.Value.(Event).ToString()
+	for curr = curr.Next(); curr != nil; curr = curr.Next() {
+		str += ", " + curr.Value.(Event).ToString()
+	}
+	return str
+}
+
 // Iterator returns a pointer to an EventListIterator object used to iterate over the events in this list,
 // starting from the beginning of the list.
 func (el *EventList) Iterator() *EventListIterator {

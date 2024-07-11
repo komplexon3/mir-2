@@ -1,0 +1,78 @@
+node process started
+waiting on no events in
+module started ID=B
+no events block
+events in eventIn - not idle
+waiting on no events in
+module started ID=A
+no events block
+started processing events # active=1
+started processing events # active=2
+waiting on modules to finish
+Event for module B: {"EvType":"Init","EvData":{"SrcModule":"","DestModule":"B","Metadata":{}}}
+Initiating ping pong - not A module, waiting on ping pong module=B
+finished processing events # active=1
+Event for module A: {"EvType":"Init","EvData":{"SrcModule":"","DestModule":"A","Metadata":{}}}
+Initiating ping pong - sent ping pong module=A
+finished processing events # active=0
+events in eventIn - not idle
+waiting on no events in
+no events block
+started processing events # active=1
+waiting on modules to finish
+Event for module B: {"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"SeqNr":0}}
+Received ping pong module=B
+Sent ping pong module=B
+finished processing events # active=0
+events in eventIn - not idle
+waiting on no events in
+no events block
+no events in eventsIn
+IDLE
+waiting on no events in
+started processing events # active=1
+Event for module A: {"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"SeqNr":1}}
+Received ping pong module=A
+Sent ping pong module=A
+finished processing events # active=0
+no events block
+started processing events # active=1
+waiting on modules to finish
+Event for module B: {"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"SeqNr":2}}
+Received ping pong module=B
+Sent ping pong module=B
+finished processing events # active=0
+events in eventIn - not idle
+waiting on no events in
+no events block
+started processing events # active=1
+waiting on modules to finish
+Event for module A: {"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"SeqNr":3}}
+Received ping pong module=A
+Sent ping pong module=A
+finished processing events # active=0
+events in eventIn - not idle
+waiting on no events in
+no events block
+started processing events # active=1
+waiting on modules to finish
+Event for module B: {"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"SeqNr":4}}
+Received ping pong module=B
+Sent ping pong module=B
+finished processing events # active=0
+events in eventIn - not idle
+waiting on no events in
+started processing events # active=1
+no events block
+waiting on modules to finish
+Event for module A: {"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"A","Metadata":{},"SeqNr":5}}
+Received ping pong module=A
+Sent ping pong module=A
+finished processing events # active=0
+events in eventIn - not idle
+waiting on no events in
+no events block
+started processing events # active=1
+Event for module B: {"EvType":"PingPong","EvData":{"SrcModule":"","DestModule":"B","Metadata":{},"SeqNr":6}}
+Received ping pong module=B
+waiting on modules to finish

@@ -13,13 +13,25 @@ import (
 	"github.com/filecoin-project/mir/pkg/modules"
 )
 
+type pauseChans map[stdtypes.ModuleID]chan struct{}
+
+func newPauseChans(modules modules.Modules) pauseChans {
+	pc := make(map[stdtypes.ModuleID]chan struct{}, len(modules))
+
+	for moduleID := range modules {
+		pc[moduleID] = make(chan struct{})
+	}
+
+	return pc
+}
+
 // workChans represents input channels for the modules within the Node.
 // the Node.process() method writes events to these channels to route them between the Node's modules.
 type workChans map[stdtypes.ModuleID]chan *stdtypes.EventList
 
 // Allocate and return a new workChans structure.
 func newWorkChans(modules modules.Modules) workChans {
-	wc := make(map[stdtypes.ModuleID]chan *stdtypes.EventList)
+	wc := make(map[stdtypes.ModuleID]chan *stdtypes.EventList, len(modules))
 
 	for moduleID := range modules {
 		wc[moduleID] = make(chan *stdtypes.EventList)
@@ -46,17 +58,27 @@ func newWorkChans(modules modules.Modules) workChans {
 // If context is canceled, processModuleEvents might return a nil error with or without performing event processing.
 func (n *Node) processModuleEvents(
 	ctx context.Context,
+	name stdtypes.ModuleID,
 	module modules.Module,
 	eventSource <-chan *stdtypes.EventList,
 	eventSink chan<- *stdtypes.EventList,
+	pause <-chan struct{},
 	sw *Stopwatch,
 ) (bool, error) {
 	var eventsIn *stdtypes.EventList
 	var inputOpen bool
 
+	n.Config.Logger.Log(logging.LevelTrace, "module waiting on input", "module", name)
+
 	// Read input.
 	select {
+	case <-pause:
+		n.Config.Logger.Log(logging.LevelTrace, "pausing module", "module", name)
+		<-pause
+		n.Config.Logger.Log(logging.LevelTrace, "continue module", "module", name)
+		return true, nil
 	case eventsIn, inputOpen = <-eventSource:
+		n.Config.Logger.Log(logging.LevelTrace, "new events to process", "module", name, "events", eventsIn)
 		if !inputOpen {
 			return false, nil
 		}
@@ -64,6 +86,7 @@ func (n *Node) processModuleEvents(
 		return false, nil
 	case <-n.workErrNotifier.ExitC():
 		return false, nil
+
 	}
 
 	eventsOut := stdtypes.EmptyList()
