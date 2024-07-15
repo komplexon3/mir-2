@@ -92,7 +92,8 @@ type Node struct {
 
 	// no events in queue signal
 	noEvents                 chan chan struct{}
-	pauseChans               pauseChans
+	modulePauseChans         pauseChans
+	importerPauseChans       pauseChans
 	inactiveNotificationChan chan chan struct{}
 	continueNotificationChan chan struct{}
 }
@@ -128,6 +129,14 @@ func NewNode(
 		stopwatches[mID] = &Stopwatch{}
 	}
 
+	numberOfActiveModules := 0
+	for _, module := range m {
+		switch module.(type) {
+		case modules.ActiveModule:
+			numberOfActiveModules++
+		}
+	}
+
 	// Return a new Node.
 	return &Node{
 		ID:     id,
@@ -152,7 +161,8 @@ func NewNode(
 		stopped: make(chan struct{}),
 
 		noEvents:                 make(chan chan struct{}),
-		pauseChans:               newPauseChans(m),
+		modulePauseChans:         newModulePauseChans(m),
+		importerPauseChans:       newImporterPauseChans(m),
 		inactiveNotificationChan: nil,
 		continueNotificationChan: nil,
 	}, nil
@@ -266,7 +276,7 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 				// no events in queues atm
 				n.Config.Logger.Log(logging.LevelTrace, "no evts on event in - pausing...")
 				// TODO: don't (ab)use cancel for regular control flow - add "stop"/"done" channel
-				for _, pc := range n.pauseChans {
+				for _, pc := range n.modulePauseChans {
 					pWg.Add(1)
 					go func(pChan chan chan struct{}, wg *sync.WaitGroup, pCtx context.Context, pCancel context.CancelFunc) {
 						continueModuleChan := make(chan struct{})
@@ -288,7 +298,29 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 					}(pc, &pWg, pCtx, pCancel)
 				}
 
-				allNodesIdle := true
+				for _, pc := range n.importerPauseChans {
+					pWg.Add(1)
+					go func(pChan chan chan struct{}, wg *sync.WaitGroup, pCtx context.Context, pCancel context.CancelFunc) {
+						continueImporterChan := make(chan struct{})
+						defer wg.Done()
+						defer close(continueImporterChan)
+						select {
+						case <-pCtx.Done():
+							return
+						case pChan <- continueImporterChan:
+							// if this (or another) module created events during the pausing procedure, abort
+							if len(n.eventsIn) > 0 {
+								pCancel()
+							} else {
+								pauseCounter <- struct{}{}
+							}
+							<-pCtx.Done()
+							continueImporterChan <- struct{}{}
+						}
+					}(pc, &pWg, pCtx, pCancel)
+				}
+
+				allModulesAndImportersIdle := true
 				count := 0
 
 				// TODO: should I add a timeout based abort?
@@ -297,18 +329,18 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 					select {
 					case <-pauseCounter:
 						count++
-						if count == len(n.modules) {
+						if count == len(n.modulePauseChans)+len(n.importerPauseChans) {
 							// all modules are now inactive and there are no events in eventsIn
 							break CounterLoop
 						}
 					case <-pCtx.Done():
-						allNodesIdle = false
+						allModulesAndImportersIdle = false
 						// no need to restart modules as they should already be running
 						break CounterLoop
 					}
 				}
 
-				if allNodesIdle {
+				if allModulesAndImportersIdle {
 					n.Config.Logger.Log(logging.LevelTrace, "no events in eventsIn", "buffer", n.pendingEvents.totalEvents)
 					n.Config.Logger.Log(logging.LevelWarn, "IDLE")
 					if n.inactiveNotificationChan != nil {
@@ -336,7 +368,7 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 	for returnErr == nil {
 
 		if n.continueNotificationChan != nil {
-			n.continueNotificationChan <- struct{}{}
+			close(n.continueNotificationChan)
 			n.continueNotificationChan = nil
 		}
 
@@ -510,7 +542,7 @@ func (n *Node) startModules(ctx context.Context, wg *sync.WaitGroup) {
 				}
 			}
 
-		}(moduleID, module, n.workChans[moduleID], n.pauseChans[moduleID])
+		}(moduleID, module, n.workChans[moduleID], n.modulePauseChans[moduleID])
 
 		// Depending on the module type (and the way output events are communicated back to the node),
 		// start a goroutine importing the modules' output events
@@ -520,14 +552,15 @@ func (n *Node) startModules(ctx context.Context, wg *sync.WaitGroup) {
 		case modules.ActiveModule:
 			// Start a goroutine to import the ActiveModule's output events to workItemInput.
 			wg.Add(1)
+			inactiveNotificationChan := n.importerPauseChans[moduleID]
 			go func() {
 				defer wg.Done()
 				if n.debugMode {
 					// In debug mode, all produced events are routed to the debug output.
-					n.importEvents(ctx, m.EventsOut(), n.debugOut)
+					n.importEvents(ctx, m.EventsOut(), n.debugOut, inactiveNotificationChan)
 				} else {
 					// During normal operation, feed all produced events back into the event loop.
-					n.importEvents(ctx, m.EventsOut(), n.eventsIn)
+					n.importEvents(ctx, m.EventsOut(), n.eventsIn, inactiveNotificationChan)
 				}
 			}()
 		default:
@@ -544,6 +577,7 @@ func (n *Node) importEvents(
 	ctx context.Context,
 	eventSource <-chan *stdtypes.EventList,
 	eventSink chan<- *stdtypes.EventList,
+	pause <-chan chan struct{},
 ) {
 	for {
 
@@ -551,6 +585,10 @@ func (n *Node) importEvents(
 
 		// First, try to read events from the input.
 		select {
+		case continueChan := <-pause:
+			n.Config.Logger.Log(logging.LevelTrace, "pausing imorter")
+			<-continueChan
+			n.Config.Logger.Log(logging.LevelTrace, "continue importer")
 		case newEvents, ok := <-eventSource:
 
 			// Return if input channel has been closed
@@ -637,4 +675,17 @@ func createInitEvents(m modules.Modules) *stdtypes.EventList {
 		initEvents.PushBack(stdevents.NewInit(moduleID))
 	}
 	return initEvents
+}
+
+func newImporterPauseChans(m modules.Modules) pauseChans {
+	pcs := make(map[stdtypes.ModuleID]chan chan struct{})
+
+	for moduleID, module := range m {
+		switch module.(type) {
+		case modules.ActiveModule:
+			pcs[moduleID] = make(chan chan struct{})
+		}
+	}
+
+	return pcs
 }

@@ -49,6 +49,7 @@ func (fl *FuzzLink) ApplyEvents(
 			// no actions on init
 		case *stdevents.SendMessage:
 			for _, destID := range evt.DestNodes {
+				fl.FuzzTransport.ftObserver.RegisterSend()
 				if destID == fl.Source {
 					// Send message to myself bypassing the network.
 					// The sending must be done in its own goroutine in case writing to tr.incomingMessages blocks.
@@ -58,6 +59,7 @@ func (fl *FuzzLink) ApplyEvents(
 					go func() {
 						select {
 						case eventsOut <- stdtypes.ListOf(receiveEvent):
+							fl.FuzzTransport.ftObserver.RegisterReceive()
 							fl.FuzzTransport.logger.Log(logging.LevelTrace, "Pushed onto evtsOut (shortcut)", "event", receiveEvent)
 						case <-ctx.Done():
 						}
@@ -85,6 +87,7 @@ func (fl *FuzzLink) ApplyPbEvent(ctx context.Context, evt *eventpb.Event) error 
 		switch e := transportpbtypes.EventFromPb(e.Transport).Type.(type) {
 		case *transportpbtypes.Event_SendMessage:
 			for _, destID := range e.SendMessage.Destinations {
+				fl.FuzzTransport.ftObserver.RegisterSend()
 				if destID == fl.Source {
 					// Send message to myself bypassing the network.
 					receivedEvent := transportpbevents.MessageReceived(
@@ -96,6 +99,7 @@ func (fl *FuzzLink) ApplyPbEvent(ctx context.Context, evt *eventpb.Event) error 
 					go func() {
 						select {
 						case eventsOut <- stdtypes.ListOf(receivedEvent.Pb()):
+							fl.FuzzTransport.ftObserver.RegisterReceive()
 							fl.FuzzTransport.logger.Log(logging.LevelTrace, "Pushed onto evtsOut (shortcut)", "event", receivedEvent.Pb())
 						case <-ctx.Done():
 						}
@@ -139,146 +143,56 @@ type FuzzTransport struct {
 	// Buffers is source x dest
 	Buffers    map[stdtypes.NodeID]map[stdtypes.NodeID]chan *stdtypes.EventList
 	NodeSinks  map[stdtypes.NodeID]chan *stdtypes.EventList
+	ftObserver *FuzzTransportObserver
 	logger     logging.Logger
-	pauseChans map[stdtypes.NodeID]chan chan struct{}
-	pause      bool
-	pauseLock  *sync.RWMutex
-	pauseCond  *sync.Cond
 }
 
-func NewFuzzTransport(nodeIDs []stdtypes.NodeID) *FuzzTransport {
+func NewFuzzTransport(nodeIDs []stdtypes.NodeID, inactiveNotificationC *chan chan struct{}, logger logging.Logger, ctx context.Context) *FuzzTransport {
 	buffers := make(map[stdtypes.NodeID]map[stdtypes.NodeID]chan *stdtypes.EventList, len(nodeIDs))
 	nodeSinks := make(map[stdtypes.NodeID]chan *stdtypes.EventList, len(nodeIDs))
-	pauseChans := make(map[stdtypes.NodeID]chan chan struct{})
 	for _, sourceID := range nodeIDs {
-		pauseChans[sourceID] = make(chan chan struct{})
 		buffers[sourceID] = make(map[stdtypes.NodeID]chan *stdtypes.EventList, len(nodeIDs)-1)
 		for _, destID := range nodeIDs {
 			if sourceID == destID {
 				continue
 			}
-			buffers[sourceID][destID] = make(chan *stdtypes.EventList, 10000)
+			buffers[sourceID][destID] = make(chan *stdtypes.EventList, 1000)
 		}
 		nodeSinks[sourceID] = make(chan *stdtypes.EventList)
 	}
 
-	pauseLock := sync.RWMutex{}
-
-	return &FuzzTransport{
-		Buffers:    buffers,
-		NodeSinks:  nodeSinks,
-		logger:     logging.ConsoleErrorLogger,
-		pauseChans: pauseChans,
-		pause:      false,
-		pauseLock:  &pauseLock,
-		pauseCond:  sync.NewCond(pauseLock.RLocker()),
+	ft := &FuzzTransport{
+		Buffers:   buffers,
+		NodeSinks: nodeSinks,
+		logger:    logger,
 	}
-}
 
-// TODO: should probably have a context
-func (ft *FuzzTransport) Pause() (func(), chan struct{}) {
-	ft.pauseLock.Lock()
-	ft.pause = true
-	ft.pauseLock.Unlock()
-
-	wgPaused := &sync.WaitGroup{}
-	wgResumed := &sync.WaitGroup{}
-	doneC := make(chan struct{})
-	pausedNotificationChannel := make(chan struct{})
-
-	// pause all comm consume goroutines
-	for _, pc := range ft.pauseChans {
-		wgPaused.Add(1)
-		wgResumed.Add(1)
-		go func(pc chan chan struct{}, dc chan struct{}, wgP *sync.WaitGroup, wgR *sync.WaitGroup) {
-			continueChan := make(chan struct{})
-			defer close(continueChan)
-			select {
-			case <-dc:
-				wgP.Done()
-				wgR.Done()
-				return
-			case pc <- continueChan:
-				wgP.Done()
-				<-dc
-				continueChan <- struct{}{}
-				wgR.Done()
+	if inactiveNotificationC != nil {
+		ft.ftObserver = NewFuzzTransportObserver(ft, *inactiveNotificationC)
+		go func() {
+			err := ft.ftObserver.Run(ctx)
+			if err != nil {
+				panic(es.Errorf("FuzzTransportObserver failed unexpectedly: %v", err))
 			}
-		}(pc, doneC, wgPaused, wgResumed)
+		}()
 	}
 
-	// wait until all consume gorourines are paused
-
-	go func(pnC chan struct{}, wgP *sync.WaitGroup) {
-		wgP.Wait()
-		close(pnC)
-	}(pausedNotificationChannel, wgPaused)
-
-	// release all comm channels
-	// resume/abort pause
-	return func() {
-		ft.pauseLock.Lock()
-		ft.pause = false
-		ft.pauseCond.Broadcast()
-		ft.pauseLock.Unlock()
-
-		close(doneC)
-
-		// wait until all consumer routines have resumed
-		wgResumed.Wait()
-	}, pausedNotificationChannel
-}
-
-func (ft *FuzzTransport) CountMessagesInTransit() (int, error) {
-	ft.pauseLock.RLock()
-	defer ft.pauseLock.RUnlock()
-	if ft.pause {
-		return 0, es.Errorf("cannot count messages in transit while the network is running - you must pause it first ")
-	}
-
-	count := 0
-
-	for _, bufferGroup := range ft.Buffers {
-		for _, buffer := range bufferGroup {
-			count += len(buffer)
-		}
-	}
-
-	return count, nil
+	return ft
 }
 
 func (ft *FuzzTransport) SendRawMessage(sourceNode, destNode stdtypes.NodeID, destModule stdtypes.ModuleID, message stdtypes.Message) error {
-	// block incase the system is paused
-	ft.pauseLock.RLock()
-	if ft.pause {
-		ft.pauseCond.Wait()
-	}
-	ft.pauseLock.RUnlock()
-	select {
-	case ft.Buffers[sourceNode][destNode] <- stdtypes.ListOf(
+	ft.Buffers[sourceNode][destNode] <- stdtypes.ListOf(
 		stdevents.NewMessageReceived(destModule, sourceNode, message),
-	):
-	default:
-		fmt.Printf("Warning: Dropping message %v from %s to %s\n", message, sourceNode, destNode)
-	}
+	)
 
 	return nil
 }
 
 func (ft *FuzzTransport) Send(sourceNode, destNode stdtypes.NodeID, msg *messagepb.Message) {
 	// block incase the system is paused
-	ft.pauseLock.RLock()
-	if ft.pause {
-		ft.pauseCond.Wait()
-	}
-	ft.pauseLock.RUnlock()
-	select {
-	case ft.Buffers[sourceNode][destNode] <- stdtypes.ListOf(
+	ft.Buffers[sourceNode][destNode] <- stdtypes.ListOf(
 		transportpbevents.MessageReceived(stdtypes.ModuleID(msg.DestModule), sourceNode, messagepbtypes.MessageFromPb(msg)).Pb(),
-	):
-	default:
-		fmt.Printf("Warning: Dropping message %T from %s to %s\n", msg.Type, sourceNode, destNode)
-	}
+	)
 }
 
 func (ft *FuzzTransport) Link(source stdtypes.NodeID) (net.Transport, error) {
@@ -289,7 +203,9 @@ func (ft *FuzzTransport) Link(source stdtypes.NodeID) (net.Transport, error) {
 	}, nil
 }
 
-func (ft *FuzzTransport) Close() {}
+func (ft *FuzzTransport) Close() {
+
+}
 
 func (fl *FuzzLink) CloseOldConnections(_ *trantorpbtypes.Membership) {}
 
@@ -311,14 +227,11 @@ func (fl *FuzzLink) Connect(_ *trantorpbtypes.Membership) {
 			defer fl.wg.Done()
 			for {
 				select {
-				case cc := <-fl.FuzzTransport.pauseChans[destID]:
-					// block waiting on continue signal
-					<-cc
 				case msg := <-buffer:
-					// if paused but already here, it will still push it onto node sink, which is the event out for the node
 					fl.FuzzTransport.logger.Log(logging.LevelTrace, "Popped msg - trying to push onto evtsOut", "event", msg)
 					select {
 					case fl.FuzzTransport.NodeSinks[destID] <- msg:
+						fl.FuzzTransport.ftObserver.RegisterReceive()
 						fl.FuzzTransport.logger.Log(logging.LevelTrace, "Pushed onto evtsOut", "event", msg)
 					case <-fl.DoneC:
 						return
@@ -341,4 +254,78 @@ func (fl *FuzzLink) WaitFor(_ int) error {
 func (fl *FuzzLink) Stop() {
 	close(fl.DoneC)
 	fl.wg.Wait()
+}
+
+type FuzzTransportObserver struct {
+	FuzzTransport         *FuzzTransport
+	sendRevcTrackC        chan bool
+	inactiveNotificationC chan chan struct{}
+	doneC                 chan struct{}
+	wg                    sync.WaitGroup
+}
+
+func NewFuzzTransportObserver(ft *FuzzTransport, inactiveNotificationChan chan chan struct{}) *FuzzTransportObserver {
+	return &FuzzTransportObserver{
+		FuzzTransport:         ft,
+		sendRevcTrackC:        make(chan bool),
+		inactiveNotificationC: inactiveNotificationChan,
+		doneC:                 make(chan struct{}),
+	}
+}
+
+func (fto *FuzzTransportObserver) RegisterSend() {
+	if fto == nil {
+		return
+	}
+	fto.FuzzTransport.logger.Log(logging.LevelTrace, "send +++")
+	fto.sendRevcTrackC <- true
+}
+
+func (fto *FuzzTransportObserver) RegisterReceive() {
+	if fto == nil {
+		return
+	}
+	fto.FuzzTransport.logger.Log(logging.LevelTrace, "receive ---")
+	fto.sendRevcTrackC <- false
+}
+
+func (fto *FuzzTransportObserver) Run(ctx context.Context) error {
+	fto.wg.Add(1)
+	defer fto.wg.Done()
+
+	msgsInTransit := 0
+	var activeAgainChan chan struct{}
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-fto.doneC:
+			return nil
+		case wasSend := <-fto.sendRevcTrackC:
+			if wasSend {
+				msgsInTransit++
+				// if consumer currently thinks the network is inactive
+				if activeAgainChan != nil {
+					close(activeAgainChan)
+					activeAgainChan = nil
+				}
+			} else {
+				msgsInTransit--
+			}
+		}
+
+		fto.FuzzTransport.logger.Log(logging.LevelTrace, fmt.Sprintf("%d msg in transit", msgsInTransit))
+
+		if msgsInTransit == 0 && len(fto.sendRevcTrackC) == 0 {
+			activeAgainChan = make(chan struct{})
+			fto.inactiveNotificationC <- activeAgainChan
+		} else if msgsInTransit < 0 {
+			return es.Errorf("number of msgs in transit should never be negative! (current count: %d)", msgsInTransit)
+		}
+	}
+}
+
+func (fto *FuzzTransportObserver) Stop() {
+	close(fto.doneC)
+	fto.wg.Wait()
 }

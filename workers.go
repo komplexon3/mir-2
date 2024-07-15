@@ -15,7 +15,7 @@ import (
 
 type pauseChans map[stdtypes.ModuleID]chan chan struct{}
 
-func newPauseChans(modules modules.Modules) pauseChans {
+func newModulePauseChans(modules modules.Modules) pauseChans {
 	pc := make(map[stdtypes.ModuleID]chan chan struct{}, len(modules))
 
 	for moduleID := range modules {
