@@ -70,24 +70,14 @@ func main() {
 			networkInactive := false
 			wasInactive := false
 
-			var continueChanNode0 chan struct{}
-			var continueChanNode1 chan struct{}
-			var continueChanNetwork chan struct{}
+			var (
+				continueChanNode0   chan struct{}
+				continueChanNode1   chan struct{}
+				continueChanNetwork chan struct{}
+			)
 
 			for {
 				select {
-				case cc := <-inactiveChanNode0:
-					sLogger.Log(logging.LevelTrace, "Node 0 inactive")
-					node0Inactive = true
-					continueChanNode0 = cc
-				case cc := <-inactiveChanNode1:
-					sLogger.Log(logging.LevelTrace, "Node 1 inactive")
-					node1Inactive = true
-					continueChanNode1 = cc
-				case cc := <-inactiveChanNodeNetwork:
-					sLogger.Log(logging.LevelTrace, "Network inactive")
-					networkInactive = true
-					continueChanNetwork = cc
 				case <-continueChanNode0:
 					sLogger.Log(logging.LevelTrace, "Node 0 active")
 					node0Inactive = false
@@ -100,6 +90,18 @@ func main() {
 					sLogger.Log(logging.LevelTrace, "Network active")
 					networkInactive = false
 					continueChanNetwork = nil
+				case cc := <-inactiveChanNode0:
+					sLogger.Log(logging.LevelTrace, "Node 0 inactive")
+					node0Inactive = true
+					continueChanNode0 = cc
+				case cc := <-inactiveChanNode1:
+					sLogger.Log(logging.LevelTrace, "Node 1 inactive")
+					node1Inactive = true
+					continueChanNode1 = cc
+				case cc := <-inactiveChanNodeNetwork:
+					sLogger.Log(logging.LevelTrace, "Network inactive")
+					networkInactive = true
+					continueChanNetwork = cc
 				case <-ctx.Done():
 					return
 				}
