@@ -147,7 +147,7 @@ type FuzzTransport struct {
 	logger     logging.Logger
 }
 
-func NewFuzzTransport(nodeIDs []stdtypes.NodeID, inactiveNotificationC *chan chan struct{}, logger logging.Logger, ctx context.Context) *FuzzTransport {
+func NewFuzzTransport(nodeIDs []stdtypes.NodeID, inactiveNotificationC chan chan struct{}, logger logging.Logger, ctx context.Context) *FuzzTransport {
 	buffers := make(map[stdtypes.NodeID]map[stdtypes.NodeID]chan *stdtypes.EventList, len(nodeIDs))
 	nodeSinks := make(map[stdtypes.NodeID]chan *stdtypes.EventList, len(nodeIDs))
 	for _, sourceID := range nodeIDs {
@@ -168,7 +168,7 @@ func NewFuzzTransport(nodeIDs []stdtypes.NodeID, inactiveNotificationC *chan cha
 	}
 
 	if inactiveNotificationC != nil {
-		ft.ftObserver = NewFuzzTransportObserver(ft, *inactiveNotificationC)
+		ft.ftObserver = NewFuzzTransportObserver(ft, inactiveNotificationC)
 		go func() {
 			err := ft.ftObserver.Run(ctx)
 			if err != nil {

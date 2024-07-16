@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"sync"
 
 	es "github.com/go-errors/errors"
@@ -19,11 +20,6 @@ import (
 func main() {
 	nodeIds := []stdtypes.NodeID{"0", "1"}
 
-	// fkt := deploytest.NewFakeTransport(map[stdtypes.NodeID]types.VoteWeight{
-	// 	stdtypes.NodeID("0"): "1",
-	// 	stdtypes.NodeID("1"): "1",
-	// })
-	//
 	logger := logging.Synchronize(logging.ConsoleTraceLogger)
 
 	wg := &sync.WaitGroup{}
@@ -31,93 +27,107 @@ func main() {
 	var err error
 	errPrimary := make(chan error)
 	errSecondary := make(chan error)
-	inactiveChanNode0 := make(chan chan struct{})
-	inactiveChanNode1 := make(chan chan struct{})
-	inactiveChanNodeNetwork := make(chan chan struct{})
-	// var inactiveChanNode0 chan chan struct{}
-	// var inactiveChanNode1 chan chan struct{}
+	inactiveChanNetwork := make(chan chan struct{})
+	var continueChanNetwork chan struct{}
 	defer close(errPrimary)
 	defer close(errSecondary)
-	defer close(inactiveChanNode0)
-	defer close(inactiveChanNode1)
-	defer close(inactiveChanNodeNetwork)
+	defer close(inactiveChanNetwork)
+	inactiveNodeChans := make(map[stdtypes.NodeID]chan chan struct{}, len(nodeIds))
+	continueNodeChans := make(map[stdtypes.NodeID]chan struct{}, len(nodeIds))
+	for _, nodeID := range nodeIds {
+		inactiveNodeChans[nodeID] = make(chan chan struct{})
+		continueNodeChans[nodeID] = nil
+	}
+
+	defer func() {
+		for _, nc := range inactiveNodeChans {
+			close(nc)
+		}
+	}()
 
 	nLogger := logging.Decorate(logger, "N - ")
-	ft := network.NewFuzzTransport(nodeIds, &inactiveChanNodeNetwork, nLogger, ctx)
+	ft := network.NewFuzzTransport(nodeIds, inactiveChanNetwork, nLogger, ctx)
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		errPrimary <- run(true, ft, inactiveChanNode0, logger, ctx)
+		errPrimary <- run(true, ft, inactiveNodeChans[stdtypes.NodeID("0")], logger, ctx)
 	}()
 
 	wg.Add(1)
 	go func() {
 		wg.Done()
-		errSecondary <- run(false, ft, inactiveChanNode1, logger, ctx)
+		errSecondary <- run(false, ft, inactiveNodeChans[stdtypes.NodeID("1")], logger, ctx)
 	}()
 
 	sLogger := logging.Decorate(logger, "S - ")
 	wg.Add(1)
-	go func(wg *sync.WaitGroup, ctx context.Context) {
+	go func() {
 		defer wg.Done()
+		activeCount := len(nodeIds) + 1 // nodes + network
+		wasInactive := false
+		stop := false
+		for !stop {
+			selectCases := make([]reflect.SelectCase, 0, 2*len(nodeIds)+3) // 2*nodes + network inactive and active + ctx done
+			selectReactions := make([]func(recvVal reflect.Value), 0, 2*len(nodeIds)+3)
 
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			node0Inactive := false
-			node1Inactive := false
-			networkInactive := false
-			wasInactive := false
+			selectCases = append(selectCases, reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(ctx.Done())})
+			selectReactions = append(selectReactions, func(_ reflect.Value) { stop = true })
 
-			var (
-				continueChanNode0   chan struct{}
-				continueChanNode1   chan struct{}
-				continueChanNetwork chan struct{}
-			)
+			// continue cases - must be first
+			// network
+			selectCases = append(selectCases, reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(continueChanNetwork)})
+			selectReactions = append(selectReactions, func(_ reflect.Value) {
+				sLogger.Log(logging.LevelTrace, "Network active")
+				continueChanNetwork = nil
+				activeCount++
+			})
 
-			for {
-				select {
-				case <-continueChanNode0:
-					sLogger.Log(logging.LevelTrace, "Node 0 active")
-					node0Inactive = false
-					continueChanNode0 = nil
-				case <-continueChanNode1:
-					sLogger.Log(logging.LevelTrace, "Node 1 active")
-					node1Inactive = false
-					continueChanNode1 = nil
-				case <-continueChanNetwork:
-					sLogger.Log(logging.LevelTrace, "Network active")
-					networkInactive = false
-					continueChanNetwork = nil
-				case cc := <-inactiveChanNode0:
-					sLogger.Log(logging.LevelTrace, "Node 0 inactive")
-					node0Inactive = true
-					continueChanNode0 = cc
-				case cc := <-inactiveChanNode1:
-					sLogger.Log(logging.LevelTrace, "Node 1 inactive")
-					node1Inactive = true
-					continueChanNode1 = cc
-				case cc := <-inactiveChanNodeNetwork:
-					sLogger.Log(logging.LevelTrace, "Network inactive")
-					networkInactive = true
-					continueChanNetwork = cc
-				case <-ctx.Done():
-					return
-				}
-
-				sLogger.Log(logging.LevelTrace, fmt.Sprintf("n0 %t, n1 %t, net %t", node0Inactive, node1Inactive, networkInactive))
-
-				if node0Inactive && node1Inactive && networkInactive {
-					sLogger.Log(logging.LevelTrace, "=== System inactive ===")
-					wasInactive = true
-				} else if wasInactive {
-					sLogger.Log(logging.LevelTrace, "=== System active again ===")
-					wasInactive = false
-				}
+			// nodes
+			for nodeID, continueChan := range continueNodeChans {
+				selectCases = append(selectCases, reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(continueChan)})
+				selectReactions = append(selectReactions, func(_ reflect.Value) {
+					sLogger.Log(logging.LevelTrace, fmt.Sprintf("Node %s active", nodeID))
+					continueNodeChans[nodeID] = nil
+					activeCount++
+				})
 			}
-		}()
-	}(wg, ctx)
+
+			// inactive cases
+			// network
+			selectCases = append(selectCases, reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(inactiveChanNetwork)})
+			selectReactions = append(selectReactions, func(recvVal reflect.Value) {
+				sLogger.Log(logging.LevelTrace, "Network inactive")
+				continueChanNetwork = recvVal.Interface().(chan struct{})
+				activeCount--
+			})
+
+			// nodes
+			for nodeID, inactiveChan := range inactiveNodeChans {
+				selectCases = append(selectCases, reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(inactiveChan)})
+				selectReactions = append(selectReactions, func(recvVal reflect.Value) {
+					sLogger.Log(logging.LevelTrace, fmt.Sprintf("Node %s inactive", nodeID))
+					continueNodeChans[nodeID] = recvVal.Interface().(chan struct{})
+					activeCount--
+				})
+			}
+
+			sLogger.Log(logging.LevelTrace, "~+~")
+			chosenCase, recvValue, _ := reflect.Select(selectCases)
+			selectReactions[chosenCase](recvValue)
+			sLogger.Log(logging.LevelTrace, "~_~")
+
+			if activeCount == 0 {
+				sLogger.Log(logging.LevelTrace, "=== System inactive ===")
+				wasInactive = true
+			} else if wasInactive {
+				sLogger.Log(logging.LevelTrace, "=== System active again ===")
+				wasInactive = false
+			}
+
+		}
+
+	}()
 
 	select {
 	case pErr := <-errPrimary:
