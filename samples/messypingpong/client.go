@@ -126,7 +126,6 @@ func main() {
 			}
 
 		}
-
 	}()
 
 	select {
@@ -145,7 +144,6 @@ func main() {
 }
 
 func run(isPrimary bool, fuzzTransport *network.FuzzTransport, inactiveChan chan chan struct{}, logger logging.Logger, ctx context.Context) error {
-
 	selfNode := stdtypes.NodeID("0")
 	otherNode := stdtypes.NodeID("1")
 	if !isPrimary {
@@ -183,12 +181,11 @@ func run(isPrimary bool, fuzzTransport *network.FuzzTransport, inactiveChan chan
 	}
 
 	// create a Mir node
-	node, err := mir.NewNode("internalpingpongtest", mir.DefaultNodeConfig().WithLogger(logger), m, nil)
+	node, err := mir.NewNodeWithIdleDetection("internalpingpongtest", mir.DefaultNodeConfig().WithLogger(logger), m, nil, inactiveChan)
+	// node, err := mir.NewNode("internalpingpongtest", mir.DefaultNodeConfig().WithLogger(logger), m, nil)
 	if err != nil {
 		return es.Errorf("error creating a Mir node: %w", err)
 	}
-
-	node.SetInactiveNotificationChannel(inactiveChan)
 
 	// run the node
 	err = node.Run(ctx)

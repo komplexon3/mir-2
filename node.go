@@ -111,7 +111,6 @@ func NewNode(
 	m modules.Modules,
 	interceptor eventlog.Interceptor,
 ) (*Node, error) {
-
 	// Check that a valid configuration has been provided.
 	if err := config.Validate(); err != nil {
 		return nil, es.Errorf("invalid node configuration: %w", err)
@@ -168,6 +167,17 @@ func NewNode(
 	}, nil
 }
 
+func NewNodeWithIdleDetection(id stdtypes.NodeID, config *NodeConfig, m modules.Modules, interceptor eventlog.Interceptor, idleNotificationC chan chan struct{}) (*Node, error) {
+	n, err := NewNode(id, config, m, interceptor)
+	if err != nil {
+		return nil, err
+	}
+
+	n.inactiveNotificationChan = idleNotificationC
+	n.noEvents = make(chan chan struct{})
+	return n, nil
+}
+
 // Debug runs the Node in debug mode.
 // The Node will ony process events submitted through the Step method.
 // All internally generated events will be ignored
@@ -175,7 +185,6 @@ func NewNode(
 // Note that if the caller supplies such a channel, the caller is expected to read from it.
 // Otherwise, the Node's execution might block while writing to the channel.
 func (n *Node) Debug(ctx context.Context, eventsOut chan *stdtypes.EventList) error {
-
 	// When done, indicate to the Stop method that it can return.
 	defer close(n.stopped)
 
@@ -187,12 +196,10 @@ func (n *Node) Debug(ctx context.Context, eventsOut chan *stdtypes.EventList) er
 
 	// Start processing of events.
 	return n.process(ctx)
-
 }
 
 // InjectEvents inserts a list of Events in the Node.
 func (n *Node) InjectEvents(ctx context.Context, events *stdtypes.EventList) error {
-
 	// Enqueue event in a work channel to be handled by the processing thread.
 	select {
 	case n.eventsIn <- events:
@@ -211,7 +218,6 @@ func (n *Node) InjectEvents(ctx context.Context, events *stdtypes.EventList) err
 // The node stops when the ctx is canceled.
 // The function call is blocking and only returns when the node stops.
 func (n *Node) Run(ctx context.Context) error {
-
 	// When done, indicate to the Stop method that it can return.
 	defer close(n.stopped)
 
@@ -260,108 +266,99 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 	// Start processing module events.
 	n.startModules(ctx, &wg)
 
-	// observe if node is active
-	// TODO: cancel/shutdown
-	go func(ctx context.Context) {
-		for {
-			n.Config.Logger.Log(logging.LevelTrace, "waiting on no events in")
-			select {
-			case <-ctx.Done():
-				return
-			case continueEventLoopChan := <-n.noEvents:
-				pWg := sync.WaitGroup{}
-				pCtx, pCancel := context.WithCancel(ctx)
-				pauseCounter := make(chan struct{}, len(n.modules))
-				defer close(pauseCounter)
-				// no events in queues atm
-				n.Config.Logger.Log(logging.LevelTrace, "no evts on event in - pausing...")
-				// TODO: don't (ab)use cancel for regular control flow - add "stop"/"done" channel
-				for _, pc := range n.modulePauseChans {
-					pWg.Add(1)
-					go func(pChan chan chan struct{}, wg *sync.WaitGroup, pCtx context.Context, pCancel context.CancelFunc) {
-						continueModuleChan := make(chan struct{})
-						defer wg.Done()
-						defer close(continueModuleChan)
-						select {
-						case <-pCtx.Done():
-							return
-						case pChan <- continueModuleChan:
-							// if this (or another) module created events during the pausing procedure, abort
-							if len(n.eventsIn) > 0 {
-								pCancel()
-							} else {
-								pauseCounter <- struct{}{}
+	if n.inactiveNotificationChan != nil {
+		// observe if node is active
+		// TODO: cancel/shutdown
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case continueEventLoopChan := <-n.noEvents:
+					pauseWg := sync.WaitGroup{}
+					pauseCtx, pauseCancel := context.WithCancel(ctx)
+					pauseCounter := make(chan struct{}, len(n.modules))
+					defer close(pauseCounter)
+					// no events in queues atm
+					// TODO: don't (ab)use cancel for regular control flow - add "stop"/"done" channel
+					for _, pauseC := range n.modulePauseChans {
+						pauseWg.Add(1)
+						go func() {
+							continueModuleChan := make(chan struct{})
+							defer pauseWg.Done()
+							defer close(continueModuleChan)
+							select {
+							case <-pauseCtx.Done():
+								return
+							case pauseC <- continueModuleChan:
+								// if this (or another) module created events during the pausing procedure, abort
+								if len(n.eventsIn) > 0 {
+									pauseCancel()
+								} else {
+									pauseCounter <- struct{}{}
+								}
+								<-pauseCtx.Done()
+								continueModuleChan <- struct{}{}
 							}
-							<-pCtx.Done()
-							continueModuleChan <- struct{}{}
-						}
-					}(pc, &pWg, pCtx, pCancel)
-				}
+						}()
+					}
 
-				for _, pc := range n.importerPauseChans {
-					pWg.Add(1)
-					go func(pChan chan chan struct{}, wg *sync.WaitGroup, pCtx context.Context, pCancel context.CancelFunc) {
-						continueImporterChan := make(chan struct{})
-						defer wg.Done()
-						defer close(continueImporterChan)
-						select {
-						case <-pCtx.Done():
-							return
-						case pChan <- continueImporterChan:
-							// if this (or another) module created events during the pausing procedure, abort
-							if len(n.eventsIn) > 0 {
-								pCancel()
-							} else {
-								pauseCounter <- struct{}{}
+					for _, pauseC := range n.importerPauseChans {
+						pauseWg.Add(1)
+						go func() {
+							continueImporterChan := make(chan struct{})
+							defer pauseWg.Done()
+							defer close(continueImporterChan)
+							select {
+							case <-pauseCtx.Done():
+								return
+							case pauseC <- continueImporterChan:
+								// if this (or another) module created events during the pausing procedure, abort
+								if len(n.eventsIn) > 0 {
+									pauseCancel()
+								} else {
+									pauseCounter <- struct{}{}
+								}
+								<-pauseCtx.Done()
+								continueImporterChan <- struct{}{}
 							}
-							<-pCtx.Done()
-							continueImporterChan <- struct{}{}
-						}
-					}(pc, &pWg, pCtx, pCancel)
-				}
+						}()
+					}
 
-				allModulesAndImportersIdle := true
-				count := 0
+					allModulesAndImportersIdle := true
+					count := 0
 
-				// TODO: should I add a timeout based abort?
-			CounterLoop:
-				for {
-					select {
-					case <-pauseCounter:
-						count++
-						if count == len(n.modulePauseChans)+len(n.importerPauseChans) {
-							// all modules are now inactive and there are no events in eventsIn
+				CounterLoop:
+					for {
+						select {
+						case <-pauseCounter:
+							count++
+							if count == len(n.modulePauseChans)+len(n.importerPauseChans) {
+								// all modules are now inactive and there are no events in eventsIn
+								break CounterLoop
+							}
+						case <-pauseCtx.Done():
+							allModulesAndImportersIdle = false
+							// no need to restart modules as they should already be running
 							break CounterLoop
 						}
-					case <-pCtx.Done():
-						allModulesAndImportersIdle = false
-						// no need to restart modules as they should already be running
-						break CounterLoop
 					}
-				}
 
-				if allModulesAndImportersIdle {
-					n.Config.Logger.Log(logging.LevelTrace, "no events in eventsIn", "buffer", n.pendingEvents.totalEvents)
-					n.Config.Logger.Log(logging.LevelWarn, "IDLE")
-					if n.inactiveNotificationChan != nil {
-						n.Config.Logger.Log(logging.LevelTrace, "idle - sending notification...")
+					if allModulesAndImportersIdle {
 						n.continueNotificationChan = make(chan struct{})
 						n.inactiveNotificationChan <- n.continueNotificationChan
-						n.Config.Logger.Log(logging.LevelTrace, "idle - notification sent")
-					} else {
-						n.Config.Logger.Log(logging.LevelTrace, "idle but no notification channel")
 					}
-				} else {
-					n.Config.Logger.Log(logging.LevelTrace, "events in eventIn - not idle", "buffer", n.pendingEvents.totalEvents, "eventsIn", len(n.eventsIn))
-				}
 
-				// restart the modules if they haven't aborted before
-				pCancel()
-				pWg.Wait()
-				continueEventLoopChan <- struct{}{}
+					// restart the modules if they haven't aborted before
+					pauseCancel()
+					pauseWg.Wait()
+					continueEventLoopChan <- struct{}{}
+				}
 			}
-		}
-	}(ctx)
+		}()
+	}
 
 	// This loop shovels events between the appropriate channels, until a stopping condition is satisfied.
 	var returnErr error
@@ -372,13 +369,15 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 			n.continueNotificationChan = nil
 		}
 
-		if n.pendingEvents.totalEvents == 0 {
-			// no events in queues, block to check modules
-			continueChan := make(chan struct{})
-			n.noEvents <- continueChan
-			// block until done
-			<-continueChan
-			close(continueChan)
+		if n.inactiveNotificationChan != nil {
+			if n.pendingEvents.totalEvents == 0 {
+				// no events in queues, block to check modules
+				continueChan := make(chan struct{})
+				n.noEvents <- continueChan
+				// block until done
+				<-continueChan
+				close(continueChan)
+			}
 		}
 
 		// Initialize slices of select cases and the corresponding reactions to each case being selected.
@@ -456,7 +455,7 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 				// Create a copy of moduleID to use in the reaction function.
 				// If we used moduleID directly in the function definition, it would correspond to the loop variable
 				// and have the same value for all cases after the loop finishes iterating.
-				var mID = moduleID
+				mID := moduleID
 
 				// React to writing to a work channel by emptying the corresponding event buffer
 				// (i.e., removing events just written to the channel from the buffer).
@@ -491,7 +490,6 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 }
 
 func (n *Node) startModules(ctx context.Context, wg *sync.WaitGroup) {
-
 	// The modules mostly read events from their respective channels in n.workChans,
 	// process them correspondingly, and write the results (also represented as events) in the appropriate channels.
 	for moduleID, module := range n.modules {
@@ -509,7 +507,7 @@ func (n *Node) startModules(ctx context.Context, wg *sync.WaitGroup) {
 			processingCtx, cancelProcessing := context.WithCancel(ctx)
 			defer cancelProcessing()
 
-			var continueProcessing = true
+			continueProcessing := true
 			var err error
 
 			for continueProcessing {
@@ -541,7 +539,6 @@ func (n *Node) startModules(ctx context.Context, wg *sync.WaitGroup) {
 					return
 				}
 			}
-
 		}(moduleID, module, n.workChans[moduleID], n.modulePauseChans[moduleID])
 
 		// Depending on the module type (and the way output events are communicated back to the node),
@@ -626,7 +623,6 @@ func (n *Node) importEvents(
 // as those will be intercepted separately when processed.
 // Make sure to call the Strip method of the EventList before passing it to interceptEvents.
 func (n *Node) interceptEvents(events *stdtypes.EventList) *stdtypes.EventList {
-
 	// ATTENTION: n.interceptor is an interface type. If it is assigned the nil value of a concrete type,
 	// this condition will evaluate to true, and Intercept(events) will be called on nil.
 	// The implementation of the concrete type must make sure that calling Intercept even on the nil value

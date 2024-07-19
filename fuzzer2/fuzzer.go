@@ -20,27 +20,29 @@ import (
 	"github.com/filecoin-project/mir/stdtypes"
 )
 
-const MAX_EVENTS = 200
-const MAX_HEARTBEATS_INACTIVE = 10
+const (
+	MAX_EVENTS              = 200
+	MAX_HEARTBEATS_INACTIVE = 10
+)
 
-type Fuzzer[T interface{}] struct {
+type Fuzzer[T any] struct {
 	ca         *centraladversay.Adversary
 	puppeteer  puppeteer.Puppeteer
 	reportsDir string
 	logger     logging.Logger
 }
 
-func NewFuzzer[T interface{}](
+func NewFuzzer[T any](
 	createNodeInstance nodeinstance.NodeInstanceCreationFunc[T],
 	nodeConfigs nodeinstance.NodeConfigs[T],
 	byzantineNodes []stdtypes.NodeID,
 	puppeteer puppeteer.Puppeteer,
-	actions []actions.WeightedAction,
+	byzantineActions []actions.WeightedAction,
+	networkActions []actions.WeightedAction,
 	reportsDir string,
 	logger logging.Logger,
 ) (*Fuzzer[T], error) {
-	adv, err := centraladversay.NewAdversary(createNodeInstance, nodeConfigs, actions, byzantineNodes, logger)
-
+	adv, err := centraladversay.NewAdversary(createNodeInstance, nodeConfigs, byzantineActions, byzantineNodes, logger)
 	if err != nil {
 		return nil, es.Errorf("failed to create adversary: %v", err)
 	}

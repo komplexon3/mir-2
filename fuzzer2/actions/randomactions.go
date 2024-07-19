@@ -9,8 +9,8 @@ type RandomActions struct {
 }
 
 type WeightedAction struct {
-	weight int
 	action Action
+	weight int
 }
 
 func NewWeightedAction(action Action, weight int) WeightedAction {

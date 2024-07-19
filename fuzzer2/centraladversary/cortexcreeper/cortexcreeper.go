@@ -10,20 +10,22 @@ import (
 )
 
 type CortexCreeper struct {
-	node      *mir.Node
-	cancel    context.CancelFunc
-	eventsIn  chan *stdtypes.EventList
-	eventsOut chan *stdtypes.EventList
-	abort     chan struct{}
+	node           *mir.Node
+	cancel         context.CancelFunc
+	eventsIn       chan *stdtypes.EventList
+	eventsOut      chan *stdtypes.EventList
+	abort          chan struct{}
+	IdleDetectionC chan chan struct{}
 	eventlog.Interceptor
 }
 
 func NewCortexCreeper() *CortexCreeper {
 	return &CortexCreeper{
-		node:      nil,
-		eventsIn:  make(chan *stdtypes.EventList),
-		eventsOut: make(chan *stdtypes.EventList),
-		abort:     make(chan struct{}),
+		node:           nil,
+		eventsIn:       make(chan *stdtypes.EventList),
+		eventsOut:      make(chan *stdtypes.EventList),
+		abort:          make(chan struct{}),
+		IdleDetectionC: make(chan chan struct{}),
 	}
 }
 

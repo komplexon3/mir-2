@@ -91,6 +91,7 @@ func (vci *VectorClockInterceptor) Intercept(events *stdtypes.EventList) (*stdty
 				return vci.vc.Clone()
 			}()
 			nEv, err = nEv.SetMetadata(vcKey, vc)
+			nEv, err = nEv.SetMetadata("vcSend", vcMsg)
 		case *eventpb.Event:
 			switch pbEvT := evT.Type.(type) {
 			case *eventpb.Event_Transport:

@@ -23,18 +23,18 @@ import (
 
 type BcbNodeInstance struct {
 	node            *mir.Node
-	nodeID          stdtypes.NodeID
 	transportModule *deploytest.FakeLink
-	config          BcbNodeInstanceConfig
 	cortexCreeper   *cortexcreeper.CortexCreeper
+	nodeID          stdtypes.NodeID
+	config          BcbNodeInstanceConfig
 }
 
 type BcbNodeInstanceConfig struct {
+	FakeTransport *deploytest.FakeTransport
+	Leader        stdtypes.NodeID
+	ReportPath    string
 	InstanceUID   []byte
 	NumberOfNodes int
-	Leader        stdtypes.NodeID
-	FakeTransport *deploytest.FakeTransport
-	ReportPath    string
 }
 
 func (bi *BcbNodeInstance) GetNode() *mir.Node {
@@ -119,7 +119,7 @@ func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig,
 	}
 
 	// create a Mir node
-	node, err := mir.NewNode(nodeID, mir.DefaultNodeConfig().WithLogger(logger), m, interceptor)
+	node, err := mir.NewNodeWithIdleDetection(nodeID, mir.DefaultNodeConfig().WithLogger(logger), m, interceptor, cortexCreeper.IdleDetectionC)
 	if err != nil {
 		return nil, es.Errorf("error creating a Mir node: %w", err)
 	}
