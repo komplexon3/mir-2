@@ -42,7 +42,7 @@ func NewFuzzer[T any](
 	reportsDir string,
 	logger logging.Logger,
 ) (*Fuzzer[T], error) {
-	adv, err := centraladversay.NewAdversary(createNodeInstance, nodeConfigs, byzantineActions, byzantineNodes, logger)
+	adv, err := centraladversay.NewAdversary(createNodeInstance, nodeConfigs, byzantineActions, networkActions, byzantineNodes, logger)
 	if err != nil {
 		return nil, es.Errorf("failed to create adversary: %v", err)
 	}
@@ -56,7 +56,7 @@ func NewFuzzer[T any](
 }
 
 func (f *Fuzzer[T]) Run(name string, propertyChecker *checker.Checker, maxEvents, maxInactiveHeartbeats int) error {
-	reportDir := fmt.Sprintf("./report_%s_%s", strings.Join(strings.Split(name, " "), "_"), time.Now().Format("2006-01-02_15-04-05"))
+	reportDir := fmt.Sprintf("./report_%s_%s", time.Now().Format("2006-01-02_15-04-05"), strings.Join(strings.Split(name, " "), "_"))
 	err := os.MkdirAll(reportDir, os.ModePerm)
 	if err != nil {
 		return es.Errorf("failed to create report directory: %v", err)
@@ -97,9 +97,9 @@ func (f *Fuzzer[T]) Run(name string, propertyChecker *checker.Checker, maxEvents
 	}
 
 	// delete report dir if all tests passed
-	if allPassed {
-		os.RemoveAll(reportDir)
-	}
+	// if allPassed {
+	// 	os.RemoveAll(reportDir)
+	// }
 
 	return nil
 }

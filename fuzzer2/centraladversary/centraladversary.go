@@ -19,6 +19,7 @@ import (
 	"github.com/filecoin-project/mir/pkg/util/maputil"
 	"github.com/filecoin-project/mir/pkg/util/sliceutil"
 	"github.com/filecoin-project/mir/pkg/vcinterceptor/vectorclock"
+	broadcastevents "github.com/filecoin-project/mir/samples/bcb-native/events"
 	"github.com/filecoin-project/mir/stdevents"
 	"github.com/filecoin-project/mir/stdtypes"
 
@@ -46,6 +47,7 @@ type Adversary struct {
 	byzantineNodes          []stdtypes.NodeID
 	actionTrace             []ActionTraceEntry
 	delayedEvents           []actions.DelayedEvents
+	logger                  logging.Logger
 }
 
 func NewAdversary[T any](
@@ -67,7 +69,7 @@ func NewAdversary[T any](
 	cortexCreepers := make(map[stdtypes.NodeID]*cortexcreeper.CortexCreeper, len(nodeConfigs))
 
 	for nodeID, config := range nodeConfigs {
-		nodeLogger := logging.Decorate(logger, string(nodeID)+" ")
+		nodeLogger := logging.Decorate(logger, string(nodeID)+" - ")
 		cortexCreeper := cortexcreeper.NewCortexCreeper()
 		cortexCreepers[nodeID] = cortexCreeper
 		nodeInstance, err := createNodeInstance(nodeID, config, cortexCreeper, nodeLogger)
@@ -98,6 +100,7 @@ func NewAdversary[T any](
 		maputil.GetKeys(nodeInstances),
 		make([]ActionTraceEntry, 0),
 		make([]actions.DelayedEvents, 0),
+		logging.Decorate(logger, "CA - "),
 	}, nil
 }
 
@@ -176,10 +179,11 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, che
 			return nil
 		} else if ind == 1 && a.noUndeliveredMsgs() {
 			// idle notification
+			a.logger.Log(logging.LevelDebug, "All nodes IDLE")
 			select {
 			case <-value.Interface().(chan struct{}):
 				// just in case it was cancelled
-				fmt.Println("IDLE - abort")
+				fmt.Println("All nodes IDLE - abort")
 			default:
 				// TODO: handle delayed to msgs or similar
 				if len(a.delayedEvents) == 0 {
@@ -210,6 +214,8 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, che
 			isByzantineSourceNode := sliceutil.Contains(a.nodeIds, sourceNodeID)
 			isDeliverEvent := false
 
+			a.logger.Log(logging.LevelDebug, "Info", "node", sourceNodeID, "byz", isByzantineSourceNode)
+
 			// TODO: figure out how to actually do this filtering
 			// hardcoding for now...
 
@@ -221,11 +227,16 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, che
 			// 	continue
 			// }
 
+			a.logger.Log(logging.LevelDebug, "AAAAAAAAAAAAAAAAAAAAAAAAAAA")
+
 			// hardcoded tmp solution
 			switch evT := event.(type) {
 			case *broadcastevents.BroadcastRequest:
+				a.logger.Log(logging.LevelDebug, "BROADCAST BROADCAST BROADCAST")
 			case *broadcastevents.Deliver:
+				a.logger.Log(logging.LevelDebug, "DELIVER DELIVER DELIVER DELIVER")
 			case *stdevents.SendMessage:
+				a.logger.Log(logging.LevelDebug, "SEND SEND SEND SEND SEND")
 				vc, err := evT.GetMetadata("vc")
 				if err != nil {
 					// TODO: how should I deal with errors in here?
@@ -233,6 +244,7 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, che
 				}
 				a.undeliveredMsgs[vc.(*vectorclock.VectorClock).String()] = struct{}{}
 			case *stdevents.MessageReceived:
+				a.logger.Log(logging.LevelDebug, "RECV RECV RECV RECV")
 				isDeliverEvent = true
 				vcSend, err := evT.GetMetadata("vcSend")
 				if err != nil {
@@ -241,9 +253,12 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, che
 				}
 				delete(a.undeliveredMsgs, vcSend.(*vectorclock.VectorClock).String())
 			default:
+				a.logger.Log(logging.LevelDebug, "DEFAULT DEFAULT DEFAULT DEFAULT", "type", evT.ToString())
 				a.pushEvents(sourceNodeID, stdtypes.ListOf(event), checker)
 				continue
 			}
+
+			a.logger.Log(logging.LevelDebug, "BBBBBBBBBBBBBBBBBBBBBBBBBBB")
 
 			// otherwise pick an action to apply to this event
 			var action actions.Action
@@ -260,6 +275,7 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, che
 			if err != nil {
 				return err
 			}
+			a.logger.Log(logging.LevelDebug, "Action picked", "action", actionLog, "node", sourceNodeID, "isByz", isByzantineSourceNode, "isDeliver", isDeliverEvent)
 
 			if delayedEvents != nil {
 				a.delayedEvents = append(a.delayedEvents, delayedEvents...)
@@ -310,12 +326,21 @@ func (a *Adversary) RunExperiment(puppeteer puppeteer.Puppeteer, checker *checke
 	nodesErr := make(chan error)
 	caErr := make(chan error)
 	checkerErr := make(chan error)
+	puppeteerErr := make(chan error)
+	//
+	// TODO: use context for actual shutdown
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer close(caErr)
+		nodesErr <- a.RunNodes(ctx)
+	}()
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		defer close(nodesErr)
-		nodesErr <- a.RunNodes(ctx)
+		defer close(caErr)
+		puppeteerErr <- puppeteer.Run(a.nodeInstances)
 	}()
 
 	wg.Add(1)
@@ -326,8 +351,8 @@ func (a *Adversary) RunExperiment(puppeteer puppeteer.Puppeteer, checker *checke
 		caErr <- a.RunCentralAdversary(maxEvents, maxHeartbeatsInactive, checker, ctx)
 	}()
 
-	wg.Add(1)
 	if checker != nil {
+		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			defer close(checkerErr)
@@ -335,11 +360,7 @@ func (a *Adversary) RunExperiment(puppeteer puppeteer.Puppeteer, checker *checke
 		}()
 	}
 
-	err := puppeteer.Run(a.nodeInstances)
-	if err != nil {
-		return err
-	}
-
+	var err error
 	select {
 	case err = <-nodesErr:
 		if err != nil {

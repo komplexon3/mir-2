@@ -347,6 +347,7 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 					}
 
 					if allModulesAndImportersIdle {
+						n.Config.Logger.Log(logging.LevelDebug, "IDLE")
 						n.continueNotificationChan = make(chan struct{})
 						n.inactiveNotificationChan <- n.continueNotificationChan
 					}
@@ -365,6 +366,7 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 	for returnErr == nil {
 
 		if n.continueNotificationChan != nil {
+			n.Config.Logger.Log(logging.LevelDebug, "No longer IDLE")
 			close(n.continueNotificationChan)
 			n.continueNotificationChan = nil
 		}

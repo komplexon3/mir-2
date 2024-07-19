@@ -23,15 +23,21 @@ const (
 	MAX_HEARTBEATS_INACTIVE = 10
 )
 
+//	var puppeteerEvents = []actions.DelayedEvents{
+//		{
+//			NodeID: stdtypes.NodeID("0"),
+//			Events: stdtypes.ListOf(broadcastevents.NewBroadcastRequest("bcb", []byte("hello"))),
+//		},
+//	}
 var weightedActionsForNetwork = []actions.WeightedAction{
-	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
-		return "noop (network)",
-			map[stdtypes.NodeID]*stdtypes.EventList{
-				sourceNode: stdtypes.ListOf(e),
-			},
-			nil,
-			nil
-	}, 10),
+	// actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
+	// 	return "noop (network)",
+	// 		map[stdtypes.NodeID]*stdtypes.EventList{
+	// 			sourceNode: stdtypes.ListOf(e),
+	// 		},
+	// 		nil,
+	// 		nil
+	// }, 10),
 	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
 		return "event delayed (network)",
 			nil,
@@ -79,7 +85,8 @@ func fuzzBCB(
 	nodes []stdtypes.NodeID,
 	byzantineNodes []stdtypes.NodeID,
 	sender stdtypes.NodeID,
-	actions []actions.WeightedAction,
+	byzantineActions []actions.WeightedAction,
+	networkActions []actions.WeightedAction,
 	rounds int,
 	logger logging.Logger,
 ) error {
@@ -120,7 +127,7 @@ func fuzzBCB(
 			return es.Errorf("fauled to create checker: %v", err)
 		}
 
-		fuzzer, err := fuzzer2.NewFuzzer(nodeinstance.CreateBcbNodeInstance, nodeConfigs, byzantineNodes, puppeteers.NewOneNodeBroadcast(sender), actions, "", logger)
+		fuzzer, err := fuzzer2.NewFuzzer(nodeinstance.CreateBcbNodeInstance, nodeConfigs, byzantineNodes, puppeteers.NewOneNodeBroadcast(sender), byzantineActions, networkActions, "", logger)
 		if err != nil {
 			return es.Errorf("failed to create fuzzer: %v", err)
 		}
@@ -134,6 +141,7 @@ func fuzzBCB(
 }
 
 func main() {
-	logger := logging.ConsoleWarnLogger
-	fuzzBCB([]stdtypes.NodeID{"0", "1", "2", "3"}, []stdtypes.NodeID{"1"}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, 5, logger)
+	logger := logging.ConsoleDebugLogger
+	logger = logging.Synchronize(logger)
+	fuzzBCB([]stdtypes.NodeID{"0", "1", "2", "3"}, []stdtypes.NodeID{"1", "2"}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, 5, logger)
 }
