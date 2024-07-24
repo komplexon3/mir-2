@@ -12,10 +12,10 @@ type mirEvent struct {
 }
 
 func newMirEvent(dest t.ModuleID) mirEvent {
-  return mirEvent{
-    DestModule: dest,
-    Metadata: make(map[string]interface{}),
-  }
+	return mirEvent{
+		DestModule: dest,
+		Metadata:   make(map[string]interface{}),
+	}
 }
 
 func (e *mirEvent) Src() t.ModuleID {

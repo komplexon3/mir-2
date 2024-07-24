@@ -17,7 +17,7 @@ const (
 	MetadataPbMessageType     metadataMessageType = "MetadataPbMessage"
 )
 
-type MetadateMessage interface {
+type MetadataMessage interface {
 	ToBytes() ([]byte, error)
 	GetMetadata(key string) (interface{}, error)
 }
@@ -68,7 +68,7 @@ func (m MetadataNativeMessage) UnwrapMessage() (stdtypes.Message, map[string]int
 	return m.Payload, m.Metadata
 }
 
-func WrapNativeMessage(msg stdtypes.Message, metadata map[string]interface{}) MetadateMessage {
+func WrapNativeMessage(msg stdtypes.Message, metadata map[string]interface{}) MetadataMessage {
 	return MetadataNativeMessage{
 		baseMetadataMessage: baseMetadataMessage{
 			Metadata: metadata,
@@ -109,7 +109,7 @@ func (m MetadataPbMessage) UnwrapMessage() (*messagepb.Message, map[string]inter
 	return m.Payload, m.Metadata
 }
 
-func WrapPbMessage(msg *messagepb.Message, metadata map[string]interface{}) MetadateMessage {
+func WrapPbMessage(msg *messagepb.Message, metadata map[string]interface{}) MetadataMessage {
 	return MetadataPbMessage{
 		baseMetadataMessage: baseMetadataMessage{
 			Metadata: metadata,
@@ -122,7 +122,7 @@ func (m MetadataPbMessage) GetMessage() *messagepb.Message {
 	return m.Payload
 }
 
-func Deserialize(data []byte) (MetadateMessage, error) {
+func Deserialize(data []byte) (MetadataMessage, error) {
 	var sm serializedMessage
 	var metadata map[string]interface{}
 
@@ -131,9 +131,11 @@ func Deserialize(data []byte) (MetadateMessage, error) {
 		return nil, err
 	}
 
-	err = json.Unmarshal(sm.Metadata, &metadata)
-	if err != nil {
-		return nil, err
+	if sm.Metadata != nil {
+		err = json.Unmarshal(sm.Metadata, &metadata)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	switch sm.Type {
@@ -158,6 +160,7 @@ func Deserialize(data []byte) (MetadateMessage, error) {
 			},
 			Payload: &pbPayload,
 		}, nil
+	default:
+		return nil, es.Errorf("message %v is not a metadata message", sm)
 	}
-	return nil, es.Errorf("message %v is not a vector clock message", sm)
 }

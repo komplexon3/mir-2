@@ -14,11 +14,10 @@ import (
 	"github.com/filecoin-project/mir/fuzzer2/centraladversary/cortexcreeper"
 	"github.com/filecoin-project/mir/fuzzer2/heartbeat"
 	"github.com/filecoin-project/mir/fuzzer2/nodeinstance"
-	"github.com/filecoin-project/mir/fuzzer2/puppeteer"
+	"github.com/filecoin-project/mir/fuzzer2/utils"
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/util/maputil"
 	"github.com/filecoin-project/mir/pkg/util/sliceutil"
-	"github.com/filecoin-project/mir/pkg/vcinterceptor/vectorclock"
 	broadcastevents "github.com/filecoin-project/mir/samples/bcb-native/events"
 	"github.com/filecoin-project/mir/stdevents"
 	"github.com/filecoin-project/mir/stdtypes"
@@ -84,7 +83,7 @@ func NewAdversary[T any](
 		return nil, err
 	}
 
-	networkActionSelector, err := actions.NewRandomActions(byzantineWeightedActions)
+	networkActionSelector, err := actions.NewRandomActions(networkWeightedActions)
 	if err != nil {
 		return nil, err
 	}
@@ -148,10 +147,9 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, che
 	ccsNodeIds := maputil.GetSortedKeys(a.cortexCreepers)
 	ccs := maputil.GetValuesOf(a.cortexCreepers, ccsNodeIds)
 
-	idleNotificationC := make(chan chan struct{})
-	defer close(idleNotificationC)
 	idleDetectionCs := sliceutil.Transform(ccs, func(_ int, cc *cortexcreeper.CortexCreeper) chan chan struct{} { return cc.IdleDetectionC })
-	go a.idleNodesMonitor.Run(ctx, idleDetectionCs, idleNotificationC)
+	go a.idleNodesMonitor.Run(ctx, idleDetectionCs)
+	defer a.idleNodesMonitor.Stop()
 
 	for {
 		// fan in events from different cortexCreepers + idle detection + error
@@ -163,7 +161,7 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, che
 
 		selectCases = append(selectCases, reflect.SelectCase{
 			Dir:  reflect.SelectRecv,
-			Chan: reflect.ValueOf(idleNotificationC),
+			Chan: reflect.ValueOf(a.idleNodesMonitor.IdleNotificationC()),
 		})
 
 		for _, cc := range ccs {
@@ -177,20 +175,23 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, che
 		if ind == 0 {
 			// context was cancelled
 			return nil
-		} else if ind == 1 && a.noUndeliveredMsgs() {
-			// idle notification
-			a.logger.Log(logging.LevelDebug, "All nodes IDLE")
-			select {
-			case <-value.Interface().(chan struct{}):
-				// just in case it was cancelled
-				fmt.Println("All nodes IDLE - abort")
-			default:
-				// TODO: handle delayed to msgs or similar
-				if len(a.delayedEvents) == 0 {
-					return IdleWithoutDelayedEvents
+		} else if ind == 1 {
+			if a.noUndeliveredMsgs() {
+				// idle notification
+				a.logger.Log(logging.LevelDebug, "All nodes IDLE")
+				select {
+				case <-value.Interface().(chan struct{}):
+					// just in case it was cancelled
+					a.logger.Log(logging.LevelDebug, "All nodes IDLE - abort")
+					return nil
+				default:
+					// TODO: handle delayed to msgs or similar
+					if len(a.delayedEvents) == 0 {
+						return IdleWithoutDelayedEvents
+					}
+					delayedEvents := a.popRandomDelayedEvets()
+					a.pushEvents(delayedEvents.NodeID, delayedEvents.Events, checker)
 				}
-				delayedEvents := a.popRandomDelayedEvets()
-				a.pushEvents(delayedEvents.NodeID, delayedEvents.Events, checker)
 			}
 			continue
 		}
@@ -198,6 +199,7 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, che
 		// process this event
 		elIterator := value.Interface().(*stdtypes.EventList).Iterator()
 		for event := elIterator.Next(); event != nil; event = elIterator.Next() {
+			var err error
 			eventCount++
 			switch event.(type) {
 			case *heartbeat.Heartbeat:
@@ -214,7 +216,10 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, che
 			isByzantineSourceNode := sliceutil.Contains(a.nodeIds, sourceNodeID)
 			isDeliverEvent := false
 
-			a.logger.Log(logging.LevelDebug, "Info", "node", sourceNodeID, "byz", isByzantineSourceNode)
+			// event, err := event.SetMetadata("node", sourceNodeID)
+			// if err != nil {
+			// 	return err
+			// }
 
 			// TODO: figure out how to actually do this filtering
 			// hardcoding for now...
@@ -227,38 +232,28 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, che
 			// 	continue
 			// }
 
-			a.logger.Log(logging.LevelDebug, "AAAAAAAAAAAAAAAAAAAAAAAAAAA")
-
 			// hardcoded tmp solution
 			switch evT := event.(type) {
 			case *broadcastevents.BroadcastRequest:
-				a.logger.Log(logging.LevelDebug, "BROADCAST BROADCAST BROADCAST")
 			case *broadcastevents.Deliver:
-				a.logger.Log(logging.LevelDebug, "DELIVER DELIVER DELIVER DELIVER")
 			case *stdevents.SendMessage:
-				a.logger.Log(logging.LevelDebug, "SEND SEND SEND SEND SEND")
-				vc, err := evT.GetMetadata("vc")
+				msgID := utils.RandomString(10)
+				event, err = evT.SetMetadata("msgID", msgID)
 				if err != nil {
-					// TODO: how should I deal with errors in here?
-					panic(err)
+					return err
 				}
-				a.undeliveredMsgs[vc.(*vectorclock.VectorClock).String()] = struct{}{}
+				a.undeliveredMsgs[msgID] = struct{}{}
 			case *stdevents.MessageReceived:
-				a.logger.Log(logging.LevelDebug, "RECV RECV RECV RECV")
 				isDeliverEvent = true
-				vcSend, err := evT.GetMetadata("vcSend")
+				msgID, err := evT.GetMetadata("msgID")
 				if err != nil {
-					// TODO: how should I deal with errors in here?
-					panic(err)
+					return err
 				}
-				delete(a.undeliveredMsgs, vcSend.(*vectorclock.VectorClock).String())
+				delete(a.undeliveredMsgs, msgID.(string))
 			default:
-				a.logger.Log(logging.LevelDebug, "DEFAULT DEFAULT DEFAULT DEFAULT", "type", evT.ToString())
 				a.pushEvents(sourceNodeID, stdtypes.ListOf(event), checker)
 				continue
 			}
-
-			a.logger.Log(logging.LevelDebug, "BBBBBBBBBBBBBBBBBBBBBBBBBBB")
 
 			// otherwise pick an action to apply to this event
 			var action actions.Action
@@ -271,23 +266,22 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, che
 				continue
 			}
 
-			actionLog, newEvents, delayedEvents, err := action(event, sourceNodeID, a.byzantineNodes)
+			_, newEvents, delayedEvents, err := action(event, sourceNodeID, a.byzantineNodes)
 			if err != nil {
 				return err
 			}
-			a.logger.Log(logging.LevelDebug, "Action picked", "action", actionLog, "node", sourceNodeID, "isByz", isByzantineSourceNode, "isDeliver", isDeliverEvent)
 
 			if delayedEvents != nil {
 				a.delayedEvents = append(a.delayedEvents, delayedEvents...)
 			}
 
 			// ignore "" bc this signifies noop - not the best solution but works for now
-			if actionLog != "" {
-				a.actionTrace = append(a.actionTrace, ActionTraceEntry{
-					node:      a.nodeIds[ind-2],
-					actionLog: actionLog,
-				})
-			}
+			// if actionLog != "noop" && actionLog != "noop (network)" {
+			// 	a.actionTrace = append(a.actionTrace, ActionTraceEntry{
+			// 		node:      a.nodeIds[ind-2],
+			// 		actionLog: actionLog,
+			// 	})
+			// }
 
 			// TODO: check for nil?
 			for injectNodeID, injectEvents := range newEvents {
@@ -315,7 +309,7 @@ func (a *Adversary) nodeIsPermittedToTakeByzantineAction(nodeId stdtypes.NodeID)
 	return slices.Contains(a.byzantineNodes, nodeId)
 }
 
-func (a *Adversary) RunExperiment(puppeteer puppeteer.Puppeteer, checker *checker.Checker, maxEvents, maxHeartbeatsInactive int) error {
+func (a *Adversary) RunExperiment(puppeteerSchedule []actions.DelayedEvents, checker *checker.Checker, maxEvents, maxHeartbeatsInactive int) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	wg := sync.WaitGroup{}
 	defer cancel()
@@ -323,10 +317,13 @@ func (a *Adversary) RunExperiment(puppeteer puppeteer.Puppeteer, checker *checke
 		defer checker.Stop()
 	}
 
+	// NOTE: the whole structure of this thing is a complete mess
+	a.delayedEvents = append(a.delayedEvents, puppeteerSchedule...)
+
 	nodesErr := make(chan error)
 	caErr := make(chan error)
 	checkerErr := make(chan error)
-	puppeteerErr := make(chan error)
+	// puppeteerErr := make(chan error)
 	//
 	// TODO: use context for actual shutdown
 	wg.Add(1)
@@ -336,12 +333,12 @@ func (a *Adversary) RunExperiment(puppeteer puppeteer.Puppeteer, checker *checke
 		nodesErr <- a.RunNodes(ctx)
 	}()
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		defer close(caErr)
-		puppeteerErr <- puppeteer.Run(a.nodeInstances)
-	}()
+	// wg.Add(1)
+	// go func() {
+	// 	defer wg.Done()
+	// 	defer close(caErr)
+	// 	puppeteerErr <- puppeteer.Run(a.nodeInstances)
+	// }()
 
 	wg.Add(1)
 	go func() {
@@ -376,8 +373,6 @@ func (a *Adversary) RunExperiment(puppeteer puppeteer.Puppeteer, checker *checke
 		}
 	}
 
-	wg.Wait()
-
 	return nil
 }
 
@@ -407,17 +402,36 @@ func (a *Adversary) popRandomDelayedEvets() actions.DelayedEvents {
 	return de
 }
 
-type IdleNodesMonitor struct{}
-
-func NewIdleNodesMonitor() *IdleNodesMonitor {
-	return &IdleNodesMonitor{}
+type IdleNodesMonitor struct {
+	idleNotificationC chan chan struct{}
+	doneC             chan struct{}
+	wg                sync.WaitGroup
 }
 
-func (id *IdleNodesMonitor) Run(ctx context.Context, idleDetectionCs []chan chan struct{}, idleNotificationC chan<- chan struct{}) error {
-	wg := sync.WaitGroup{}
+func NewIdleNodesMonitor() *IdleNodesMonitor {
+	return &IdleNodesMonitor{
+		idleNotificationC: make(chan chan struct{}),
+		doneC:             make(chan struct{}),
+		wg:                sync.WaitGroup{},
+	}
+}
+
+func (inm *IdleNodesMonitor) Stop() {
+	close(inm.doneC)
+	inm.wg.Wait()
+}
+
+func (inm *IdleNodesMonitor) IdleNotificationC() chan chan struct{} {
+	return inm.idleNotificationC
+}
+
+func (inm *IdleNodesMonitor) Run(ctx context.Context, idleDetectionCs []chan chan struct{}) error {
 	ctx, cancel := context.WithCancel(ctx)
 	activeC := make(chan struct{})
 	idleC := make(chan struct{})
+	defer close(activeC)
+	defer close(idleC)
+	defer close(inm.idleNotificationC)
 	var noLongerInactiveC chan struct{}
 	defer cancel()
 	defer func() {
@@ -426,10 +440,10 @@ func (id *IdleNodesMonitor) Run(ctx context.Context, idleDetectionCs []chan chan
 		}
 	}()
 
-	wg.Add(len(idleDetectionCs))
+	inm.wg.Add(len(idleDetectionCs))
 	for _, idleDetectionC := range idleDetectionCs {
 		go func() {
-			defer wg.Done()
+			defer inm.wg.Done()
 			var continueC chan struct{}
 			for {
 				select {
@@ -447,25 +461,30 @@ func (id *IdleNodesMonitor) Run(ctx context.Context, idleDetectionCs []chan chan
 	}
 
 	activeCount := len(idleDetectionCs)
+ActiveCountLoop:
 	for {
 		select {
 		case <-ctx.Done():
-			return nil
+			break ActiveCountLoop
+		case <-inm.doneC:
+			break ActiveCountLoop
 		case <-activeC:
 			if noLongerInactiveC != nil {
 				close(noLongerInactiveC)
 				noLongerInactiveC = nil
-				fmt.Println("No longer idle")
 			}
 			activeCount++
 		case <-idleC:
 			activeCount--
 			if activeCount == 0 {
 				noLongerInactiveC = make(chan struct{})
-				idleNotificationC <- noLongerInactiveC
+				inm.idleNotificationC <- noLongerInactiveC
 			} else if activeCount < 0 {
 				return es.Errorf("number of active nodes is negative")
 			}
 		}
 	}
+
+	inm.wg.Wait()
+	return nil
 }

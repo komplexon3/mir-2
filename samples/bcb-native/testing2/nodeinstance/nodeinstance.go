@@ -5,6 +5,9 @@ import (
 
 	"github.com/filecoin-project/mir"
 	"github.com/filecoin-project/mir/fuzzer2/centraladversary/cortexcreeper"
+	msgmetadata "github.com/filecoin-project/mir/fuzzer2/interceptors/msgMetadata"
+	"github.com/filecoin-project/mir/fuzzer2/interceptors/nomulticast"
+	"github.com/filecoin-project/mir/fuzzer2/interceptors/vcinterceptor"
 	"github.com/filecoin-project/mir/fuzzer2/nodeinstance"
 	"github.com/filecoin-project/mir/pkg/crypto"
 	mirCrypto "github.com/filecoin-project/mir/pkg/crypto"
@@ -14,7 +17,6 @@ import (
 	"github.com/filecoin-project/mir/pkg/modules"
 	trantorpbtypes "github.com/filecoin-project/mir/pkg/pb/trantorpb/types"
 	"github.com/filecoin-project/mir/pkg/utilinterceptors"
-	"github.com/filecoin-project/mir/pkg/vcinterceptor"
 	"github.com/filecoin-project/mir/samples/bcb-native/modules/bcb"
 	"github.com/filecoin-project/mir/stdmodules/timer"
 	"github.com/filecoin-project/mir/stdtypes"
@@ -98,7 +100,9 @@ func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig,
 		return nil, es.Errorf("error setting up interceptor: %w", err)
 	}
 
-	interceptor := eventlog.MultiInterceptor(&utilinterceptors.NodeIdMetadataInterceptor{NodeID: nodeID}, cortexCreeper, vcinterceptor.New(nodeID), eventLogger)
+	msgMetadataInterceptorIn, msgMetadataInterceptorOut := msgmetadata.NewMsgMetadataInterceptorPair(logger, "vc", "msgID")
+
+	interceptor := eventlog.MultiInterceptor(msgMetadataInterceptorIn, &nomulticast.NoMulticast{}, &utilinterceptors.NodeIdMetadataInterceptor{NodeID: nodeID}, cortexCreeper, vcinterceptor.New(nodeID), msgMetadataInterceptorOut, eventLogger)
 
 	// setup crypto
 	keyPairs, err := crypto.GenerateKeys(config.NumberOfNodes, 42)

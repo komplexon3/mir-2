@@ -12,9 +12,9 @@ import (
 	"github.com/filecoin-project/mir/pkg/deploytest"
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/trantor/types"
+	broadcastevents "github.com/filecoin-project/mir/samples/bcb-native/events"
 	"github.com/filecoin-project/mir/samples/bcb-native/testing2/nodeinstance"
 	"github.com/filecoin-project/mir/samples/bcb-native/testing2/properties"
-	"github.com/filecoin-project/mir/samples/bcb-native/testing2/puppeteers"
 	"github.com/filecoin-project/mir/stdtypes"
 )
 
@@ -23,37 +23,38 @@ const (
 	MAX_HEARTBEATS_INACTIVE = 10
 )
 
-//	var puppeteerEvents = []actions.DelayedEvents{
-//		{
-//			NodeID: stdtypes.NodeID("0"),
-//			Events: stdtypes.ListOf(broadcastevents.NewBroadcastRequest("bcb", []byte("hello"))),
-//		},
-//	}
+var puppeteerEvents = []actions.DelayedEvents{
+	{
+		NodeID: stdtypes.NodeID("0"),
+		Events: stdtypes.ListOf(broadcastevents.NewBroadcastRequest("bcb", []byte("hello"))),
+	},
+}
+
 var weightedActionsForNetwork = []actions.WeightedAction{
-	// actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
-	// 	return "noop (network)",
-	// 		map[stdtypes.NodeID]*stdtypes.EventList{
-	// 			sourceNode: stdtypes.ListOf(e),
-	// 		},
-	// 		nil,
-	// 		nil
-	// }, 10),
 	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
-		return "event delayed (network)",
-			nil,
-			[]actions.DelayedEvents{
-				{
-					NodeID: sourceNode,
-					Events: stdtypes.ListOf(e),
-				},
+		return "noop (network)",
+			map[stdtypes.NodeID]*stdtypes.EventList{
+				sourceNode: stdtypes.ListOf(e),
 			},
+			nil,
 			nil
-	}, 1),
+	}, 10),
+	// actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
+	// 	return "event delayed (network)",
+	// 		nil,
+	// 		[]actions.DelayedEvents{
+	// 			{
+	// 				NodeID: sourceNode,
+	// 				Events: stdtypes.ListOf(e),
+	// 			},
+	// 		},
+	// 		nil
+	// }, 1),
 }
 
 var weightedActionsForByzantineNodes = []actions.WeightedAction{
 	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
-		return "",
+		return "noop",
 			map[stdtypes.NodeID]*stdtypes.EventList{
 				sourceNode: stdtypes.ListOf(e),
 			},
@@ -127,7 +128,7 @@ func fuzzBCB(
 			return es.Errorf("fauled to create checker: %v", err)
 		}
 
-		fuzzer, err := fuzzer2.NewFuzzer(nodeinstance.CreateBcbNodeInstance, nodeConfigs, byzantineNodes, puppeteers.NewOneNodeBroadcast(sender), byzantineActions, networkActions, "", logger)
+		fuzzer, err := fuzzer2.NewFuzzer(nodeinstance.CreateBcbNodeInstance, nodeConfigs, byzantineNodes, puppeteerEvents, byzantineActions, networkActions, "", logger)
 		if err != nil {
 			return es.Errorf("failed to create fuzzer: %v", err)
 		}
@@ -143,5 +144,5 @@ func fuzzBCB(
 func main() {
 	logger := logging.ConsoleDebugLogger
 	logger = logging.Synchronize(logger)
-	fuzzBCB([]stdtypes.NodeID{"0", "1", "2", "3"}, []stdtypes.NodeID{"1", "2"}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, 5, logger)
+	fuzzBCB([]stdtypes.NodeID{"0", "1", "2", "3"}, []stdtypes.NodeID{}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, 5, logger)
 }

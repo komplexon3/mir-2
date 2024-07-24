@@ -13,7 +13,6 @@ import (
 	"github.com/filecoin-project/mir/fuzzer2/actions"
 	centraladversay "github.com/filecoin-project/mir/fuzzer2/centraladversary"
 	"github.com/filecoin-project/mir/fuzzer2/nodeinstance"
-	"github.com/filecoin-project/mir/fuzzer2/puppeteer"
 
 	"github.com/filecoin-project/mir/checker"
 	"github.com/filecoin-project/mir/pkg/logging"
@@ -26,17 +25,17 @@ const (
 )
 
 type Fuzzer[T any] struct {
-	ca         *centraladversay.Adversary
-	puppeteer  puppeteer.Puppeteer
-	reportsDir string
-	logger     logging.Logger
+	ca                *centraladversay.Adversary
+	puppeteerSchedule []actions.DelayedEvents
+	reportsDir        string
+	logger            logging.Logger
 }
 
 func NewFuzzer[T any](
 	createNodeInstance nodeinstance.NodeInstanceCreationFunc[T],
 	nodeConfigs nodeinstance.NodeConfigs[T],
 	byzantineNodes []stdtypes.NodeID,
-	puppeteer puppeteer.Puppeteer,
+	puppeteerSchedule []actions.DelayedEvents,
 	byzantineActions []actions.WeightedAction,
 	networkActions []actions.WeightedAction,
 	reportsDir string,
@@ -47,11 +46,28 @@ func NewFuzzer[T any](
 		return nil, es.Errorf("failed to create adversary: %v", err)
 	}
 
+	// TODO: not too nice but checher needs this info
+	logger.Log(logging.LevelDebug, "prepping delayed events")
+	ps := make([]actions.DelayedEvents, 0, len(puppeteerSchedule))
+	for _, de := range puppeteerSchedule {
+		evtsWithNodeMetadata := stdtypes.EmptyList()
+		evtsIterator := de.Events.Iterator()
+		for evt := evtsIterator.Next(); evt != nil; evt = evtsIterator.Next() {
+			evtWithNodeMetadata, err := evt.SetMetadata("node", de.NodeID)
+			if err != nil {
+				return nil, err
+			}
+			evtsWithNodeMetadata.PushBack(evtWithNodeMetadata)
+		}
+		ps = append(ps, actions.DelayedEvents{NodeID: de.NodeID, Events: evtsWithNodeMetadata})
+	}
+	logger.Log(logging.LevelDebug, "done - prepping delayed events")
+
 	return &Fuzzer[T]{
-		ca:         adv,
-		puppeteer:  puppeteer,
-		reportsDir: reportsDir,
-		logger:     logger,
+		ca:                adv,
+		puppeteerSchedule: ps,
+		reportsDir:        reportsDir,
+		logger:            logger,
 	}, nil
 }
 
@@ -62,7 +78,7 @@ func (f *Fuzzer[T]) Run(name string, propertyChecker *checker.Checker, maxEvents
 		return es.Errorf("failed to create report directory: %v", err)
 	}
 
-	f.ca.RunExperiment(f.puppeteer, propertyChecker, maxEvents, maxInactiveHeartbeats)
+	f.ca.RunExperiment(f.puppeteerSchedule, propertyChecker, maxEvents, maxInactiveHeartbeats)
 
 	results, _ := propertyChecker.GetResults()
 

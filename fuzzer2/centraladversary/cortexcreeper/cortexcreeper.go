@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/filecoin-project/mir"
-	"github.com/filecoin-project/mir/pkg/eventlog"
 	"github.com/filecoin-project/mir/stdtypes"
 	es "github.com/go-errors/errors"
 )
@@ -16,7 +15,6 @@ type CortexCreeper struct {
 	eventsOut      chan *stdtypes.EventList
 	abort          chan struct{}
 	IdleDetectionC chan chan struct{}
-	eventlog.Interceptor
 }
 
 func NewCortexCreeper() *CortexCreeper {

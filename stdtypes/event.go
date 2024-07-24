@@ -1,7 +1,12 @@
 package stdtypes
 
-type Event interface {
+import (
+	"fmt"
+)
 
+var KeyNotFoundErr = fmt.Errorf("key not found in metadata")
+
+type Event interface {
 	// Src returns the module that emitted the event.
 	// While this information is not always necessary for the system operation,
 	// it is useful for analyzing event traces and debugging.

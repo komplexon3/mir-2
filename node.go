@@ -412,13 +412,11 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 			newEvents := newEventsVal.Interface().(*stdtypes.EventList)
 			// Intercept the (stripped of all follow-ups) events that were emitted.
 			// This is only for debugging / diagnostic purposes.
-			n.Config.Logger.Log(logging.LevelTrace, "intercepting events", "#", newEvents.Len())
 			interceptedEvents := n.interceptEvents(newEvents)
 			// Add the intercepted events to the modules' event buffers
 			if err := n.pendingEvents.Add(interceptedEvents); err != nil {
 				n.workErrNotifier.Fail(err)
 			}
-			n.Config.Logger.Log(logging.LevelTrace, "done intercepting events, added to pending events")
 
 			// Keep track of the size of the input buffer.
 			// When it exceeds the PauseInputThreshold, pause the input from active modules.
@@ -434,7 +432,6 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 			Chan: reflect.ValueOf(n.workErrNotifier.ExitC()),
 		})
 		selectReactions = append(selectReactions, func(_ reflect.Value) {
-			n.Config.Logger.Log(logging.LevelTrace, "reaction exit c")
 			returnErr = n.workErrNotifier.Err()
 		})
 
@@ -465,7 +462,6 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 					n.statsLock.Lock()
 					defer n.statsLock.Unlock()
 
-					n.Config.Logger.Log(logging.LevelTrace, "reaction pending events", "module", mID, "events", eventBatch)
 					n.pendingEvents.buffers[mID].RemoveFront(numEvents)
 
 					// Keep track of the size of the event buffer.
@@ -585,7 +581,7 @@ func (n *Node) importEvents(
 		// First, try to read events from the input.
 		select {
 		case continueChan := <-pause:
-			n.Config.Logger.Log(logging.LevelTrace, "pausing imorter")
+			n.Config.Logger.Log(logging.LevelTrace, "pausing importer")
 			<-continueChan
 			n.Config.Logger.Log(logging.LevelTrace, "continue importer")
 		case newEvents, ok := <-eventSource:
