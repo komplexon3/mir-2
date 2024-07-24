@@ -2,18 +2,14 @@ package centraladversay
 
 import (
 	"context"
-	"fmt"
 	"math/rand/v2"
 	"reflect"
 	"slices"
 	"sync"
 
-	"github.com/filecoin-project/mir"
 	"github.com/filecoin-project/mir/checker"
 	"github.com/filecoin-project/mir/fuzzer/actions"
-	"github.com/filecoin-project/mir/fuzzer/centraladversary/cortexcreeper"
-	"github.com/filecoin-project/mir/fuzzer/heartbeat"
-	"github.com/filecoin-project/mir/fuzzer/nodeinstance"
+	"github.com/filecoin-project/mir/fuzzer/cortexcreeper"
 	"github.com/filecoin-project/mir/fuzzer/utils"
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/util/maputil"
@@ -26,58 +22,31 @@ import (
 )
 
 var (
-	MaxEventsOrHeartbeatShutdown = es.Errorf("Shutting down because max events or max inactive heartbeats has been exceeded.")
-	IdleWithoutDelayedEvents     = es.Errorf("Shutting down because all nodes are idle and there are no msgs to delay.")
+	MaxEventsShutdown        = es.Errorf("Shutting down because max events reached")
+	IdleWithoutDelayedEvents = es.Errorf("Shutting down because all nodes are idle and there are no msgs to delay.")
 )
-
-type ActionTraceEntry struct {
-	node      stdtypes.NodeID
-	actionLog string
-}
 
 type Adversary struct {
 	byzantineActionSelector actions.Actions
 	networkActionSelector   actions.Actions
-	nodeInstances           map[stdtypes.NodeID]nodeinstance.NodeInstance
-	cortexCreepers          map[stdtypes.NodeID]*cortexcreeper.CortexCreeper
+	logger                  logging.Logger
+	cortexCreepers          cortexcreeper.CortexCreepers
 	idleNodesMonitor        *IdleNodesMonitor
 	undeliveredMsgs         map[string]struct{}
-	nodeIds                 []stdtypes.NodeID
+	actionTrace             *actionTrace
+	nodeIDs                 []stdtypes.NodeID
 	byzantineNodes          []stdtypes.NodeID
-	actionTrace             []ActionTraceEntry
 	delayedEvents           []actions.DelayedEvents
-	logger                  logging.Logger
 }
 
-func NewAdversary[T any](
-	createNodeInstance nodeinstance.NodeInstanceCreationFunc[T],
-	nodeConfigs nodeinstance.NodeConfigs[T],
+func NewAdversary(
+	nodeIDs []stdtypes.NodeID,
+	cortexCreepers cortexcreeper.CortexCreepers,
 	byzantineWeightedActions []actions.WeightedAction,
 	networkWeightedActions []actions.WeightedAction,
 	byzantineNodes []stdtypes.NodeID,
 	logger logging.Logger,
 ) (*Adversary, error) {
-	nodeIDs := maputil.GetKeys(nodeConfigs)
-	for _, byzNodeID := range byzantineNodes {
-		if !slices.Contains(nodeIDs, byzNodeID) {
-			return nil, es.Errorf("Cannot use node %s as a byzantine node as there is no node config for this node.", byzNodeID)
-		}
-	}
-
-	nodeInstances := make(map[stdtypes.NodeID]nodeinstance.NodeInstance)
-	cortexCreepers := make(map[stdtypes.NodeID]*cortexcreeper.CortexCreeper, len(nodeConfigs))
-
-	for nodeID, config := range nodeConfigs {
-		nodeLogger := logging.Decorate(logger, string(nodeID)+" - ")
-		cortexCreeper := cortexcreeper.NewCortexCreeper()
-		cortexCreepers[nodeID] = cortexCreeper
-		nodeInstance, err := createNodeInstance(nodeID, config, cortexCreeper, nodeLogger)
-		if err != nil {
-			return nil, es.Errorf("Failed to create node instance with id %s: %v", nodeID, err)
-		}
-		nodeInstances[nodeID] = nodeInstance
-	}
-
 	byzantineActionSelector, err := actions.NewRandomActions(append(byzantineWeightedActions, networkWeightedActions...))
 	if err != nil {
 		return nil, err
@@ -89,60 +58,20 @@ func NewAdversary[T any](
 	}
 
 	return &Adversary{
-		byzantineActionSelector,
-		networkActionSelector,
-		nodeInstances,
-		cortexCreepers,
-		NewIdleNodesMonitor(),
-		make(map[string]struct{}),
-		byzantineNodes,
-		maputil.GetKeys(nodeInstances),
-		make([]ActionTraceEntry, 0),
-		make([]actions.DelayedEvents, 0),
-		logging.Decorate(logger, "CA - "),
+		byzantineActionSelector: byzantineActionSelector,
+		networkActionSelector:   networkActionSelector,
+		cortexCreepers:          cortexCreepers,
+		idleNodesMonitor:        NewIdleNodesMonitor(),
+		undeliveredMsgs:         make(map[string]struct{}),
+		byzantineNodes:          byzantineNodes,
+		nodeIDs:                 nodeIDs,
+		actionTrace:             newActionTrace(),
+		delayedEvents:           make([]actions.DelayedEvents, 0),
+		logger:                  logging.Decorate(logger, "CA - "),
 	}, nil
 }
 
-func (a *Adversary) RunNodes(ctx context.Context) error {
-	// setup all nodes and run them
-	wg := &sync.WaitGroup{}
-	nodesContext, advCancel := context.WithCancel(ctx)
-	defer advCancel()
-	for nodeId, nodeInstance := range a.nodeInstances {
-		go func() {
-			errChan := make(chan error)
-			wg.Add(1)
-			defer wg.Done()
-			defer nodeInstance.Stop()
-			defer nodeInstance.Cleanup()
-			nodeInstance.Setup()
-			go func() {
-				errChan <- nodeInstance.Run(nodesContext)
-				fmt.Printf("node %s stopped\n", nodeId)
-			}()
-
-			select {
-			case err := <-errChan:
-				if err != nil && err != mir.ErrStopped {
-					// node failed, kill all other nodes
-					fmt.Printf("Node %s failed with error: %v", nodeId, err)
-				}
-			case <-nodesContext.Done():
-			}
-		}()
-	}
-
-	<-nodesContext.Done()
-
-	wg.Wait()
-
-	return nil
-}
-
-func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, checker *checker.Checker, ctx context.Context) error {
-	eventCount := 0
-	heartbeatCount := 0
-
+func (a *Adversary) RunCentralAdversary(maxEvents int, checker *checker.Checker, ctx context.Context) error {
 	// slice of cortex creepers ordered by nodeIds to easily reference them to the select cases
 	ccsNodeIds := maputil.GetSortedKeys(a.cortexCreepers)
 	ccs := maputil.GetValuesOf(a.cortexCreepers, ccsNodeIds)
@@ -150,6 +79,8 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, che
 	idleDetectionCs := sliceutil.Transform(ccs, func(_ int, cc *cortexcreeper.CortexCreeper) chan chan struct{} { return cc.IdleDetectionC })
 	go a.idleNodesMonitor.Run(ctx, idleDetectionCs)
 	defer a.idleNodesMonitor.Stop()
+
+	eventCount := 0
 
 	for {
 		// fan in events from different cortexCreepers + idle detection + error
@@ -201,19 +132,13 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, che
 		for event := elIterator.Next(); event != nil; event = elIterator.Next() {
 			var err error
 			eventCount++
-			switch event.(type) {
-			case *heartbeat.Heartbeat:
-				heartbeatCount++
-			default:
-				heartbeatCount = 0
-			}
 
-			if heartbeatCount > maxHearbeatsInactive || eventCount > maxEvents {
-				return MaxEventsOrHeartbeatShutdown
+			if eventCount > maxEvents {
+				return MaxEventsShutdown
 			}
 
 			sourceNodeID := ccsNodeIds[ind-2]
-			isByzantineSourceNode := sliceutil.Contains(a.nodeIds, sourceNodeID)
+			isByzantineSourceNode := sliceutil.Contains(a.nodeIDs, sourceNodeID)
 			isDeliverEvent := false
 
 			// event, err := event.SetMetadata("node", sourceNodeID)
@@ -266,7 +191,7 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, che
 				continue
 			}
 
-			_, newEvents, delayedEvents, err := action(event, sourceNodeID, a.byzantineNodes)
+			actionLog, newEvents, delayedEvents, err := action(event, sourceNodeID, a.byzantineNodes)
 			if err != nil {
 				return err
 			}
@@ -276,12 +201,9 @@ func (a *Adversary) RunCentralAdversary(maxEvents, maxHearbeatsInactive int, che
 			}
 
 			// ignore "" bc this signifies noop - not the best solution but works for now
-			// if actionLog != "noop" && actionLog != "noop (network)" {
-			// 	a.actionTrace = append(a.actionTrace, ActionTraceEntry{
-			// 		node:      a.nodeIds[ind-2],
-			// 		actionLog: actionLog,
-			// 	})
-			// }
+			if actionLog != "noop" && actionLog != "noop (network)" {
+				a.actionTrace.Push(a.nodeIDs[ind-2], actionLog)
+			}
 
 			// TODO: check for nil?
 			for injectNodeID, injectEvents := range newEvents {
@@ -300,7 +222,6 @@ func (a *Adversary) pushEvents(nodeID stdtypes.NodeID, events *stdtypes.EventLis
 			checker.NextEvent(e)
 		}
 	}
-	// TODO: we know that this cc exists, should I still check to make sure?
 	cc := a.cortexCreepers[nodeID]
 	cc.PushEvents(events)
 }
@@ -309,7 +230,8 @@ func (a *Adversary) nodeIsPermittedToTakeByzantineAction(nodeId stdtypes.NodeID)
 	return slices.Contains(a.byzantineNodes, nodeId)
 }
 
-func (a *Adversary) RunExperiment(puppeteerSchedule []actions.DelayedEvents, checker *checker.Checker, maxEvents, maxHeartbeatsInactive int) error {
+// TODO: should take ctx
+func (a *Adversary) RunExperiment(puppeteerSchedule []actions.DelayedEvents, checker *checker.Checker, maxEvents int) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	wg := sync.WaitGroup{}
 	defer cancel()
@@ -324,14 +246,6 @@ func (a *Adversary) RunExperiment(puppeteerSchedule []actions.DelayedEvents, che
 	caErr := make(chan error)
 	checkerErr := make(chan error)
 	// puppeteerErr := make(chan error)
-	//
-	// TODO: use context for actual shutdown
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		defer close(caErr)
-		nodesErr <- a.RunNodes(ctx)
-	}()
 
 	// wg.Add(1)
 	// go func() {
@@ -345,7 +259,7 @@ func (a *Adversary) RunExperiment(puppeteerSchedule []actions.DelayedEvents, che
 		defer wg.Done()
 		defer close(caErr)
 		// defer cancel() // cancel to stop nodes when adv had enough
-		caErr <- a.RunCentralAdversary(maxEvents, maxHeartbeatsInactive, checker, ctx)
+		caErr <- a.RunCentralAdversary(maxEvents, checker, ctx)
 	}()
 
 	if checker != nil {
@@ -380,12 +294,8 @@ func (a *Adversary) GetByzantineNodes() []stdtypes.NodeID {
 	return a.byzantineNodes
 }
 
-func (a *Adversary) GetActionLogString() string {
-	logStr := ""
-	for _, al := range a.actionTrace {
-		logStr += fmt.Sprintf("Node %s took action: %v\n\n", al.node, al.actionLog)
-	}
-	return logStr
+func (a *Adversary) GetActionTrace() *actionTrace {
+	return a.actionTrace
 }
 
 func (a *Adversary) noUndeliveredMsgs() bool {
@@ -400,91 +310,4 @@ func (a *Adversary) popRandomDelayedEvets() actions.DelayedEvents {
 	a.delayedEvents[ind] = a.delayedEvents[len(a.delayedEvents)-1]
 	a.delayedEvents = a.delayedEvents[:len(a.delayedEvents)-1]
 	return de
-}
-
-type IdleNodesMonitor struct {
-	idleNotificationC chan chan struct{}
-	doneC             chan struct{}
-	wg                sync.WaitGroup
-}
-
-func NewIdleNodesMonitor() *IdleNodesMonitor {
-	return &IdleNodesMonitor{
-		idleNotificationC: make(chan chan struct{}),
-		doneC:             make(chan struct{}),
-		wg:                sync.WaitGroup{},
-	}
-}
-
-func (inm *IdleNodesMonitor) Stop() {
-	close(inm.doneC)
-	inm.wg.Wait()
-}
-
-func (inm *IdleNodesMonitor) IdleNotificationC() chan chan struct{} {
-	return inm.idleNotificationC
-}
-
-func (inm *IdleNodesMonitor) Run(ctx context.Context, idleDetectionCs []chan chan struct{}) error {
-	ctx, cancel := context.WithCancel(ctx)
-	activeC := make(chan struct{})
-	idleC := make(chan struct{})
-	defer close(activeC)
-	defer close(idleC)
-	defer close(inm.idleNotificationC)
-	var noLongerInactiveC chan struct{}
-	defer cancel()
-	defer func() {
-		for _, nc := range idleDetectionCs {
-			close(nc)
-		}
-	}()
-
-	inm.wg.Add(len(idleDetectionCs))
-	for _, idleDetectionC := range idleDetectionCs {
-		go func() {
-			defer inm.wg.Done()
-			var continueC chan struct{}
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case <-continueC:
-					activeC <- struct{}{}
-					continueC = nil
-				case cc := <-idleDetectionC:
-					idleC <- struct{}{}
-					continueC = cc
-				}
-			}
-		}()
-	}
-
-	activeCount := len(idleDetectionCs)
-ActiveCountLoop:
-	for {
-		select {
-		case <-ctx.Done():
-			break ActiveCountLoop
-		case <-inm.doneC:
-			break ActiveCountLoop
-		case <-activeC:
-			if noLongerInactiveC != nil {
-				close(noLongerInactiveC)
-				noLongerInactiveC = nil
-			}
-			activeCount++
-		case <-idleC:
-			activeCount--
-			if activeCount == 0 {
-				noLongerInactiveC = make(chan struct{})
-				inm.idleNotificationC <- noLongerInactiveC
-			} else if activeCount < 0 {
-				return es.Errorf("number of active nodes is negative")
-			}
-		}
-	}
-
-	inm.wg.Wait()
-	return nil
 }

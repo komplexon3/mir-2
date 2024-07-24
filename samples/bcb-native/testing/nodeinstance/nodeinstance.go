@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/filecoin-project/mir"
-	"github.com/filecoin-project/mir/fuzzer/centraladversary/cortexcreeper"
+	"github.com/filecoin-project/mir/fuzzer/cortexcreeper"
 	msgmetadata "github.com/filecoin-project/mir/fuzzer/interceptors/msgMetadata"
 	"github.com/filecoin-project/mir/fuzzer/interceptors/nomulticast"
 	"github.com/filecoin-project/mir/fuzzer/interceptors/vcinterceptor"

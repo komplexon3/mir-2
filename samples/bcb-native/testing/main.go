@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	es "github.com/go-errors/errors"
@@ -19,8 +20,7 @@ import (
 )
 
 const (
-	MAX_EVENTS              = 200
-	MAX_HEARTBEATS_INACTIVE = 10
+	MAX_EVENTS = 200
 )
 
 var puppeteerEvents = []actions.DelayedEvents{
@@ -133,7 +133,9 @@ func fuzzBCB(
 			return es.Errorf("failed to create fuzzer: %v", err)
 		}
 
-		err = fuzzer.Run(fmt.Sprintf("run %d", i), propertyChecker, MAX_EVENTS, MAX_HEARTBEATS_INACTIVE)
+		// TODO: properly deal with context
+		ctx := context.Background()
+		err = fuzzer.Run(ctx, fmt.Sprintf("run %d", i), propertyChecker, MAX_EVENTS, MAX_HEARTBEATS_INACTIVE)
 		if err != nil {
 			return es.Errorf("fuzzer encountered an issue: %v", err)
 		}

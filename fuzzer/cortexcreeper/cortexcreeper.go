@@ -8,6 +8,8 @@ import (
 	es "github.com/go-errors/errors"
 )
 
+type CortexCreepers map[stdtypes.NodeID]*CortexCreeper
+
 type CortexCreeper struct {
 	node           *mir.Node
 	cancel         context.CancelFunc

@@ -1,10 +1,12 @@
 package fuzzer
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path"
+	"slices"
 	"strings"
 	"time"
 
@@ -12,10 +14,12 @@ import (
 
 	"github.com/filecoin-project/mir/fuzzer/actions"
 	centraladversay "github.com/filecoin-project/mir/fuzzer/centraladversary"
+	"github.com/filecoin-project/mir/fuzzer/cortexcreeper"
 	"github.com/filecoin-project/mir/fuzzer/nodeinstance"
 
 	"github.com/filecoin-project/mir/checker"
 	"github.com/filecoin-project/mir/pkg/logging"
+	"github.com/filecoin-project/mir/pkg/util/maputil"
 	"github.com/filecoin-project/mir/stdtypes"
 )
 
@@ -25,10 +29,11 @@ const (
 )
 
 type Fuzzer[T any] struct {
-	ca                *centraladversay.Adversary
-	puppeteerSchedule []actions.DelayedEvents
-	reportsDir        string
 	logger            logging.Logger
+	ca                *centraladversay.Adversary
+	nodeInstances     nodeinstance.NodeInstances
+	reportsDir        string
+	puppeteerSchedule []actions.DelayedEvents
 }
 
 func NewFuzzer[T any](
@@ -41,7 +46,31 @@ func NewFuzzer[T any](
 	reportsDir string,
 	logger logging.Logger,
 ) (*Fuzzer[T], error) {
-	adv, err := centraladversay.NewAdversary(createNodeInstance, nodeConfigs, byzantineActions, networkActions, byzantineNodes, logger)
+	// TODO: create node instances here and run them from here as well (instead of in the ca)
+
+	// setting up node instances and cortex creepers
+	nodeIDs := maputil.GetKeys(nodeConfigs)
+	for _, byzNodeID := range byzantineNodes {
+		if !slices.Contains(nodeIDs, byzNodeID) {
+			return nil, es.Errorf("cannot use node %s as a byzantine node as there is no node config for this node", byzNodeID)
+		}
+	}
+
+	nodeInstances := make(nodeinstance.NodeInstances, len(nodeIDs))
+	cortexCreepers := make(cortexcreeper.CortexCreepers, len(nodeConfigs))
+
+	for nodeID, config := range nodeConfigs {
+		nodeLogger := logging.Decorate(logger, string(nodeID)+" - ")
+		cortexCreeper := cortexcreeper.NewCortexCreeper()
+		cortexCreepers[nodeID] = cortexCreeper
+		nodeInstance, err := createNodeInstance(nodeID, config, cortexCreeper, nodeLogger)
+		if err != nil {
+			return nil, es.Errorf("Failed to create node instance with id %s: %v", nodeID, err)
+		}
+		nodeInstances[nodeID] = nodeInstance
+	}
+
+	adv, err := centraladversay.NewAdversary(nodeIDs, cortexCreepers, byzantineActions, networkActions, byzantineNodes, logger)
 	if err != nil {
 		return nil, es.Errorf("failed to create adversary: %v", err)
 	}
@@ -68,17 +97,29 @@ func NewFuzzer[T any](
 		puppeteerSchedule: ps,
 		reportsDir:        reportsDir,
 		logger:            logger,
+		nodeInstances:     nodeInstances,
 	}, nil
 }
 
-func (f *Fuzzer[T]) Run(name string, propertyChecker *checker.Checker, maxEvents, maxInactiveHeartbeats int) error {
+func (f *Fuzzer[T]) Run(ctx context.Context, name string, propertyChecker *checker.Checker, maxEvents, maxInactiveHeartbeats int) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	reportDir := fmt.Sprintf("./report_%s_%s", time.Now().Format("2006-01-02_15-04-05"), strings.Join(strings.Split(name, " "), "_"))
 	err := os.MkdirAll(reportDir, os.ModePerm)
 	if err != nil {
 		return es.Errorf("failed to create report directory: %v", err)
 	}
 
-	f.ca.RunExperiment(f.puppeteerSchedule, propertyChecker, maxEvents, maxInactiveHeartbeats)
+	// TODO: look into handeling this better
+	nodesErr := make(chan error)
+	go func() {
+		nodesErr <- nodeinstance.RunNodes(ctx, f.nodeInstances, f.logger)
+	}()
+
+	err = f.ca.RunExperiment(f.puppeteerSchedule, propertyChecker, maxEvents)
+	if err != nil {
+		return err
+	}
 
 	results, _ := propertyChecker.GetResults()
 
@@ -105,7 +146,7 @@ func (f *Fuzzer[T]) Run(name string, propertyChecker *checker.Checker, maxEvents
 		return string(commit)
 	}()
 	resultStr = fmt.Sprintf("%s\n\n%s\n\nCommit: %s\n\n", name, resultStr, commit)
-	resultStr += f.ca.GetActionLogString()
+	resultStr += f.ca.GetActionTrace().String()
 
 	err = os.WriteFile(path.Join(reportDir, "report.txt"), []byte(resultStr), 0644)
 	if err != nil {
