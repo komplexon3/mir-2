@@ -1,8 +1,7 @@
-package testmodules
+package properties
 
 import (
 	"bytes"
-	"fmt"
 	"slices"
 
 	bcbevents "github.com/filecoin-project/mir/samples/bcb-native/events"
@@ -65,11 +64,6 @@ func (v *Validity) handleDeliver(e *bcbevents.Deliver) error {
 
 func (v *Validity) handleFinal(e *checkerevents.FinalEvent) error {
 	// if sender byz or if honest sender didn't broadcast, success
-	fmt.Println(v.broadcastRequest)
-	for nodeID, val := range v.broadcastDeliverTracker {
-		fmt.Printf("%s - %v, ", nodeID, val)
-	}
-	fmt.Println()
 	if v.byzantineSender || v.broadcastRequest == nil {
 		dsl.EmitEvent(v.m, checkerevents.NewSuccessEvent())
 		return nil
@@ -80,15 +74,10 @@ func (v *Validity) handleFinal(e *checkerevents.FinalEvent) error {
 		return slices.Contains(v.systemConfig.ByzantineNodes, n)
 	})
 
-	fmt.Println("all nodes", v.systemConfig.AllNodes)
-	fmt.Println("byz nodes", v.systemConfig.ByzantineNodes)
-	fmt.Println("non byz nodes", nonByzantineNodes)
-
 	// only checking non byzantine nodes
 	for _, nonByzantineNode := range nonByzantineNodes {
 		deliveredValue, ok := v.broadcastDeliverTracker[nonByzantineNode]
 		if !ok || !bytes.Equal(v.broadcastRequest, deliveredValue) {
-			fmt.Printf("node %s: ok %t, equal %t\n", nonByzantineNode, ok, bytes.Equal(v.broadcastRequest, deliveredValue))
 			dsl.EmitEvent(v.m, checkerevents.NewFailureEvent())
 		}
 	}

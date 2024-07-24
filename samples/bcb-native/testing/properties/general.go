@@ -1,4 +1,4 @@
-package testmodules
+package properties
 
 import (
 	"fmt"
@@ -13,9 +13,10 @@ type SystemConfig struct {
 }
 
 func getNodeIdFromMetadata(e stdtypes.Event) stdtypes.NodeID {
+	fmt.Println(e.ToString())
 	node, err := e.GetMetadata("node")
 	if err != nil {
-		panic("handleDeliver - node not in metadata")
+		panic("node not in metadata")
 	}
 
 	// TODO: just converting without checking - will fail nastily if not string

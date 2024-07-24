@@ -8,7 +8,7 @@ import (
 
 	es "github.com/go-errors/errors"
 
-	"github.com/filecoin-project/mir/fuzzer2/network"
+	"github.com/filecoin-project/mir/fuzzer/network"
 	"github.com/filecoin-project/mir/stdtypes"
 
 	"github.com/filecoin-project/mir"

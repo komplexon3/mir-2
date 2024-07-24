@@ -4,7 +4,10 @@ import (
 	"context"
 
 	"github.com/filecoin-project/mir"
-	"github.com/filecoin-project/mir/fuzzer/cortexcreeper"
+	"github.com/filecoin-project/mir/fuzzer/centraladversary/cortexcreeper"
+	msgmetadata "github.com/filecoin-project/mir/fuzzer/interceptors/msgMetadata"
+	"github.com/filecoin-project/mir/fuzzer/interceptors/nomulticast"
+	"github.com/filecoin-project/mir/fuzzer/interceptors/vcinterceptor"
 	"github.com/filecoin-project/mir/fuzzer/nodeinstance"
 	"github.com/filecoin-project/mir/pkg/crypto"
 	mirCrypto "github.com/filecoin-project/mir/pkg/crypto"
@@ -14,26 +17,26 @@ import (
 	"github.com/filecoin-project/mir/pkg/modules"
 	trantorpbtypes "github.com/filecoin-project/mir/pkg/pb/trantorpb/types"
 	"github.com/filecoin-project/mir/pkg/utilinterceptors"
-	"github.com/filecoin-project/mir/pkg/vcinterceptor"
 	"github.com/filecoin-project/mir/samples/bcb-native/modules/bcb"
+	"github.com/filecoin-project/mir/stdmodules/timer"
 	"github.com/filecoin-project/mir/stdtypes"
 	es "github.com/go-errors/errors"
 )
 
 type BcbNodeInstance struct {
 	node            *mir.Node
-	nodeID          stdtypes.NodeID
 	transportModule *deploytest.FakeLink
+	cortexCreeper   *cortexcreeper.CortexCreeper
+	nodeID          stdtypes.NodeID
 	config          BcbNodeInstanceConfig
-	cortexCreeper   cortexcreeper.CortexCreeper
 }
 
 type BcbNodeInstanceConfig struct {
+	FakeTransport *deploytest.FakeTransport
+	Leader        stdtypes.NodeID
+	ReportPath    string
 	InstanceUID   []byte
 	NumberOfNodes int
-	Leader        stdtypes.NodeID
-	FakeTransport *deploytest.FakeTransport
-	LogPath       string
 }
 
 func (bi *BcbNodeInstance) GetNode() *mir.Node {
@@ -41,7 +44,7 @@ func (bi *BcbNodeInstance) GetNode() *mir.Node {
 }
 
 func (bi *BcbNodeInstance) Run(ctx context.Context) error {
-	go bi.cortexCreeper.RunInjector(ctx) // ignoring error for now
+	go bi.cortexCreeper.Run(ctx) // ignoring error for now
 	return bi.node.Run(ctx)
 }
 
@@ -61,7 +64,7 @@ func (bi *BcbNodeInstance) Cleanup() error {
 	return nil
 }
 
-func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig, cortexCreeper cortexcreeper.CortexCreeper, logger logging.Logger) (nodeinstance.NodeInstance, error) {
+func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig, cortexCreeper *cortexcreeper.CortexCreeper, logger logging.Logger) (nodeinstance.NodeInstance, error) {
 	nodeIDs := make([]stdtypes.NodeID, config.NumberOfNodes)
 	for i := 0; i < config.NumberOfNodes; i++ {
 		nodeIDs[i] = stdtypes.NewNodeIDFromInt(i)
@@ -92,12 +95,14 @@ func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig,
 		logger,
 	)
 
-	eventLogger, err := eventlog.NewRecorder(nodeID, config.LogPath, logger)
+	eventLogger, err := eventlog.NewRecorder(nodeID, config.ReportPath, logger)
 	if err != nil {
 		return nil, es.Errorf("error setting up interceptor: %w", err)
 	}
 
-	interceptor := eventlog.MultiInterceptor(vcinterceptor.New(nodeID), &utilinterceptors.NodeIdMetadataInterceptor{NodeID: nodeID}, eventLogger, cortexCreeper)
+	msgMetadataInterceptorIn, msgMetadataInterceptorOut := msgmetadata.NewMsgMetadataInterceptorPair(logger, "vc", "msgID")
+
+	interceptor := eventlog.MultiInterceptor(msgMetadataInterceptorIn, &nomulticast.NoMulticast{}, &utilinterceptors.NodeIdMetadataInterceptor{NodeID: nodeID}, cortexCreeper, vcinterceptor.New(nodeID), msgMetadataInterceptorOut, eventLogger)
 
 	// setup crypto
 	keyPairs, err := crypto.GenerateKeys(config.NumberOfNodes, 42)
@@ -114,10 +119,11 @@ func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig,
 		"crypto": mirCrypto.New(crypto),
 		"bcb":    bcbModule,
 		"null":   modules.NullPassive{}, // just sending delivers to null, will still be intercepted
+		"timer":  timer.New(),
 	}
 
 	// create a Mir node
-	node, err := mir.NewNode(nodeID, mir.DefaultNodeConfig().WithLogger(logger), m, interceptor)
+	node, err := mir.NewNodeWithIdleDetection(nodeID, mir.DefaultNodeConfig().WithLogger(logger), m, interceptor, cortexCreeper.IdleDetectionC)
 	if err != nil {
 		return nil, es.Errorf("error creating a Mir node: %w", err)
 	}

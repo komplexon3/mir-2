@@ -1,4 +1,4 @@
-package testmodules
+package properties
 
 import (
 	"bytes"

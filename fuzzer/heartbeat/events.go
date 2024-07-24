@@ -24,8 +24,8 @@ type Heartbeat struct {
 	Metadata   map[string]interface{}
 }
 
-func NewHeartbeat(destModule stdtypes.ModuleID) Heartbeat {
-	return Heartbeat{
+func NewHeartbeat(destModule stdtypes.ModuleID) *Heartbeat {
+	return &Heartbeat{
 		DestModule: destModule,
 		Metadata:   make(map[string]interface{}),
 	}
@@ -42,7 +42,7 @@ func (hb *Heartbeat) Dest() stdtypes.ModuleID {
 func (hb *Heartbeat) GetMetadata(key string) (interface{}, error) {
 	val, ok := hb.Metadata[key]
 	if !ok {
-		return nil, es.Errorf("no metadata for key %s", key)
+		return nil, es.Errorf("no metadata for key %s, Metadata: %v", key, hb.Metadata)
 	}
 
 	return val, nil
