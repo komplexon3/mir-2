@@ -9,21 +9,20 @@ import (
 
 type IdleNodesMonitor struct {
 	idleNotificationC chan chan struct{}
-	doneC             chan struct{}
-	wg                sync.WaitGroup
+	cancel            context.CancelFunc
 }
 
 func NewIdleNodesMonitor() *IdleNodesMonitor {
 	return &IdleNodesMonitor{
 		idleNotificationC: make(chan chan struct{}),
-		doneC:             make(chan struct{}),
-		wg:                sync.WaitGroup{},
+		cancel:            nil,
 	}
 }
 
 func (inm *IdleNodesMonitor) Stop() {
-	close(inm.doneC)
-	inm.wg.Wait()
+	if inm.cancel != nil {
+		inm.cancel()
+	}
 }
 
 func (inm *IdleNodesMonitor) IdleNotificationC() chan chan struct{} {
@@ -31,24 +30,32 @@ func (inm *IdleNodesMonitor) IdleNotificationC() chan chan struct{} {
 }
 
 func (inm *IdleNodesMonitor) Run(ctx context.Context, idleDetectionCs []chan chan struct{}) error {
+	if inm.cancel != nil {
+		return es.Errorf("Idle Nodes Monitor is already running or was running")
+	}
+
+	wg := sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(ctx)
+	inm.cancel = cancel
+	defer cancel()
+
 	activeC := make(chan struct{})
 	idleC := make(chan struct{})
 	defer close(activeC)
 	defer close(idleC)
 	defer close(inm.idleNotificationC)
 	var noLongerInactiveC chan struct{}
-	defer cancel()
+
 	defer func() {
 		for _, nc := range idleDetectionCs {
 			close(nc)
 		}
 	}()
 
-	inm.wg.Add(len(idleDetectionCs))
+	wg.Add(len(idleDetectionCs))
 	for _, idleDetectionC := range idleDetectionCs {
 		go func() {
-			defer inm.wg.Done()
+			defer wg.Done()
 			var continueC chan struct{}
 			for {
 				select {
@@ -71,8 +78,6 @@ ActiveCountLoop:
 		select {
 		case <-ctx.Done():
 			break ActiveCountLoop
-		case <-inm.doneC:
-			break ActiveCountLoop
 		case <-activeC:
 			if noLongerInactiveC != nil {
 				close(noLongerInactiveC)
@@ -90,6 +95,6 @@ ActiveCountLoop:
 		}
 	}
 
-	inm.wg.Wait()
+	wg.Wait()
 	return nil
 }

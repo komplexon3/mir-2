@@ -33,8 +33,8 @@ import (
 
 type FuzzLink struct {
 	FuzzTransport *FuzzTransport
-	Source        stdtypes.NodeID
 	DoneC         chan struct{}
+	Source        stdtypes.NodeID
 	wg            sync.WaitGroup
 }
 
@@ -204,7 +204,6 @@ func (ft *FuzzTransport) Link(source stdtypes.NodeID) (net.Transport, error) {
 }
 
 func (ft *FuzzTransport) Close() {
-
 }
 
 func (fl *FuzzLink) CloseOldConnections(_ *trantorpbtypes.Membership) {}

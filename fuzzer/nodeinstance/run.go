@@ -17,10 +17,9 @@ func RunNodes(
 ) error {
 	wg := &sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
 
+	wg.Add(len(nodeInstances))
 	for nodeID, nodeInstance := range nodeInstances {
-		wg.Add(1)
 		go func() {
 			errChan := make(chan error)
 			defer wg.Done()
@@ -37,6 +36,7 @@ func RunNodes(
 			case err := <-errChan:
 				if err != nil && err != mir.ErrStopped {
 					// node failed, kill all other nodes
+					cancel()
 					logger.Log(logging.LevelDebug, "node failed with error", "node", nodeID, "error", err)
 				}
 			case <-ctx.Done():
@@ -45,6 +45,12 @@ func RunNodes(
 	}
 
 	<-ctx.Done()
+
+	wg.Add(len(nodeInstances))
+	for _, nodeInstance := range nodeInstances {
+		wg.Add(1)
+		nodeInstance.Stop()
+	}
 
 	wg.Wait()
 

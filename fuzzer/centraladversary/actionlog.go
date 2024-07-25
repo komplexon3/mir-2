@@ -15,7 +15,7 @@ type actionTrace struct {
 	history []actionTraceEntry
 }
 
-func newActionTrace() *actionTrace {
+func NewActionTrace() *actionTrace {
 	return &actionTrace{
 		history: make([]actionTraceEntry, 0),
 	}

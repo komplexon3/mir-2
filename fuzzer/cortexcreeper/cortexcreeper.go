@@ -2,21 +2,23 @@ package cortexcreeper
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/filecoin-project/mir"
 	"github.com/filecoin-project/mir/stdtypes"
 	es "github.com/go-errors/errors"
 )
 
+var ErrorShutdown = fmt.Errorf("shutdown signal received")
+
 type CortexCreepers map[stdtypes.NodeID]*CortexCreeper
 
 type CortexCreeper struct {
 	node           *mir.Node
-	cancel         context.CancelFunc
 	eventsIn       chan *stdtypes.EventList
 	eventsOut      chan *stdtypes.EventList
-	abort          chan struct{}
 	IdleDetectionC chan chan struct{}
+	doneC          chan struct{}
 }
 
 func NewCortexCreeper() *CortexCreeper {
@@ -24,8 +26,8 @@ func NewCortexCreeper() *CortexCreeper {
 		node:           nil,
 		eventsIn:       make(chan *stdtypes.EventList),
 		eventsOut:      make(chan *stdtypes.EventList),
-		abort:          make(chan struct{}),
 		IdleDetectionC: make(chan chan struct{}),
+		doneC:          make(chan struct{}),
 	}
 }
 
@@ -38,9 +40,6 @@ func (cc *CortexCreeper) Run(ctx context.Context) error {
 	if cc.node == nil {
 		return es.Errorf("Initialize cortex creeper with node before running it (Setup).")
 	}
-
-	ctx, cancel := context.WithCancel(ctx)
-	cc.cancel = cancel
 
 	for {
 		select {
@@ -55,17 +54,16 @@ func (cc *CortexCreeper) Run(ctx context.Context) error {
 			}
 			cc.node.InjectEvents(ctx, markedEvts)
 		case <-ctx.Done():
-			defer close(cc.abort)
-			cc.abort <- struct{}{}
+			close(cc.doneC)
 			return nil
+		case <-cc.doneC:
+			return ErrorShutdown
 		}
 	}
 }
 
 func (cc *CortexCreeper) StopInjector() {
-	if cc.cancel != nil {
-		cc.cancel()
-	}
+	close(cc.doneC)
 }
 
 func (cc *CortexCreeper) Intercept(evts *stdtypes.EventList) (*stdtypes.EventList, error) {
@@ -79,7 +77,9 @@ func (cc *CortexCreeper) Intercept(evts *stdtypes.EventList) (*stdtypes.EventLis
 	// events to adversary
 	select {
 	case cc.eventsIn <- evts:
-	case <-cc.abort:
+	case <-cc.doneC:
+		return nil, ErrorShutdown
+
 		// TODO deal with closing the channels
 	}
 	return stdtypes.EmptyList(), nil

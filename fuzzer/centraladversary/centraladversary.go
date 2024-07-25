@@ -2,7 +2,6 @@ package centraladversay
 
 import (
 	"context"
-	"math/rand/v2"
 	"reflect"
 	"slices"
 	"sync"
@@ -34,9 +33,9 @@ type Adversary struct {
 	idleNodesMonitor        *IdleNodesMonitor
 	undeliveredMsgs         map[string]struct{}
 	actionTrace             *actionTrace
+	delayedEventsManager    *delayedEventsManager
 	nodeIDs                 []stdtypes.NodeID
 	byzantineNodes          []stdtypes.NodeID
-	delayedEvents           []actions.DelayedEvents
 }
 
 func NewAdversary(
@@ -65,8 +64,8 @@ func NewAdversary(
 		undeliveredMsgs:         make(map[string]struct{}),
 		byzantineNodes:          byzantineNodes,
 		nodeIDs:                 nodeIDs,
-		actionTrace:             newActionTrace(),
-		delayedEvents:           make([]actions.DelayedEvents, 0),
+		actionTrace:             NewActionTrace(),
+		delayedEventsManager:    NewDelayedEventsManager(),
 		logger:                  logging.Decorate(logger, "CA - "),
 	}, nil
 }
@@ -79,7 +78,6 @@ func (a *Adversary) RunCentralAdversary(maxEvents int, checker *checker.Checker,
 	idleDetectionCs := sliceutil.Transform(ccs, func(_ int, cc *cortexcreeper.CortexCreeper) chan chan struct{} { return cc.IdleDetectionC })
 	go a.idleNodesMonitor.Run(ctx, idleDetectionCs)
 	defer a.idleNodesMonitor.Stop()
-
 	eventCount := 0
 
 	for {
@@ -117,10 +115,11 @@ func (a *Adversary) RunCentralAdversary(maxEvents int, checker *checker.Checker,
 					return nil
 				default:
 					// TODO: handle delayed to msgs or similar
-					if len(a.delayedEvents) == 0 {
+					if a.delayedEventsManager.Empty() {
+						a.logger.Log(logging.LevelDebug, "Should shut down...")
 						return IdleWithoutDelayedEvents
 					}
-					delayedEvents := a.popRandomDelayedEvets()
+					delayedEvents := a.delayedEventsManager.PopRandomDelayedEvents()
 					a.pushEvents(delayedEvents.NodeID, delayedEvents.Events, checker)
 				}
 			}
@@ -140,11 +139,6 @@ func (a *Adversary) RunCentralAdversary(maxEvents int, checker *checker.Checker,
 			sourceNodeID := ccsNodeIds[ind-2]
 			isByzantineSourceNode := sliceutil.Contains(a.nodeIDs, sourceNodeID)
 			isDeliverEvent := false
-
-			// event, err := event.SetMetadata("node", sourceNodeID)
-			// if err != nil {
-			// 	return err
-			// }
 
 			// TODO: figure out how to actually do this filtering
 			// hardcoding for now...
@@ -197,7 +191,7 @@ func (a *Adversary) RunCentralAdversary(maxEvents int, checker *checker.Checker,
 			}
 
 			if delayedEvents != nil {
-				a.delayedEvents = append(a.delayedEvents, delayedEvents...)
+				a.delayedEventsManager.Push(delayedEvents...)
 			}
 
 			// ignore "" bc this signifies noop - not the best solution but works for now
@@ -235,31 +229,22 @@ func (a *Adversary) RunExperiment(puppeteerSchedule []actions.DelayedEvents, che
 	ctx, cancel := context.WithCancel(context.Background())
 	wg := sync.WaitGroup{}
 	defer cancel()
-	if checker != nil {
-		defer checker.Stop()
-	}
 
 	// NOTE: the whole structure of this thing is a complete mess
-	a.delayedEvents = append(a.delayedEvents, puppeteerSchedule...)
 
-	nodesErr := make(chan error)
+	a.delayedEventsManager.Push(puppeteerSchedule...)
+
 	caErr := make(chan error)
 	checkerErr := make(chan error)
-	// puppeteerErr := make(chan error)
-
-	// wg.Add(1)
-	// go func() {
-	// 	defer wg.Done()
-	// 	defer close(caErr)
-	// 	puppeteerErr <- puppeteer.Run(a.nodeInstances)
-	// }()
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		defer close(caErr)
-		// defer cancel() // cancel to stop nodes when adv had enough
-		caErr <- a.RunCentralAdversary(maxEvents, checker, ctx)
+		select {
+		case caErr <- a.RunCentralAdversary(maxEvents, checker, ctx):
+		default:
+		}
 	}()
 
 	if checker != nil {
@@ -267,27 +252,32 @@ func (a *Adversary) RunExperiment(puppeteerSchedule []actions.DelayedEvents, che
 		go func() {
 			defer wg.Done()
 			defer close(checkerErr)
-			checkerErr <- checker.Start()
+			select {
+			case checkerErr <- checker.Start():
+			default:
+			}
 		}()
 	}
 
 	var err error
 	select {
-	case err = <-nodesErr:
-		if err != nil {
-			return es.Errorf("Nodes runtime (CA) error: %v", err)
-		}
 	case err = <-caErr:
-		if err != nil {
-			return es.Errorf("Central Adversary error: %v", err)
+		if checker != nil {
+			checker.Stop()
 		}
-	case err = <-caErr:
 		if err != nil {
-			return es.Errorf("Checker error: %v", err)
+			err = es.Errorf("Central Adversary error: %v", err)
+		}
+	case err = <-checkerErr:
+		if err != nil {
+			err = es.Errorf("Checker error: %v", err)
 		}
 	}
 
-	return nil
+	cancel()
+	wg.Wait()
+
+	return err
 }
 
 func (a *Adversary) GetByzantineNodes() []stdtypes.NodeID {
@@ -300,14 +290,4 @@ func (a *Adversary) GetActionTrace() *actionTrace {
 
 func (a *Adversary) noUndeliveredMsgs() bool {
 	return len(a.undeliveredMsgs) == 0
-}
-
-func (a *Adversary) popRandomDelayedEvets() actions.DelayedEvents {
-	// TODO: HERE
-	ind := rand.IntN(len(a.delayedEvents))
-	de := a.delayedEvents[ind]
-	// scrambeling order, ok bc we are picking random elements anyways
-	a.delayedEvents[ind] = a.delayedEvents[len(a.delayedEvents)-1]
-	a.delayedEvents = a.delayedEvents[:len(a.delayedEvents)-1]
-	return de
 }

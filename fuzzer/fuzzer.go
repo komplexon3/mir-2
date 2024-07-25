@@ -24,8 +24,7 @@ import (
 )
 
 const (
-	MAX_EVENTS              = 200
-	MAX_HEARTBEATS_INACTIVE = 10
+	MAX_EVENTS = 200
 )
 
 type Fuzzer[T any] struct {
@@ -101,7 +100,7 @@ func NewFuzzer[T any](
 	}, nil
 }
 
-func (f *Fuzzer[T]) Run(ctx context.Context, name string, propertyChecker *checker.Checker, maxEvents, maxInactiveHeartbeats int) error {
+func (f *Fuzzer[T]) Run(ctx context.Context, name string, propertyChecker *checker.Checker, maxEvents int) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	reportDir := fmt.Sprintf("./report_%s_%s", time.Now().Format("2006-01-02_15-04-05"), strings.Join(strings.Split(name, " "), "_"))
@@ -114,12 +113,15 @@ func (f *Fuzzer[T]) Run(ctx context.Context, name string, propertyChecker *check
 	nodesErr := make(chan error)
 	go func() {
 		nodesErr <- nodeinstance.RunNodes(ctx, f.nodeInstances, f.logger)
+		fmt.Println("DONEDONEDONEDONEDONEDONEDONEDONEDONE")
 	}()
 
 	err = f.ca.RunExperiment(f.puppeteerSchedule, propertyChecker, maxEvents)
 	if err != nil {
 		return err
 	}
+	fmt.Println("EXPERIMENT DONE EXPERIMENT DONE EXPERIMENT DONE ")
+	cancel()
 
 	results, _ := propertyChecker.GetResults()
 

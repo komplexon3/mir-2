@@ -12,8 +12,10 @@ import (
 	"github.com/filecoin-project/mir/stdtypes"
 )
 
-type Property = modules.PassiveModule
-type Properties = map[string]modules.PassiveModule
+type (
+	Property   = modules.PassiveModule
+	Properties = map[string]modules.PassiveModule
+)
 
 type checkerStatus int64
 
@@ -24,9 +26,9 @@ const (
 )
 
 type Checker struct {
+	isDoneC    chan struct{}
 	properties []*property
 	status     checkerStatus
-	cDone      chan struct{}
 }
 
 type CheckerResult int64
@@ -54,39 +56,35 @@ func (cr CheckerResult) String() string {
 type Decoder func([]byte) (stdtypes.Event, error)
 
 type property struct {
-	name         string
 	runnerModule modules.PassiveModule
 	eventChan    chan stdtypes.Event
-	doneC        chan struct{}
-	done         bool
+	isDoneC      chan struct{}
+	name         string
 	result       CheckerResult
+	done         bool
 }
 
 func newProperty(name string, module modules.PassiveModule) *property {
 	return &property{
-		name,
-		module,
-		make(chan stdtypes.Event),
-		make(chan struct{}, 1),
-		false,
-		NOT_READY,
+		name:         name,
+		runnerModule: module,
+		eventChan:    make(chan stdtypes.Event),
+		isDoneC:      make(chan struct{}, 1), // TODO: why does this channel have a capacity of 1?
+		done:         false,
+		result:       NOT_READY,
 	}
-
 }
 
+// TODO: doesn't need error
 func NewChecker(properties Properties) (*Checker, error) {
 	checker := &Checker{
 		properties: make([]*property, 0, len(properties)),
 		status:     NOT_STARTED,
-		cDone:      make(chan struct{}),
+		isDoneC:    make(chan struct{}),
 	}
 
 	for key, cond := range properties {
-		if passiveModule, ok := cond.(modules.PassiveModule); ok {
-			checker.properties = append(checker.properties, newProperty(string(key), passiveModule))
-		} else {
-			return nil, es.Errorf("module %s must be a passive module", key)
-		}
+		checker.properties = append(checker.properties, newProperty(string(key), cond))
 	}
 
 	return checker, nil
@@ -120,17 +118,17 @@ func (c *Checker) Start() error {
 
 	for _, p := range c.properties {
 		wg.Add(1)
-		go func(cc *property) {
+		go func(p *property) {
 			defer func() {
-				cc.done = true
-				close(cc.doneC)
+				p.done = true
+				close(p.isDoneC)
 				wg.Done()
 			}()
 
-			for e := range cc.eventChan {
-				outEvents, err := safelyApplyEvents(cc.runnerModule, stdtypes.ListOf(e))
+			for e := range p.eventChan {
+				outEvents, err := safelyApplyEvents(p.runnerModule, stdtypes.ListOf(e))
 				if err != nil {
-					fmt.Printf("property %s failed to apply events: %v", cc.name, err)
+					fmt.Printf("property %s failed to apply events: %v", p.name, err)
 					return
 				}
 
@@ -138,10 +136,10 @@ func (c *Checker) Start() error {
 				for ev := iter.Next(); ev != nil; ev = iter.Next() {
 					switch ev.(type) {
 					case *events.SuccessEvent:
-						cc.result = SUCCESS
+						p.result = SUCCESS
 						return
 					case *events.FailureEvent:
-						cc.result = FAILURE
+						p.result = FAILURE
 						return
 					default:
 						// TODO: add logging stuff
@@ -149,13 +147,12 @@ func (c *Checker) Start() error {
 					}
 				}
 			}
-
 		}(p)
 	}
 
 	wg.Wait()
 
-	c.cDone <- struct{}{}
+	close(c.isDoneC)
 	c.status = FINISHED
 
 	return nil
@@ -184,7 +181,7 @@ func (c *Checker) Stop() error {
 	}
 
 	// wait on done signal from "runtime"
-	<-c.cDone
+	<-c.isDoneC
 
 	return nil
 }
@@ -198,7 +195,7 @@ func (c *Checker) NextEvent(event stdtypes.Event) error {
 		if !property.done {
 			// TODO: this seeems very 'meh...' -> read up on 'closing' patterns
 			select {
-			case <-property.doneC:
+			case <-property.isDoneC:
 			case property.eventChan <- event:
 			}
 		}

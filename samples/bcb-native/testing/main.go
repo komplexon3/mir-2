@@ -61,25 +61,25 @@ var weightedActionsForByzantineNodes = []actions.WeightedAction{
 			nil,
 			nil
 	}, 10),
-	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
-		return fmt.Sprintf("dropped event %s", e.ToString()),
-			nil,
-			nil,
-			nil
-	}, 1),
-	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
-		e2, err := e.SetMetadata("duplicated", true)
-		if err != nil {
-			// TODO: should a failed action just be a "noop"
-			return "", nil, nil, err
-		}
-		return fmt.Sprintf("duplicated event %v", e.ToString()),
-			map[stdtypes.NodeID]*stdtypes.EventList{
-				sourceNode: stdtypes.ListOf(e, e2),
-			},
-			nil,
-			nil
-	}, 1),
+	// actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
+	// 	return fmt.Sprintf("dropped event %s", e.ToString()),
+	// 		nil,
+	// 		nil,
+	// 		nil
+	// }, 1),
+	// actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
+	// 	e2, err := e.SetMetadata("duplicated", true)
+	// 	if err != nil {
+	// 		// TODO: should a failed action just be a "noop"
+	// 		return "", nil, nil, err
+	// 	}
+	// 	return fmt.Sprintf("duplicated event %v", e.ToString()),
+	// 		map[stdtypes.NodeID]*stdtypes.EventList{
+	// 			sourceNode: stdtypes.ListOf(e, e2),
+	// 		},
+	// 		nil,
+	// 		nil
+	// }, 1),
 }
 
 func fuzzBCB(
@@ -135,10 +135,11 @@ func fuzzBCB(
 
 		// TODO: properly deal with context
 		ctx := context.Background()
-		err = fuzzer.Run(ctx, fmt.Sprintf("run %d", i), propertyChecker, MAX_EVENTS, MAX_HEARTBEATS_INACTIVE)
+		err = fuzzer.Run(ctx, fmt.Sprintf("run %d", i), propertyChecker, MAX_EVENTS)
 		if err != nil {
 			return es.Errorf("fuzzer encountered an issue: %v", err)
 		}
+
 	}
 	return nil
 }
