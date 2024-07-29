@@ -9,7 +9,7 @@ import (
 	"github.com/filecoin-project/mir/fuzzer"
 	"github.com/filecoin-project/mir/fuzzer/actions"
 
-	"github.com/filecoin-project/mir/checker"
+	"github.com/filecoin-project/mir/fuzzer/checker"
 	"github.com/filecoin-project/mir/pkg/deploytest"
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/trantor/types"
@@ -83,6 +83,7 @@ var weightedActionsForByzantineNodes = []actions.WeightedAction{
 }
 
 func fuzzBCB(
+	name string,
 	nodes []stdtypes.NodeID,
 	byzantineNodes []stdtypes.NodeID,
 	sender stdtypes.NodeID,
@@ -103,49 +104,41 @@ func fuzzBCB(
 	nodeConfigs := make(map[stdtypes.NodeID]nodeinstance.BcbNodeInstanceConfig, len(nodes))
 
 	// TODO: the rounds should actually be part of fuzzer, and not handeled here...
-	for i := range rounds {
-		fmt.Printf("Fuzzing round %d\n", i)
-		config := nodeinstance.BcbNodeInstanceConfig{InstanceUID: instanceUID, NumberOfNodes: len(nodes), Leader: sender, FakeTransport: deploytest.NewFakeTransport(nodeWeights), ReportPath: "."}
-		for _, nodeID := range nodes {
-			fmt.Println(nodeID)
-			nodeConfigs[nodeID] = config
-		}
-
-		systemConfig := &properties.SystemConfig{
-			AllNodes:       nodes,
-			Sender:         sender,
-			ByzantineNodes: byzantineNodes,
-		}
-
-		propertyChecker, err := checker.NewChecker(
-			checker.Properties{
-				"validity":    properties.NewValidity(*systemConfig, logger),
-				"integrity":   properties.NewIntegrity(*systemConfig, logger),
-				"consistency": properties.NewConsistency(*systemConfig, logger),
-			},
-		)
-		if err != nil {
-			return es.Errorf("fauled to create checker: %v", err)
-		}
-
-		fuzzer, err := fuzzer.NewFuzzer(nodeinstance.CreateBcbNodeInstance, nodeConfigs, byzantineNodes, puppeteerEvents, byzantineActions, networkActions, "", logger)
-		if err != nil {
-			return es.Errorf("failed to create fuzzer: %v", err)
-		}
-
-		// TODO: properly deal with context
-		ctx := context.Background()
-		err = fuzzer.Run(ctx, fmt.Sprintf("run %d", i), propertyChecker, MAX_EVENTS)
-		if err != nil {
-			return es.Errorf("fuzzer encountered an issue: %v", err)
-		}
-
+	config := nodeinstance.BcbNodeInstanceConfig{InstanceUID: instanceUID, NumberOfNodes: len(nodes), Leader: sender, FakeTransport: deploytest.NewFakeTransport(nodeWeights), ReportPath: "."}
+	for _, nodeID := range nodes {
+		fmt.Println(nodeID)
+		nodeConfigs[nodeID] = config
 	}
+
+	systemConfig := &properties.SystemConfig{
+		AllNodes:       nodes,
+		Sender:         sender,
+		ByzantineNodes: byzantineNodes,
+	}
+
+	checkerProperties := checker.Properties{
+		"validity":    properties.NewValidity(*systemConfig, logger),
+		"integrity":   properties.NewIntegrity(*systemConfig, logger),
+		"consistency": properties.NewConsistency(*systemConfig, logger),
+	}
+
+	fuzzer, err := fuzzer.NewFuzzer(nodeinstance.CreateBcbNodeInstance, nodeConfigs, byzantineNodes, puppeteerEvents, byzantineActions, networkActions, "", checkerProperties)
+	if err != nil {
+		return es.Errorf("failed to create fuzzer: %v", err)
+	}
+
+	// TODO: properly deal with context
+	ctx := context.Background()
+	err = fuzzer.Run(ctx, name, rounds, MAX_EVENTS, logger)
+	if err != nil {
+		return es.Errorf("fuzzer encountered an issue: %v", err)
+	}
+
 	return nil
 }
 
 func main() {
 	logger := logging.ConsoleDebugLogger
 	logger = logging.Synchronize(logger)
-	fuzzBCB([]stdtypes.NodeID{"0", "1", "2", "3"}, []stdtypes.NodeID{}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, 5, logger)
+	fuzzBCB("test", []stdtypes.NodeID{"0", "1", "2", "3"}, []stdtypes.NodeID{}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, 1, logger)
 }

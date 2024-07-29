@@ -1,13 +1,14 @@
 package checker
 
 import (
+	"context"
 	"fmt"
 	"runtime/debug"
 	"sync"
 
 	es "github.com/go-errors/errors"
 
-	"github.com/filecoin-project/mir/checker/events"
+	"github.com/filecoin-project/mir/fuzzer/checker/events"
 	"github.com/filecoin-project/mir/pkg/modules"
 	"github.com/filecoin-project/mir/stdtypes"
 )
@@ -27,6 +28,7 @@ const (
 
 type Checker struct {
 	isDoneC    chan struct{}
+	doneC      chan struct{}
 	properties []*property
 	status     checkerStatus
 }
@@ -81,6 +83,7 @@ func NewChecker(properties Properties) (*Checker, error) {
 		properties: make([]*property, 0, len(properties)),
 		status:     NOT_STARTED,
 		isDoneC:    make(chan struct{}),
+		doneC:      make(chan struct{}),
 	}
 
 	for key, cond := range properties {
@@ -90,35 +93,23 @@ func NewChecker(properties Properties) (*Checker, error) {
 	return checker, nil
 }
 
-func (c *Checker) GetResults() (map[string]CheckerResult, error) {
-	if c.status != FINISHED {
-		return nil, fmt.Errorf("no results available, run analysis first")
-	}
-
-	results := make(map[string]CheckerResult, len(c.properties))
-
-	for _, property := range c.properties {
-		results[property.name] = property.result
-	}
-
-	return results, nil
-}
-
-func (c *Checker) Start() error {
+func (c *Checker) Run(ctx context.Context, eventsIn chan stdtypes.Event) error {
 	if c.status != NOT_STARTED {
 		return es.Errorf("Cannot start checker. Checker is either finished or already running.")
 	}
 
 	if len(c.properties) == 0 {
-		return fmt.Errorf("no properties registered")
+		return es.Errorf("no properties registered")
 	}
 
 	c.status = RUNNING
+
 	var wg sync.WaitGroup
 
+	// TODO: ERRORs...
 	for _, p := range c.properties {
 		wg.Add(1)
-		go func(p *property) {
+		go func() {
 			defer func() {
 				p.done = true
 				close(p.isDoneC)
@@ -147,7 +138,38 @@ func (c *Checker) Start() error {
 					}
 				}
 			}
-		}(p)
+		}()
+	}
+
+FanOutLoop:
+	for {
+		select {
+		case evt := <-eventsIn:
+			for _, p := range c.properties {
+				select {
+				case p.eventChan <- evt:
+				case <-ctx.Done():
+					break FanOutLoop
+				case <-c.doneC:
+					break FanOutLoop
+				}
+			}
+		case <-ctx.Done():
+			break FanOutLoop
+		case <-c.doneC:
+			break FanOutLoop
+		}
+	}
+
+	// send done event to all -> initiate post processing if necessary
+	for _, property := range c.properties {
+		if !property.done {
+			property.eventChan <- events.NewFinalEvent()
+		}
+	}
+
+	for _, p := range c.properties {
+		close(p.eventChan)
 	}
 
 	wg.Wait()
@@ -167,18 +189,7 @@ func (c *Checker) Stop() error {
 		return es.Errorf("Analysis has not started yet.")
 	}
 
-	// send done event to all -> initiate post processing if necessary
-	for _, property := range c.properties {
-		if !property.done {
-			property.eventChan <- events.NewFinalEvent()
-		}
-	}
-
-	// close all channels
-	// will stop any property runner loop that hadn't terminated bc of success/failure yet
-	for _, property := range c.properties {
-		close(property.eventChan)
-	}
+	close(c.doneC)
 
 	// wait on done signal from "runtime"
 	<-c.isDoneC
@@ -186,46 +197,20 @@ func (c *Checker) Stop() error {
 	return nil
 }
 
-func (c *Checker) NextEvent(event stdtypes.Event) error {
-	if c.status != RUNNING {
-		return es.Errorf("Cannot process event. Checker is not running.")
+func (c *Checker) GetResults() (map[string]CheckerResult, error) {
+	if c.status != FINISHED {
+		return nil, es.Errorf("no results available, run analysis first")
 	}
+
+	results := make(map[string]CheckerResult, len(c.properties))
 
 	for _, property := range c.properties {
-		if !property.done {
-			// TODO: this seeems very 'meh...' -> read up on 'closing' patterns
-			select {
-			case <-property.isDoneC:
-			case property.eventChan <- event:
-			}
-		}
+		results[property.name] = property.result
 	}
 
-	return nil
+	return results, nil
 }
 
-// "legacy" to not break some of the old tests
-func (c *Checker) RunAnalysis(eventChan chan stdtypes.Event) error {
-	errChan := make(chan error)
-	go func() {
-		errChan <- c.Start()
-	}()
-
-	for event := range eventChan {
-		c.NextEvent(event)
-	}
-
-	c.Stop()
-
-	err := <-errChan
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// TODO - duplicated code...
 func safelyApplyEvents(
 	module modules.PassiveModule,
 	events *stdtypes.EventList,

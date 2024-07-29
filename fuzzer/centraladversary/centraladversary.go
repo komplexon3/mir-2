@@ -4,9 +4,7 @@ import (
 	"context"
 	"reflect"
 	"slices"
-	"sync"
 
-	"github.com/filecoin-project/mir/checker"
 	"github.com/filecoin-project/mir/fuzzer/actions"
 	"github.com/filecoin-project/mir/fuzzer/cortexcreeper"
 	"github.com/filecoin-project/mir/fuzzer/utils"
@@ -34,6 +32,7 @@ type Adversary struct {
 	undeliveredMsgs         map[string]struct{}
 	actionTrace             *actionTrace
 	delayedEventsManager    *delayedEventsManager
+	globalEventsStreamOut   chan stdtypes.Event
 	nodeIDs                 []stdtypes.NodeID
 	byzantineNodes          []stdtypes.NodeID
 }
@@ -41,11 +40,14 @@ type Adversary struct {
 func NewAdversary(
 	nodeIDs []stdtypes.NodeID,
 	cortexCreepers cortexcreeper.CortexCreepers,
+	idleDetectionCs []chan chan struct{},
 	byzantineWeightedActions []actions.WeightedAction,
 	networkWeightedActions []actions.WeightedAction,
 	byzantineNodes []stdtypes.NodeID,
+	globalEventsStream chan stdtypes.Event,
 	logger logging.Logger,
 ) (*Adversary, error) {
+	// TODO: add some sanity checks to make sure that there are as many cortexCreepers, idleDetectionCs, etc. as there are nodeIDs
 	byzantineActionSelector, err := actions.NewRandomActions(append(byzantineWeightedActions, networkWeightedActions...))
 	if err != nil {
 		return nil, err
@@ -60,23 +62,23 @@ func NewAdversary(
 		byzantineActionSelector: byzantineActionSelector,
 		networkActionSelector:   networkActionSelector,
 		cortexCreepers:          cortexCreepers,
-		idleNodesMonitor:        NewIdleNodesMonitor(),
+		idleNodesMonitor:        NewIdleNodesMonitor(idleDetectionCs),
 		undeliveredMsgs:         make(map[string]struct{}),
 		byzantineNodes:          byzantineNodes,
 		nodeIDs:                 nodeIDs,
 		actionTrace:             NewActionTrace(),
 		delayedEventsManager:    NewDelayedEventsManager(),
+		globalEventsStreamOut:   globalEventsStream,
 		logger:                  logging.Decorate(logger, "CA - "),
 	}, nil
 }
 
-func (a *Adversary) RunCentralAdversary(maxEvents int, checker *checker.Checker, ctx context.Context) error {
+func (a *Adversary) RunCentralAdversary(maxEvents int, ctx context.Context) error {
 	// slice of cortex creepers ordered by nodeIds to easily reference them to the select cases
 	ccsNodeIds := maputil.GetSortedKeys(a.cortexCreepers)
 	ccs := maputil.GetValuesOf(a.cortexCreepers, ccsNodeIds)
 
-	idleDetectionCs := sliceutil.Transform(ccs, func(_ int, cc *cortexcreeper.CortexCreeper) chan chan struct{} { return cc.IdleDetectionC })
-	go a.idleNodesMonitor.Run(ctx, idleDetectionCs)
+	go a.idleNodesMonitor.Run(ctx)
 	defer a.idleNodesMonitor.Stop()
 	eventCount := 0
 
@@ -112,15 +114,16 @@ func (a *Adversary) RunCentralAdversary(maxEvents int, checker *checker.Checker,
 				case <-value.Interface().(chan struct{}):
 					// just in case it was cancelled
 					a.logger.Log(logging.LevelDebug, "All nodes IDLE - abort")
-					return nil
+					continue
 				default:
 					// TODO: handle delayed to msgs or similar
 					if a.delayedEventsManager.Empty() {
 						a.logger.Log(logging.LevelDebug, "Should shut down...")
 						return IdleWithoutDelayedEvents
 					}
+					a.logger.Log(logging.LevelDebug, "Delayed events ready for dispatch")
 					delayedEvents := a.delayedEventsManager.PopRandomDelayedEvents()
-					a.pushEvents(delayedEvents.NodeID, delayedEvents.Events, checker)
+					a.pushEvents(delayedEvents.NodeID, delayedEvents.Events)
 				}
 			}
 			continue
@@ -141,15 +144,6 @@ func (a *Adversary) RunCentralAdversary(maxEvents int, checker *checker.Checker,
 			isDeliverEvent := false
 
 			// TODO: figure out how to actually do this filtering
-			// hardcoding for now...
-
-			// if not event of interest, just push and continue
-			// eventType := reflect.TypeOf(event)
-			// if _, ok := a.eventsOfInterest[eventType]; !ok {
-			// 	fmt.Printf("Forwarding %v\n", event)
-			// 	a.cortexCreepers[ind-1].PushEvents(stdtypes.ListOf(event))
-			// 	continue
-			// }
 
 			// hardcoded tmp solution
 			switch evT := event.(type) {
@@ -170,7 +164,7 @@ func (a *Adversary) RunCentralAdversary(maxEvents int, checker *checker.Checker,
 				}
 				delete(a.undeliveredMsgs, msgID.(string))
 			default:
-				a.pushEvents(sourceNodeID, stdtypes.ListOf(event), checker)
+				a.pushEvents(sourceNodeID, stdtypes.ListOf(event))
 				continue
 			}
 
@@ -181,7 +175,7 @@ func (a *Adversary) RunCentralAdversary(maxEvents int, checker *checker.Checker,
 			} else if isDeliverEvent {
 				action = a.networkActionSelector.SelectAction()
 			} else {
-				a.pushEvents(sourceNodeID, stdtypes.ListOf(event), checker)
+				a.pushEvents(sourceNodeID, stdtypes.ListOf(event))
 				continue
 			}
 
@@ -201,19 +195,23 @@ func (a *Adversary) RunCentralAdversary(maxEvents int, checker *checker.Checker,
 
 			// TODO: check for nil?
 			for injectNodeID, injectEvents := range newEvents {
-				a.pushEvents(injectNodeID, injectEvents, checker)
+				a.pushEvents(injectNodeID, injectEvents)
 			}
 		}
 	}
 }
 
-func (a *Adversary) pushEvents(nodeID stdtypes.NodeID, events *stdtypes.EventList, checker *checker.Checker) {
-	if checker != nil {
-		// if there's a checker, duplicate the events and have the checker look at them
-		eIter := events.Iterator()
-		for e := eIter.Next(); e != nil; e = eIter.Next() {
-			// TODO: must be duplicated! Don't want checker to possibly affect the system
-			checker.NextEvent(e)
+func (a *Adversary) pushEvents(nodeID stdtypes.NodeID, events *stdtypes.EventList) {
+	if a.globalEventsStreamOut != nil {
+		evtsIter := events.Iterator()
+		for evt := evtsIter.Next(); evt != nil; evt = evtsIter.Next() {
+			// add node id to metadata, also creates copy of event which we want
+			evtWithNodeID, err := evt.SetMetadata("node", nodeID)
+			if err != nil {
+				// should probably be handles better but for now panic is okay -> fuzzer should be able to deal with panics anyways
+				panic(es.Errorf("pushEvents failed to set metadata: %v", err))
+			}
+			a.globalEventsStreamOut <- evtWithNodeID
 		}
 	}
 	cc := a.cortexCreepers[nodeID]
@@ -225,57 +223,12 @@ func (a *Adversary) nodeIsPermittedToTakeByzantineAction(nodeId stdtypes.NodeID)
 }
 
 // TODO: should take ctx
-func (a *Adversary) RunExperiment(puppeteerSchedule []actions.DelayedEvents, checker *checker.Checker, maxEvents int) error {
-	ctx, cancel := context.WithCancel(context.Background())
-	wg := sync.WaitGroup{}
-	defer cancel()
-
+func (a *Adversary) RunExperiment(ctx context.Context, puppeteerSchedule []actions.DelayedEvents, maxEvents int) error {
 	// NOTE: the whole structure of this thing is a complete mess
 
 	a.delayedEventsManager.Push(puppeteerSchedule...)
 
-	caErr := make(chan error)
-	checkerErr := make(chan error)
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		defer close(caErr)
-		select {
-		case caErr <- a.RunCentralAdversary(maxEvents, checker, ctx):
-		default:
-		}
-	}()
-
-	if checker != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			defer close(checkerErr)
-			select {
-			case checkerErr <- checker.Start():
-			default:
-			}
-		}()
-	}
-
-	var err error
-	select {
-	case err = <-caErr:
-		if checker != nil {
-			checker.Stop()
-		}
-		if err != nil {
-			err = es.Errorf("Central Adversary error: %v", err)
-		}
-	case err = <-checkerErr:
-		if err != nil {
-			err = es.Errorf("Checker error: %v", err)
-		}
-	}
-
-	cancel()
-	wg.Wait()
+	err := a.RunCentralAdversary(maxEvents, ctx)
 
 	return err
 }

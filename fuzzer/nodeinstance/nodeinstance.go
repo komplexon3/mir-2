@@ -11,6 +11,7 @@ import (
 
 type NodeInstance interface {
 	GetNode() *mir.Node
+	GetIdleDetectionC() chan chan struct{}
 	Setup() error
 	Cleanup() error
 	Run(ctx context.Context) error

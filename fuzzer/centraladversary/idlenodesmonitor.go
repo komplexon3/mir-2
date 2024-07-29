@@ -2,6 +2,7 @@ package centraladversay
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	es "github.com/go-errors/errors"
@@ -10,50 +11,43 @@ import (
 type IdleNodesMonitor struct {
 	idleNotificationC chan chan struct{}
 	cancel            context.CancelFunc
+	idleDetectionCs   []chan chan struct{}
 }
 
-func NewIdleNodesMonitor() *IdleNodesMonitor {
+func NewIdleNodesMonitor(idleDetectionCs []chan chan struct{}) *IdleNodesMonitor {
 	return &IdleNodesMonitor{
+		idleDetectionCs:   idleDetectionCs,
 		idleNotificationC: make(chan chan struct{}),
 		cancel:            nil,
 	}
 }
 
-func (inm *IdleNodesMonitor) Stop() {
-	if inm.cancel != nil {
-		inm.cancel()
+func (m *IdleNodesMonitor) Stop() {
+	if m.cancel != nil {
+		m.cancel()
 	}
 }
 
-func (inm *IdleNodesMonitor) IdleNotificationC() chan chan struct{} {
-	return inm.idleNotificationC
+func (m *IdleNodesMonitor) IdleNotificationC() chan chan struct{} {
+	return m.idleNotificationC
 }
 
-func (inm *IdleNodesMonitor) Run(ctx context.Context, idleDetectionCs []chan chan struct{}) error {
-	if inm.cancel != nil {
+func (m *IdleNodesMonitor) Run(ctx context.Context) error {
+	if m.cancel != nil {
 		return es.Errorf("Idle Nodes Monitor is already running or was running")
 	}
 
 	wg := sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(ctx)
-	inm.cancel = cancel
+	m.cancel = cancel
 	defer cancel()
 
 	activeC := make(chan struct{})
 	idleC := make(chan struct{})
-	defer close(activeC)
-	defer close(idleC)
-	defer close(inm.idleNotificationC)
 	var noLongerInactiveC chan struct{}
 
-	defer func() {
-		for _, nc := range idleDetectionCs {
-			close(nc)
-		}
-	}()
-
-	wg.Add(len(idleDetectionCs))
-	for _, idleDetectionC := range idleDetectionCs {
+	wg.Add(len(m.idleDetectionCs))
+	for _, idleDetectionC := range m.idleDetectionCs {
 		go func() {
 			defer wg.Done()
 			var continueC chan struct{}
@@ -72,7 +66,8 @@ func (inm *IdleNodesMonitor) Run(ctx context.Context, idleDetectionCs []chan cha
 		}()
 	}
 
-	activeCount := len(idleDetectionCs)
+	var err error
+	activeCount := len(m.idleDetectionCs)
 ActiveCountLoop:
 	for {
 		select {
@@ -88,13 +83,21 @@ ActiveCountLoop:
 			activeCount--
 			if activeCount == 0 {
 				noLongerInactiveC = make(chan struct{})
-				inm.idleNotificationC <- noLongerInactiveC
+				m.idleNotificationC <- noLongerInactiveC
 			} else if activeCount < 0 {
-				return es.Errorf("number of active nodes is negative")
+				err = es.Errorf("number of active nodes is negative")
+				break ActiveCountLoop
 			}
 		}
 	}
 
 	wg.Wait()
-	return nil
+
+	close(activeC)
+	close(idleC)
+	close(m.idleNotificationC)
+
+	fmt.Println("IdleNodesMonitor done")
+
+	return err
 }

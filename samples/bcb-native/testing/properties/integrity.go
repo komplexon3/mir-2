@@ -8,7 +8,7 @@ import (
 	bcbevents "github.com/filecoin-project/mir/samples/bcb-native/events"
 	"github.com/filecoin-project/mir/stdtypes"
 
-	checkerevents "github.com/filecoin-project/mir/checker/events"
+	checkerevents "github.com/filecoin-project/mir/fuzzer/checker/events"
 	"github.com/filecoin-project/mir/pkg/dsl"
 	"github.com/filecoin-project/mir/pkg/logging"
 )

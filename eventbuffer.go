@@ -14,7 +14,6 @@ type eventBuffer struct {
 
 // newEventBuffer allocates and returns a pointer to a new eventBuffer object.
 func newEventBuffer(modules modules.Modules) eventBuffer {
-
 	wi := eventBuffer{
 		buffers:     make(map[stdtypes.ModuleID]*stdtypes.EventList),
 		totalEvents: 0,
@@ -37,7 +36,6 @@ func (eb *eventBuffer) Add(events *stdtypes.EventList) error {
 
 	// For each incoming event
 	for event := iter.Next(); event != nil; event = iter.Next() {
-
 		// Look up the corresponding module's buffer and add the event to it.
 		if buffer, ok := eb.buffers[event.Dest().Top()]; ok {
 			buffer.PushBack(event)

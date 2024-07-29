@@ -9,16 +9,13 @@ import (
 	"github.com/filecoin-project/mir/fuzzer/interceptors/nomulticast"
 	"github.com/filecoin-project/mir/fuzzer/interceptors/vcinterceptor"
 	"github.com/filecoin-project/mir/fuzzer/nodeinstance"
-	"github.com/filecoin-project/mir/pkg/crypto"
 	mirCrypto "github.com/filecoin-project/mir/pkg/crypto"
 	"github.com/filecoin-project/mir/pkg/deploytest"
 	"github.com/filecoin-project/mir/pkg/eventlog"
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/modules"
 	trantorpbtypes "github.com/filecoin-project/mir/pkg/pb/trantorpb/types"
-	"github.com/filecoin-project/mir/pkg/utilinterceptors"
 	"github.com/filecoin-project/mir/samples/bcb-native/modules/bcb"
-	"github.com/filecoin-project/mir/stdmodules/timer"
 	"github.com/filecoin-project/mir/stdtypes"
 	es "github.com/go-errors/errors"
 )
@@ -27,6 +24,7 @@ type BcbNodeInstance struct {
 	node            *mir.Node
 	transportModule *deploytest.FakeLink
 	cortexCreeper   *cortexcreeper.CortexCreeper
+	idleDetectionC  chan chan struct{}
 	nodeID          stdtypes.NodeID
 	config          BcbNodeInstanceConfig
 }
@@ -43,13 +41,17 @@ func (bi *BcbNodeInstance) GetNode() *mir.Node {
 	return bi.node
 }
 
+func (bi *BcbNodeInstance) GetIdleDetectionC() chan chan struct{} {
+	return bi.idleDetectionC
+}
+
 func (bi *BcbNodeInstance) Run(ctx context.Context) error {
 	go bi.cortexCreeper.Run(ctx) // ignoring error for now
 	return bi.node.Run(ctx)
 }
 
 func (bi *BcbNodeInstance) Stop() {
-	bi.cortexCreeper.StopInjector()
+	// bi.cortexCreeper.StopInjector() // TODO: fix -tmp - double close
 	bi.node.Stop()
 }
 
@@ -102,14 +104,14 @@ func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig,
 
 	msgMetadataInterceptorIn, msgMetadataInterceptorOut := msgmetadata.NewMsgMetadataInterceptorPair(logger, "vc", "msgID")
 
-	interceptor := eventlog.MultiInterceptor(msgMetadataInterceptorIn, &nomulticast.NoMulticast{}, &utilinterceptors.NodeIdMetadataInterceptor{NodeID: nodeID}, cortexCreeper, vcinterceptor.New(nodeID), msgMetadataInterceptorOut, eventLogger)
+	interceptor := eventlog.MultiInterceptor(msgMetadataInterceptorIn, &nomulticast.NoMulticast{}, cortexCreeper, vcinterceptor.New(nodeID), msgMetadataInterceptorOut, eventLogger)
 
 	// setup crypto
-	keyPairs, err := crypto.GenerateKeys(config.NumberOfNodes, 42)
+	keyPairs, err := mirCrypto.GenerateKeys(config.NumberOfNodes, 42)
 	if err != nil {
 		return nil, es.Errorf("error setting up key paris: %w", err)
 	}
-	crypto, err := crypto.InsecureCryptoForTestingOnly(nodeIDs, nodeID, &keyPairs)
+	crypto, err := mirCrypto.InsecureCryptoForTestingOnly(nodeIDs, nodeID, &keyPairs)
 	if err != nil {
 		return nil, es.Errorf("error setting up crypto: %w", err)
 	}
@@ -119,11 +121,10 @@ func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig,
 		"crypto": mirCrypto.New(crypto),
 		"bcb":    bcbModule,
 		"null":   modules.NullPassive{}, // just sending delivers to null, will still be intercepted
-		"timer":  timer.New(),
 	}
 
 	// create a Mir node
-	node, err := mir.NewNodeWithIdleDetection(nodeID, mir.DefaultNodeConfig().WithLogger(logger), m, interceptor, cortexCreeper.IdleDetectionC)
+	node, idleDetectionC, err := mir.NewNodeWithIdleDetection(nodeID, mir.DefaultNodeConfig().WithLogger(logger), m, interceptor)
 	if err != nil {
 		return nil, es.Errorf("error creating a Mir node: %w", err)
 	}
@@ -134,6 +135,7 @@ func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig,
 		transportModule: transportModule,
 		config:          config,
 		cortexCreeper:   cortexCreeper,
+		idleDetectionC:  idleDetectionC,
 	}
 
 	return &instance, nil

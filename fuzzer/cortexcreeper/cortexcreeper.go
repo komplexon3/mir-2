@@ -14,20 +14,18 @@ var ErrorShutdown = fmt.Errorf("shutdown signal received")
 type CortexCreepers map[stdtypes.NodeID]*CortexCreeper
 
 type CortexCreeper struct {
-	node           *mir.Node
-	eventsIn       chan *stdtypes.EventList
-	eventsOut      chan *stdtypes.EventList
-	IdleDetectionC chan chan struct{}
-	doneC          chan struct{}
+	node      *mir.Node
+	eventsIn  chan *stdtypes.EventList
+	eventsOut chan *stdtypes.EventList
+	doneC     chan struct{}
 }
 
 func NewCortexCreeper() *CortexCreeper {
 	return &CortexCreeper{
-		node:           nil,
-		eventsIn:       make(chan *stdtypes.EventList),
-		eventsOut:      make(chan *stdtypes.EventList),
-		IdleDetectionC: make(chan chan struct{}),
-		doneC:          make(chan struct{}),
+		node:      nil,
+		eventsIn:  make(chan *stdtypes.EventList),
+		eventsOut: make(chan *stdtypes.EventList),
+		doneC:     make(chan struct{}),
 	}
 }
 
@@ -83,15 +81,6 @@ func (cc *CortexCreeper) Intercept(evts *stdtypes.EventList) (*stdtypes.EventLis
 		// TODO deal with closing the channels
 	}
 	return stdtypes.EmptyList(), nil
-}
-
-func (cc *CortexCreeper) PopEvents(ctx context.Context) *stdtypes.EventList {
-	select {
-	case <-ctx.Done():
-		return nil
-	case evts := <-cc.eventsIn:
-		return evts
-	}
 }
 
 func (cc *CortexCreeper) GetEventsIn() chan *stdtypes.EventList {

@@ -167,15 +167,15 @@ func NewNode(
 	}, nil
 }
 
-func NewNodeWithIdleDetection(id stdtypes.NodeID, config *NodeConfig, m modules.Modules, interceptor eventlog.Interceptor, idleNotificationC chan chan struct{}) (*Node, error) {
+func NewNodeWithIdleDetection(id stdtypes.NodeID, config *NodeConfig, m modules.Modules, interceptor eventlog.Interceptor) (*Node, chan chan struct{}, error) {
 	n, err := NewNode(id, config, m, interceptor)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	n.inactiveNotificationChan = idleNotificationC
+	n.inactiveNotificationChan = make(chan chan struct{})
 	n.noEvents = make(chan chan struct{})
-	return n, nil
+	return n, n.inactiveNotificationChan, nil
 }
 
 // Debug runs the Node in debug mode.
@@ -250,7 +250,11 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 
 	// Wait for all worker threads (started by n.StartModules()) to finish when processing is done.
 	// Watch out! If process() terminates unexpectedly (e.g. by panicking), this might get stuck!
-	defer wg.Wait()
+	defer func() {
+		n.Config.Logger.Log(logging.LevelError, "pre wait")
+		wg.Wait()
+		n.Config.Logger.Log(logging.LevelError, "post wait")
+	}()
 
 	// Make sure that the event importing goroutines do not get stuck if input is paused due to full buffers.
 	// This defer statement must go after waiting for the worker goroutines to finish (wg.Wait() above).
@@ -267,104 +271,23 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 	n.startModules(ctx, &wg)
 
 	if n.inactiveNotificationChan != nil {
+		defer close(n.inactiveNotificationChan)
+
 		// observe if node is active
 		// TODO: cancel/shutdown
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case continueEventLoopChan := <-n.noEvents:
-					pauseWg := sync.WaitGroup{}
-					pauseCtx, pauseCancel := context.WithCancel(ctx)
-					pauseCounter := make(chan struct{}, len(n.modules))
-					defer close(pauseCounter)
-					// no events in queues atm
-					// TODO: don't (ab)use cancel for regular control flow - add "stop"/"done" channel
-					for _, pauseC := range n.modulePauseChans {
-						pauseWg.Add(1)
-						go func() {
-							continueModuleChan := make(chan struct{})
-							defer pauseWg.Done()
-							defer close(continueModuleChan)
-							select {
-							case <-pauseCtx.Done():
-								return
-							case pauseC <- continueModuleChan:
-								// if this (or another) module created events during the pausing procedure, abort
-								if len(n.eventsIn) > 0 {
-									pauseCancel()
-								} else {
-									pauseCounter <- struct{}{}
-								}
-								<-pauseCtx.Done()
-								continueModuleChan <- struct{}{}
-							}
-						}()
-					}
-
-					for _, pauseC := range n.importerPauseChans {
-						pauseWg.Add(1)
-						go func() {
-							continueImporterChan := make(chan struct{})
-							defer pauseWg.Done()
-							defer close(continueImporterChan)
-							select {
-							case <-pauseCtx.Done():
-								return
-							case pauseC <- continueImporterChan:
-								// if this (or another) module created events during the pausing procedure, abort
-								if len(n.eventsIn) > 0 {
-									pauseCancel()
-								} else {
-									pauseCounter <- struct{}{}
-								}
-								<-pauseCtx.Done()
-								continueImporterChan <- struct{}{}
-							}
-						}()
-					}
-
-					allModulesAndImportersIdle := true
-					count := 0
-
-				CounterLoop:
-					for {
-						select {
-						case <-pauseCounter:
-							count++
-							if count == len(n.modulePauseChans)+len(n.importerPauseChans) {
-								// all modules are now inactive and there are no events in eventsIn
-								break CounterLoop
-							}
-						case <-pauseCtx.Done():
-							allModulesAndImportersIdle = false
-							// no need to restart modules as they should already be running
-							break CounterLoop
-						}
-					}
-
-					if allModulesAndImportersIdle {
-						n.Config.Logger.Log(logging.LevelDebug, "IDLE")
-						n.continueNotificationChan = make(chan struct{})
-						n.inactiveNotificationChan <- n.continueNotificationChan
-					}
-
-					// restart the modules if they haven't aborted before
-					pauseCancel()
-					pauseWg.Wait()
-					continueEventLoopChan <- struct{}{}
-				}
-			}
+			n.runIdleDetector(ctx)
 		}()
+
 	}
 
 	// This loop shovels events between the appropriate channels, until a stopping condition is satisfied.
 	var returnErr error
 	for returnErr == nil {
 
+		// TODO: push this stuff into module/funtion
 		if n.continueNotificationChan != nil {
 			n.Config.Logger.Log(logging.LevelDebug, "No longer IDLE")
 			close(n.continueNotificationChan)
@@ -377,8 +300,9 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 				continueChan := make(chan struct{})
 				n.noEvents <- continueChan
 				// block until done
+				n.Config.Logger.Log(logging.LevelError, "# Blocking on continue")
 				<-continueChan
-				close(continueChan)
+				n.Config.Logger.Log(logging.LevelError, "# Continue unblocked")
 			}
 		}
 
@@ -394,8 +318,10 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 		})
 		selectReactions = append(selectReactions, func(_ reflect.Value) {
 			// TODO: Use a different error here to distinguish this case from calling Node.Stop()
-			n.Config.Logger.Log(logging.LevelTrace, "reaction fail")
+			n.Config.Logger.Log(logging.LevelError, "~ select ctx")
+			n.Config.Logger.Log(logging.LevelTrace, "reaction ctx done")
 			n.workErrNotifier.Fail(ErrStopped)
+			n.Config.Logger.Log(logging.LevelError, "~ select ctx DONE")
 		})
 
 		// Add events produced by modules and debugger to the eventBuffer buffers and handle logical time.
@@ -407,8 +333,9 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 		selectReactions = append(selectReactions, func(newEventsVal reflect.Value) {
 			n.statsLock.Lock()
 			defer n.statsLock.Unlock()
+			n.Config.Logger.Log(logging.LevelError, "~ select events in")
 
-			n.Config.Logger.Log(logging.LevelTrace, "reaction new events in")
+			n.Config.Logger.Log(logging.LevelError, "new events in")
 			newEvents := newEventsVal.Interface().(*stdtypes.EventList)
 			// Intercept the (stripped of all follow-ups) events that were emitted.
 			// This is only for debugging / diagnostic purposes.
@@ -423,6 +350,7 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 			if n.pendingEvents.totalEvents > n.Config.PauseInputThreshold {
 				n.pauseInput()
 			}
+			n.Config.Logger.Log(logging.LevelError, "~ select events in DONE")
 		})
 
 		// If an error occurred, stop processing.
@@ -432,7 +360,10 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 			Chan: reflect.ValueOf(n.workErrNotifier.ExitC()),
 		})
 		selectReactions = append(selectReactions, func(_ reflect.Value) {
+			n.Config.Logger.Log(logging.LevelError, "~ select exit c")
+			n.Config.Logger.Log(logging.LevelError, "reaction exit c")
 			returnErr = n.workErrNotifier.Err()
+			n.Config.Logger.Log(logging.LevelError, "~ select exit c DONE")
 		})
 
 		// For each generic event buffer in eventBuffer that contains events to be submitted to its corresponding module,
@@ -462,6 +393,7 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 					n.statsLock.Lock()
 					defer n.statsLock.Unlock()
 
+					n.Config.Logger.Log(logging.LevelError, "~ select push events", "module", mID, "events", eventBatch)
 					n.pendingEvents.buffers[mID].RemoveFront(numEvents)
 
 					// Keep track of the size of the event buffer.
@@ -472,6 +404,7 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 					}
 
 					n.dispatchStats.AddDispatch(mID, numEvents)
+					n.Config.Logger.Log(logging.LevelError, "~ select push events DONE", "module", mID)
 				})
 			}
 		}
@@ -479,11 +412,14 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 
 		// Choose one case from above and execute the corresponding reaction.
 
+		n.Config.Logger.Log(logging.LevelError, "~ wait on select")
 		chosenCase, receivedValue, _ := reflect.Select(selectCases)
 		selectReactions[chosenCase](receivedValue)
+		n.Config.Logger.Log(logging.LevelError, "case chosen", "case", chosenCase)
 	}
 
 	n.workErrNotifier.SetExitStatus(nil, nil) // TODO: change this when statuses are implemented.
+	n.Config.Logger.Log(logging.LevelError, "returning")
 	return returnErr
 }
 
@@ -574,6 +510,7 @@ func (n *Node) importEvents(
 	eventSink chan<- *stdtypes.EventList,
 	pause <-chan chan struct{},
 ) {
+	defer n.Config.Logger.Log(logging.LevelError, "importer finished")
 	for {
 
 		n.waitForInputEnabled()
@@ -661,6 +598,105 @@ func (n *Node) inputIsPaused() bool {
 	n.inputPausedCond.L.Lock()
 	defer n.inputPausedCond.L.Unlock()
 	return n.inputPaused
+}
+
+func (n *Node) runIdleDetector(ctx context.Context) {
+	defer n.Config.Logger.Log(logging.LevelError, "idle loop shut down")
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-n.workErrNotifier.ExitC():
+			n.Config.Logger.Log(logging.LevelError, "shutdown signal recv")
+			return
+
+		case continueEventLoopChan := <-n.noEvents:
+			pauseWg := sync.WaitGroup{}
+			pauseCtx, pauseCancel := context.WithCancel(ctx)
+			pauseCounter := make(chan struct{}, len(n.modules))
+			// defer close(pauseCounter) // NOTE: maybe this is needed after all
+			// no events in queues atm
+			// TODO: don't (ab)use cancel for regular control flow - add "stop"/"done" channel
+			for _, pauseC := range n.modulePauseChans {
+				pauseWg.Add(1)
+				go func() {
+					defer pauseWg.Done()
+					n.idleDetectorPauseWorker(pauseCtx, pauseCancel, pauseCounter, pauseC)
+				}()
+			}
+
+			for _, pauseC := range n.importerPauseChans {
+				pauseWg.Add(1)
+				go func() {
+					defer pauseWg.Done()
+					n.idleDetectorPauseWorker(pauseCtx, pauseCancel, pauseCounter, pauseC)
+				}()
+			}
+
+			allModulesAndImportersIdle := true
+			count := 0
+
+			n.Config.Logger.Log(logging.LevelError, "Counter Loop reached")
+		CounterLoop:
+			for {
+				select {
+				case <-pauseCounter:
+					count++
+					if count == len(n.modulePauseChans)+len(n.importerPauseChans) {
+						// all modules are now inactive and there are no events in eventsIn
+						break CounterLoop
+					}
+				case <-pauseCtx.Done():
+					allModulesAndImportersIdle = false
+					// no need to restart modules as they should already be running
+					break CounterLoop
+				case <-n.workErrNotifier.ExitC():
+					allModulesAndImportersIdle = false
+					n.Config.Logger.Log(logging.LevelError, "shutdown signal recv - CounterLoop")
+					break CounterLoop
+
+				}
+			}
+
+			if allModulesAndImportersIdle {
+				n.Config.Logger.Log(logging.LevelDebug, "IDLE")
+				n.continueNotificationChan = make(chan struct{})
+				select {
+				case n.inactiveNotificationChan <- n.continueNotificationChan:
+				case <-n.workErrNotifier.ExitC():
+					// don't block in case it should have stopped
+					// TODO: handle this more nicely
+				}
+			}
+
+			// restart the modules if they haven't aborted before
+			n.Config.Logger.Log(logging.LevelError, "cancelling pause")
+			pauseCancel()
+			n.Config.Logger.Log(logging.LevelError, "waiting on pause")
+			pauseWg.Wait()
+			n.Config.Logger.Log(logging.LevelError, "pause done")
+			close(continueEventLoopChan)
+		}
+	}
+}
+
+func (n *Node) idleDetectorPauseWorker(ctx context.Context, abort context.CancelFunc, pauseCounter chan struct{}, pauseC chan chan struct{}) {
+	continueImporterChan := make(chan struct{})
+	defer close(continueImporterChan)
+	select {
+	case <-ctx.Done():
+		return
+	case pauseC <- continueImporterChan:
+		// if this (or another) module created events during the pausing procedure, abort
+		if len(n.eventsIn) > 0 {
+			abort()
+		} else {
+			pauseCounter <- struct{}{}
+		}
+		<-ctx.Done()
+		continueImporterChan <- struct{}{}
+	}
 }
 
 func createInitEvents(m modules.Modules) *stdtypes.EventList {
