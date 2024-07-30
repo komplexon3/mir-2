@@ -56,7 +56,7 @@ func newFuzzerRun[T any](
 
 	nodeInstances := make(nodeinstance.NodeInstances, len(nodeIDs))
 	cortexCreepers := make(cortexcreeper.CortexCreepers, len(nodeIDs))
-	idleDetectionCs := make([]chan chan struct{}, 0, len(nodeIDs))
+	idleDetectionCs := make(map[stdtypes.NodeID]chan chan struct{}, len(nodeIDs))
 
 	for nodeID, config := range nodeConfigs {
 		nodeLogger := logging.Decorate(baseLogger, string(nodeID)+" - ")
@@ -67,7 +67,7 @@ func newFuzzerRun[T any](
 			return nil, es.Errorf("Failed to create node instance with id %s: %v", nodeID, err)
 		}
 		nodeInstances[nodeID] = nodeInstance
-		idleDetectionCs = append(idleDetectionCs, nodeInstance.GetIdleDetectionC())
+		idleDetectionCs[nodeID] = nodeInstance.GetIdleDetectionC()
 	}
 
 	eventsToCheckerChan := make(chan stdtypes.Event)
@@ -169,6 +169,10 @@ func (r *fuzzerRun[T]) Run(ctx context.Context, name string, maxEvents int, logg
 		if err != nil {
 			err = es.Errorf("Central Adversary error: %v", err)
 		}
+	}
+
+	if err != nil {
+		logger.Log(logging.LevelError, "Error occured during fuzzer run:", "error", err)
 	}
 
 	// stop everything

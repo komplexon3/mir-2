@@ -250,11 +250,7 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 
 	// Wait for all worker threads (started by n.StartModules()) to finish when processing is done.
 	// Watch out! If process() terminates unexpectedly (e.g. by panicking), this might get stuck!
-	defer func() {
-		n.Config.Logger.Log(logging.LevelError, "pre wait")
-		wg.Wait()
-		n.Config.Logger.Log(logging.LevelError, "post wait")
-	}()
+	defer wg.Wait()
 
 	// Make sure that the event importing goroutines do not get stuck if input is paused due to full buffers.
 	// This defer statement must go after waiting for the worker goroutines to finish (wg.Wait() above).
@@ -298,11 +294,17 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 			if n.pendingEvents.totalEvents == 0 {
 				// no events in queues, block to check modules
 				continueChan := make(chan struct{})
-				n.noEvents <- continueChan
+				// TODO: orchestrate shutdown (complete fuzzer system) more carefully -> too many hacky fixes
+				select {
+
+				case n.noEvents <- continueChan:
+				case <-n.workErrNotifier.ExitC():
+				}
 				// block until done
-				n.Config.Logger.Log(logging.LevelError, "# Blocking on continue")
-				<-continueChan
-				n.Config.Logger.Log(logging.LevelError, "# Continue unblocked")
+				select {
+				case <-continueChan:
+				case <-n.workErrNotifier.ExitC():
+				}
 			}
 		}
 
@@ -318,10 +320,7 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 		})
 		selectReactions = append(selectReactions, func(_ reflect.Value) {
 			// TODO: Use a different error here to distinguish this case from calling Node.Stop()
-			n.Config.Logger.Log(logging.LevelError, "~ select ctx")
-			n.Config.Logger.Log(logging.LevelTrace, "reaction ctx done")
 			n.workErrNotifier.Fail(ErrStopped)
-			n.Config.Logger.Log(logging.LevelError, "~ select ctx DONE")
 		})
 
 		// Add events produced by modules and debugger to the eventBuffer buffers and handle logical time.
@@ -333,9 +332,7 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 		selectReactions = append(selectReactions, func(newEventsVal reflect.Value) {
 			n.statsLock.Lock()
 			defer n.statsLock.Unlock()
-			n.Config.Logger.Log(logging.LevelError, "~ select events in")
 
-			n.Config.Logger.Log(logging.LevelError, "new events in")
 			newEvents := newEventsVal.Interface().(*stdtypes.EventList)
 			// Intercept the (stripped of all follow-ups) events that were emitted.
 			// This is only for debugging / diagnostic purposes.
@@ -350,7 +347,6 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 			if n.pendingEvents.totalEvents > n.Config.PauseInputThreshold {
 				n.pauseInput()
 			}
-			n.Config.Logger.Log(logging.LevelError, "~ select events in DONE")
 		})
 
 		// If an error occurred, stop processing.
@@ -360,10 +356,7 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 			Chan: reflect.ValueOf(n.workErrNotifier.ExitC()),
 		})
 		selectReactions = append(selectReactions, func(_ reflect.Value) {
-			n.Config.Logger.Log(logging.LevelError, "~ select exit c")
-			n.Config.Logger.Log(logging.LevelError, "reaction exit c")
 			returnErr = n.workErrNotifier.Err()
-			n.Config.Logger.Log(logging.LevelError, "~ select exit c DONE")
 		})
 
 		// For each generic event buffer in eventBuffer that contains events to be submitted to its corresponding module,
@@ -393,7 +386,6 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 					n.statsLock.Lock()
 					defer n.statsLock.Unlock()
 
-					n.Config.Logger.Log(logging.LevelError, "~ select push events", "module", mID, "events", eventBatch)
 					n.pendingEvents.buffers[mID].RemoveFront(numEvents)
 
 					// Keep track of the size of the event buffer.
@@ -404,7 +396,6 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 					}
 
 					n.dispatchStats.AddDispatch(mID, numEvents)
-					n.Config.Logger.Log(logging.LevelError, "~ select push events DONE", "module", mID)
 				})
 			}
 		}
@@ -412,14 +403,11 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 
 		// Choose one case from above and execute the corresponding reaction.
 
-		n.Config.Logger.Log(logging.LevelError, "~ wait on select")
 		chosenCase, receivedValue, _ := reflect.Select(selectCases)
 		selectReactions[chosenCase](receivedValue)
-		n.Config.Logger.Log(logging.LevelError, "case chosen", "case", chosenCase)
 	}
 
 	n.workErrNotifier.SetExitStatus(nil, nil) // TODO: change this when statuses are implemented.
-	n.Config.Logger.Log(logging.LevelError, "returning")
 	return returnErr
 }
 
@@ -510,7 +498,6 @@ func (n *Node) importEvents(
 	eventSink chan<- *stdtypes.EventList,
 	pause <-chan chan struct{},
 ) {
-	defer n.Config.Logger.Log(logging.LevelError, "importer finished")
 	for {
 
 		n.waitForInputEnabled()
@@ -601,14 +588,11 @@ func (n *Node) inputIsPaused() bool {
 }
 
 func (n *Node) runIdleDetector(ctx context.Context) {
-	defer n.Config.Logger.Log(logging.LevelError, "idle loop shut down")
-
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-n.workErrNotifier.ExitC():
-			n.Config.Logger.Log(logging.LevelError, "shutdown signal recv")
 			return
 
 		case continueEventLoopChan := <-n.noEvents:
@@ -637,7 +621,6 @@ func (n *Node) runIdleDetector(ctx context.Context) {
 			allModulesAndImportersIdle := true
 			count := 0
 
-			n.Config.Logger.Log(logging.LevelError, "Counter Loop reached")
 		CounterLoop:
 			for {
 				select {
@@ -653,7 +636,6 @@ func (n *Node) runIdleDetector(ctx context.Context) {
 					break CounterLoop
 				case <-n.workErrNotifier.ExitC():
 					allModulesAndImportersIdle = false
-					n.Config.Logger.Log(logging.LevelError, "shutdown signal recv - CounterLoop")
 					break CounterLoop
 
 				}
@@ -663,19 +645,16 @@ func (n *Node) runIdleDetector(ctx context.Context) {
 				n.Config.Logger.Log(logging.LevelDebug, "IDLE")
 				n.continueNotificationChan = make(chan struct{})
 				select {
-				case n.inactiveNotificationChan <- n.continueNotificationChan:
 				case <-n.workErrNotifier.ExitC():
 					// don't block in case it should have stopped
 					// TODO: handle this more nicely
+				case n.inactiveNotificationChan <- n.continueNotificationChan:
 				}
 			}
 
 			// restart the modules if they haven't aborted before
-			n.Config.Logger.Log(logging.LevelError, "cancelling pause")
 			pauseCancel()
-			n.Config.Logger.Log(logging.LevelError, "waiting on pause")
 			pauseWg.Wait()
-			n.Config.Logger.Log(logging.LevelError, "pause done")
 			close(continueEventLoopChan)
 		}
 	}

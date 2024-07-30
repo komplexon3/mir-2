@@ -2,19 +2,21 @@ package centraladversay
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
+	"github.com/filecoin-project/mir/pkg/util/maputil"
+	"github.com/filecoin-project/mir/pkg/util/sliceutil"
+	"github.com/filecoin-project/mir/stdtypes"
 	es "github.com/go-errors/errors"
 )
 
 type IdleNodesMonitor struct {
 	idleNotificationC chan chan struct{}
 	cancel            context.CancelFunc
-	idleDetectionCs   []chan chan struct{}
+	idleDetectionCs   map[stdtypes.NodeID]chan chan struct{}
 }
 
-func NewIdleNodesMonitor(idleDetectionCs []chan chan struct{}) *IdleNodesMonitor {
+func NewIdleNodesMonitor(idleDetectionCs map[stdtypes.NodeID]chan chan struct{}) *IdleNodesMonitor {
 	return &IdleNodesMonitor{
 		idleDetectionCs:   idleDetectionCs,
 		idleNotificationC: make(chan chan struct{}),
@@ -42,12 +44,12 @@ func (m *IdleNodesMonitor) Run(ctx context.Context) error {
 	m.cancel = cancel
 	defer cancel()
 
-	activeC := make(chan struct{})
-	idleC := make(chan struct{})
+	activeC := make(chan stdtypes.NodeID)
+	idleC := make(chan stdtypes.NodeID)
 	var noLongerInactiveC chan struct{}
 
 	wg.Add(len(m.idleDetectionCs))
-	for _, idleDetectionC := range m.idleDetectionCs {
+	for nodeID, idleDetectionC := range m.idleDetectionCs {
 		go func() {
 			defer wg.Done()
 			var continueC chan struct{}
@@ -56,10 +58,10 @@ func (m *IdleNodesMonitor) Run(ctx context.Context) error {
 				case <-ctx.Done():
 					return
 				case <-continueC:
-					activeC <- struct{}{}
+					activeC <- nodeID
 					continueC = nil
 				case cc := <-idleDetectionC:
-					idleC <- struct{}{}
+					idleC <- nodeID
 					continueC = cc
 				}
 			}
@@ -67,26 +69,36 @@ func (m *IdleNodesMonitor) Run(ctx context.Context) error {
 	}
 
 	var err error
-	activeCount := len(m.idleDetectionCs)
+	isIdleStates := make(map[stdtypes.NodeID]bool)
+	for nodeID := range m.idleDetectionCs {
+		isIdleStates[nodeID] = false
+	}
 ActiveCountLoop:
 	for {
 		select {
 		case <-ctx.Done():
 			break ActiveCountLoop
-		case <-activeC:
+		case nodeID := <-activeC:
 			if noLongerInactiveC != nil {
 				close(noLongerInactiveC)
 				noLongerInactiveC = nil
 			}
-			activeCount++
-		case <-idleC:
-			activeCount--
-			if activeCount == 0 {
+			if !isIdleStates[nodeID] {
+				err = es.Errorf("node %s indicating not idle but is already registered as such", nodeID)
+				break ActiveCountLoop
+			}
+			isIdleStates[nodeID] = false
+		case nodeID := <-idleC:
+			if isIdleStates[nodeID] {
+				err = es.Errorf("node %s indicating idle but is already registered as such", nodeID)
+				break ActiveCountLoop
+			}
+
+			isIdleStates[nodeID] = true
+
+			if !sliceutil.Contains(maputil.GetValues(isIdleStates), false) {
 				noLongerInactiveC = make(chan struct{})
 				m.idleNotificationC <- noLongerInactiveC
-			} else if activeCount < 0 {
-				err = es.Errorf("number of active nodes is negative")
-				break ActiveCountLoop
 			}
 		}
 	}
@@ -96,8 +108,6 @@ ActiveCountLoop:
 	close(activeC)
 	close(idleC)
 	close(m.idleNotificationC)
-
-	fmt.Println("IdleNodesMonitor done")
 
 	return err
 }

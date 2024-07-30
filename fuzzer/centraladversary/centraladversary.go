@@ -3,7 +3,6 @@ package centraladversay
 import (
 	"context"
 	"reflect"
-	"slices"
 
 	"github.com/filecoin-project/mir/fuzzer/actions"
 	"github.com/filecoin-project/mir/fuzzer/cortexcreeper"
@@ -40,7 +39,7 @@ type Adversary struct {
 func NewAdversary(
 	nodeIDs []stdtypes.NodeID,
 	cortexCreepers cortexcreeper.CortexCreepers,
-	idleDetectionCs []chan chan struct{},
+	idleDetectionCs map[stdtypes.NodeID]chan chan struct{},
 	byzantineWeightedActions []actions.WeightedAction,
 	networkWeightedActions []actions.WeightedAction,
 	byzantineNodes []stdtypes.NodeID,
@@ -78,7 +77,13 @@ func (a *Adversary) RunCentralAdversary(maxEvents int, ctx context.Context) erro
 	ccsNodeIds := maputil.GetSortedKeys(a.cortexCreepers)
 	ccs := maputil.GetValuesOf(a.cortexCreepers, ccsNodeIds)
 
-	go a.idleNodesMonitor.Run(ctx)
+	// TODO: actually handle errors from idleNodesMonitor
+	go func() {
+		err := a.idleNodesMonitor.Run(ctx)
+		if err != nil {
+			a.logger.Log(logging.LevelError, "idle nodes monitor failed", err)
+		}
+	}()
 	defer a.idleNodesMonitor.Stop()
 	eventCount := 0
 
@@ -125,6 +130,8 @@ func (a *Adversary) RunCentralAdversary(maxEvents int, ctx context.Context) erro
 					delayedEvents := a.delayedEventsManager.PopRandomDelayedEvents()
 					a.pushEvents(delayedEvents.NodeID, delayedEvents.Events)
 				}
+			} else {
+				a.logger.Log(logging.LevelDebug, "Nodes Idle BUT msgs in transit", "msg count", len(a.undeliveredMsgs))
 			}
 			continue
 		}
@@ -216,10 +223,6 @@ func (a *Adversary) pushEvents(nodeID stdtypes.NodeID, events *stdtypes.EventLis
 	}
 	cc := a.cortexCreepers[nodeID]
 	cc.PushEvents(events)
-}
-
-func (a *Adversary) nodeIsPermittedToTakeByzantineAction(nodeId stdtypes.NodeID) bool {
-	return slices.Contains(a.byzantineNodes, nodeId)
 }
 
 // TODO: should take ctx

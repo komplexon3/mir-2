@@ -2,7 +2,6 @@ package nodeinstance
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"github.com/filecoin-project/mir"
@@ -62,11 +61,10 @@ ShutdownLoop:
 		}
 	}
 
-	for nodeID, nodeInstance := range r.nodeInstances {
+	for _, nodeInstance := range r.nodeInstances {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			fmt.Println("Stopping node", nodeID)
 			nodeInstance.Stop()
 			nodeInstance.Cleanup()
 		}()
