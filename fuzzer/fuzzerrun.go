@@ -16,6 +16,7 @@ import (
 	"github.com/filecoin-project/mir/fuzzer/checker"
 	"github.com/filecoin-project/mir/fuzzer/cortexcreeper"
 	"github.com/filecoin-project/mir/fuzzer/nodeinstance"
+	idledetection "github.com/filecoin-project/mir/pkg/idleDetection"
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/util/maputil"
 	"github.com/filecoin-project/mir/stdtypes"
@@ -56,7 +57,7 @@ func newFuzzerRun[T any](
 
 	nodeInstances := make(nodeinstance.NodeInstances, len(nodeIDs))
 	cortexCreepers := make(cortexcreeper.CortexCreepers, len(nodeIDs))
-	idleDetectionCs := make(map[stdtypes.NodeID]chan chan struct{}, len(nodeIDs))
+	idleDetectionCs := make([]chan idledetection.IdleNotification, 0, len(nodeIDs))
 
 	for nodeID, config := range nodeConfigs {
 		nodeLogger := logging.Decorate(baseLogger, string(nodeID)+" - ")
@@ -67,7 +68,7 @@ func newFuzzerRun[T any](
 			return nil, es.Errorf("Failed to create node instance with id %s: %v", nodeID, err)
 		}
 		nodeInstances[nodeID] = nodeInstance
-		idleDetectionCs[nodeID] = nodeInstance.GetIdleDetectionC()
+		idleDetectionCs = append(idleDetectionCs, nodeInstance.GetIdleDetectionC())
 	}
 
 	eventsToCheckerChan := make(chan stdtypes.Event)

@@ -138,7 +138,7 @@ func fuzzBCB(
 }
 
 func main() {
-	logger := logging.ConsoleDebugLogger
+	logger := logging.ConsoleTraceLogger
 	logger = logging.Synchronize(logger)
 	fuzzBCB("test", []stdtypes.NodeID{"0", "1", "2", "3"}, []stdtypes.NodeID{}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, 1, logger)
 }

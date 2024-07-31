@@ -15,6 +15,7 @@ import (
 	es "github.com/go-errors/errors"
 
 	"github.com/filecoin-project/mir/pkg/eventlog"
+	idledetection "github.com/filecoin-project/mir/pkg/idleDetection"
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/modules"
 	"github.com/filecoin-project/mir/pkg/util/maputil"
@@ -94,12 +95,8 @@ type Node struct {
 	noEvents                 chan chan struct{}
 	modulePauseChans         pauseChans
 	importerPauseChans       pauseChans
-	inactiveNotificationChan chan chan struct{}
-	continueNotificationChan chan struct{}
-}
-
-func (n *Node) SetInactiveNotificationChannel(c chan chan struct{}) {
-	n.inactiveNotificationChan = c
+	inactiveNotificationChan chan idledetection.IdleNotification
+	continueNotificationChan chan idledetection.NoLongerIdleNotification
 }
 
 // NewNode creates a new node with ID id.
@@ -167,13 +164,13 @@ func NewNode(
 	}, nil
 }
 
-func NewNodeWithIdleDetection(id stdtypes.NodeID, config *NodeConfig, m modules.Modules, interceptor eventlog.Interceptor) (*Node, chan chan struct{}, error) {
+func NewNodeWithIdleDetection(id stdtypes.NodeID, config *NodeConfig, m modules.Modules, interceptor eventlog.Interceptor) (*Node, chan idledetection.IdleNotification, error) {
 	n, err := NewNode(id, config, m, interceptor)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	n.inactiveNotificationChan = make(chan chan struct{})
+	n.inactiveNotificationChan = make(chan idledetection.IdleNotification)
 	n.noEvents = make(chan chan struct{})
 	return n, n.inactiveNotificationChan, nil
 }
@@ -286,6 +283,15 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 		// TODO: push this stuff into module/funtion
 		if n.continueNotificationChan != nil {
 			n.Config.Logger.Log(logging.LevelDebug, "No longer IDLE")
+			noLongerIdleNotification := idledetection.NewNoLongerIdleNotification()
+			select {
+			case n.continueNotificationChan <- noLongerIdleNotification:
+			case <-n.workErrNotifier.ExitC():
+			}
+			select {
+			case <-noLongerIdleNotification.Ack:
+			case <-n.workErrNotifier.ExitC():
+			}
 			close(n.continueNotificationChan)
 			n.continueNotificationChan = nil
 		}
@@ -641,14 +647,21 @@ func (n *Node) runIdleDetector(ctx context.Context) {
 				}
 			}
 
-			if allModulesAndImportersIdle {
+			if allModulesAndImportersIdle && len(n.eventsIn) == 0 && n.pendingEvents.totalEvents == 0 {
 				n.Config.Logger.Log(logging.LevelDebug, "IDLE")
-				n.continueNotificationChan = make(chan struct{})
+				idleNotification := idledetection.NewIdleNotification()
+				n.continueNotificationChan = idleNotification.NoLongerIdleC
 				select {
 				case <-n.workErrNotifier.ExitC():
 					// don't block in case it should have stopped
 					// TODO: handle this more nicely
-				case n.inactiveNotificationChan <- n.continueNotificationChan:
+				case n.inactiveNotificationChan <- idleNotification:
+				}
+				select {
+				case <-n.workErrNotifier.ExitC():
+					// don't block in case it should have stopped
+					// TODO: handle this more nicely
+				case <-idleNotification.Ack:
 				}
 			}
 

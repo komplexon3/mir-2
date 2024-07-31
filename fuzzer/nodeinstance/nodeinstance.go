@@ -5,13 +5,14 @@ import (
 
 	"github.com/filecoin-project/mir"
 	"github.com/filecoin-project/mir/fuzzer/cortexcreeper"
+	idledetection "github.com/filecoin-project/mir/pkg/idleDetection"
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/stdtypes"
 )
 
 type NodeInstance interface {
 	GetNode() *mir.Node
-	GetIdleDetectionC() chan chan struct{}
+	GetIdleDetectionC() chan idledetection.IdleNotification
 	Setup() error
 	Cleanup() error
 	Run(ctx context.Context) error

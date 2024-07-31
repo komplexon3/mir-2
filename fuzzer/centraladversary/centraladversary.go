@@ -7,6 +7,7 @@ import (
 	"github.com/filecoin-project/mir/fuzzer/actions"
 	"github.com/filecoin-project/mir/fuzzer/cortexcreeper"
 	"github.com/filecoin-project/mir/fuzzer/utils"
+	idledetection "github.com/filecoin-project/mir/pkg/idleDetection"
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/util/maputil"
 	"github.com/filecoin-project/mir/pkg/util/sliceutil"
@@ -28,7 +29,7 @@ type Adversary struct {
 	logger                  logging.Logger
 	cortexCreepers          cortexcreeper.CortexCreepers
 	idleNodesMonitor        *IdleNodesMonitor
-	undeliveredMsgs         map[string]struct{}
+	undeliveredMsgs         map[string]*stdevents.SendMessage
 	actionTrace             *actionTrace
 	delayedEventsManager    *delayedEventsManager
 	globalEventsStreamOut   chan stdtypes.Event
@@ -39,7 +40,7 @@ type Adversary struct {
 func NewAdversary(
 	nodeIDs []stdtypes.NodeID,
 	cortexCreepers cortexcreeper.CortexCreepers,
-	idleDetectionCs map[stdtypes.NodeID]chan chan struct{},
+	idleDetectionCs []chan idledetection.IdleNotification,
 	byzantineWeightedActions []actions.WeightedAction,
 	networkWeightedActions []actions.WeightedAction,
 	byzantineNodes []stdtypes.NodeID,
@@ -62,7 +63,7 @@ func NewAdversary(
 		networkActionSelector:   networkActionSelector,
 		cortexCreepers:          cortexCreepers,
 		idleNodesMonitor:        NewIdleNodesMonitor(idleDetectionCs),
-		undeliveredMsgs:         make(map[string]struct{}),
+		undeliveredMsgs:         make(map[string]*stdevents.SendMessage),
 		byzantineNodes:          byzantineNodes,
 		nodeIDs:                 nodeIDs,
 		actionTrace:             NewActionTrace(),
@@ -81,7 +82,7 @@ func (a *Adversary) RunCentralAdversary(maxEvents int, ctx context.Context) erro
 	go func() {
 		err := a.idleNodesMonitor.Run(ctx)
 		if err != nil {
-			a.logger.Log(logging.LevelError, "idle nodes monitor failed", err)
+			a.logger.Log(logging.LevelError, "idle nodes monitor failed", "error", err)
 		}
 	}()
 	defer a.idleNodesMonitor.Stop()
@@ -108,101 +109,101 @@ func (a *Adversary) RunCentralAdversary(maxEvents int, ctx context.Context) erro
 		}
 
 		ind, value, _ := reflect.Select(selectCases)
-		if ind == 0 {
+		switch ind {
+		case 0:
 			// context was cancelled
 			return nil
-		} else if ind == 1 {
+		case 1:
+			idleNotification := value.Interface().(idledetection.IdleNotification)
 			if a.noUndeliveredMsgs() {
 				// idle notification
-				a.logger.Log(logging.LevelDebug, "All nodes IDLE")
-				select {
-				case <-value.Interface().(chan struct{}):
-					// just in case it was cancelled
-					a.logger.Log(logging.LevelDebug, "All nodes IDLE - abort")
-					continue
-				default:
-					// TODO: handle delayed to msgs or similar
-					if a.delayedEventsManager.Empty() {
-						a.logger.Log(logging.LevelDebug, "Should shut down...")
-						return IdleWithoutDelayedEvents
-					}
-					a.logger.Log(logging.LevelDebug, "Delayed events ready for dispatch")
-					delayedEvents := a.delayedEventsManager.PopRandomDelayedEvents()
-					a.pushEvents(delayedEvents.NodeID, delayedEvents.Events)
+				a.logger.Log(logging.LevelDebug, "All nodes IDLE and no msgs")
+				// TODO: handle delayed to msgs or similar
+				if a.delayedEventsManager.Empty() {
+					a.logger.Log(logging.LevelDebug, "Should shut down...")
+					return IdleWithoutDelayedEvents
 				}
+				a.logger.Log(logging.LevelDebug, "Delayed events ready for dispatch")
+				delayedEvents := a.delayedEventsManager.PopRandomDelayedEvents()
+				a.pushEvents(delayedEvents.NodeID, delayedEvents.Events)
 			} else {
 				a.logger.Log(logging.LevelDebug, "Nodes Idle BUT msgs in transit", "msg count", len(a.undeliveredMsgs))
 			}
-			continue
-		}
+			close(idleNotification.Ack)
+			close(idleNotification.NoLongerIdleC)
+		default:
+			// process this event
+			elIterator := value.Interface().(*stdtypes.EventList).Iterator()
+			for event := elIterator.Next(); event != nil; event = elIterator.Next() {
+				var err error
+				eventCount++
 
-		// process this event
-		elIterator := value.Interface().(*stdtypes.EventList).Iterator()
-		for event := elIterator.Next(); event != nil; event = elIterator.Next() {
-			var err error
-			eventCount++
+				if eventCount > maxEvents {
+					return MaxEventsShutdown
+				}
 
-			if eventCount > maxEvents {
-				return MaxEventsShutdown
-			}
+				sourceNodeID := ccsNodeIds[ind-2]
+				isByzantineSourceNode := sliceutil.Contains(a.nodeIDs, sourceNodeID)
+				isDeliverEvent := false
 
-			sourceNodeID := ccsNodeIds[ind-2]
-			isByzantineSourceNode := sliceutil.Contains(a.nodeIDs, sourceNodeID)
-			isDeliverEvent := false
+				// TODO: figure out how to actually do this filtering
 
-			// TODO: figure out how to actually do this filtering
+				// hardcoded tmp solution
+				switch evT := event.(type) {
+				case *broadcastevents.BroadcastRequest:
+				case *broadcastevents.Deliver:
+				case *stdevents.SendMessage:
+					a.logger.Log(logging.LevelDebug, "undeliveredMsgs pre add", "undelivered", a.undeliveredMsgs, "new msg", evT.ToString())
+					msgID := utils.RandomString(10)
+					event, err = evT.SetMetadata("msgID", msgID)
+					if err != nil {
+						return err
+					}
+					a.undeliveredMsgs[msgID] = evT
+					a.logger.Log(logging.LevelDebug, "undeliveredMsgs post add", "undelivered", a.undeliveredMsgs, "new msg", evT.ToString())
+				case *stdevents.MessageReceived:
+					a.logger.Log(logging.LevelDebug, "undeliveredMsgs pre rm", "undelivered", a.undeliveredMsgs, "recv msg", evT.ToString())
+					isDeliverEvent = true
+					msgID, err := evT.GetMetadata("msgID")
+					if err != nil {
+						return err
+					}
+					delete(a.undeliveredMsgs, msgID.(string))
+					a.logger.Log(logging.LevelDebug, "undeliveredMsgs post rm", "undelivered", a.undeliveredMsgs, "recv msg", evT.ToString())
+				default:
+					a.pushEvents(sourceNodeID, stdtypes.ListOf(event))
+					continue
+				}
 
-			// hardcoded tmp solution
-			switch evT := event.(type) {
-			case *broadcastevents.BroadcastRequest:
-			case *broadcastevents.Deliver:
-			case *stdevents.SendMessage:
-				msgID := utils.RandomString(10)
-				event, err = evT.SetMetadata("msgID", msgID)
+				// otherwise pick an action to apply to this event
+				var action actions.Action
+				if isByzantineSourceNode {
+					action = a.byzantineActionSelector.SelectAction()
+				} else if isDeliverEvent {
+					action = a.networkActionSelector.SelectAction()
+				} else {
+					a.pushEvents(sourceNodeID, stdtypes.ListOf(event))
+					continue
+				}
+
+				actionLog, newEvents, delayedEvents, err := action(event, sourceNodeID, a.byzantineNodes)
 				if err != nil {
 					return err
 				}
-				a.undeliveredMsgs[msgID] = struct{}{}
-			case *stdevents.MessageReceived:
-				isDeliverEvent = true
-				msgID, err := evT.GetMetadata("msgID")
-				if err != nil {
-					return err
+
+				if delayedEvents != nil {
+					a.delayedEventsManager.Push(delayedEvents...)
 				}
-				delete(a.undeliveredMsgs, msgID.(string))
-			default:
-				a.pushEvents(sourceNodeID, stdtypes.ListOf(event))
-				continue
-			}
 
-			// otherwise pick an action to apply to this event
-			var action actions.Action
-			if isByzantineSourceNode {
-				action = a.byzantineActionSelector.SelectAction()
-			} else if isDeliverEvent {
-				action = a.networkActionSelector.SelectAction()
-			} else {
-				a.pushEvents(sourceNodeID, stdtypes.ListOf(event))
-				continue
-			}
+				// ignore "" bc this signifies noop - not the best solution but works for now
+				if actionLog != "noop" && actionLog != "noop (network)" {
+					a.actionTrace.Push(a.nodeIDs[ind-2], actionLog)
+				}
 
-			actionLog, newEvents, delayedEvents, err := action(event, sourceNodeID, a.byzantineNodes)
-			if err != nil {
-				return err
-			}
-
-			if delayedEvents != nil {
-				a.delayedEventsManager.Push(delayedEvents...)
-			}
-
-			// ignore "" bc this signifies noop - not the best solution but works for now
-			if actionLog != "noop" && actionLog != "noop (network)" {
-				a.actionTrace.Push(a.nodeIDs[ind-2], actionLog)
-			}
-
-			// TODO: check for nil?
-			for injectNodeID, injectEvents := range newEvents {
-				a.pushEvents(injectNodeID, injectEvents)
+				// TODO: check for nil?
+				for injectNodeID, injectEvents := range newEvents {
+					a.pushEvents(injectNodeID, injectEvents)
+				}
 			}
 		}
 	}

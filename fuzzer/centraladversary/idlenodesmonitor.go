@@ -2,24 +2,26 @@ package centraladversay
 
 import (
 	"context"
-	"sync"
+	"fmt"
+	"reflect"
 
-	"github.com/filecoin-project/mir/pkg/util/maputil"
+	idledetection "github.com/filecoin-project/mir/pkg/idleDetection"
 	"github.com/filecoin-project/mir/pkg/util/sliceutil"
-	"github.com/filecoin-project/mir/stdtypes"
 	es "github.com/go-errors/errors"
 )
 
+var ErrorShutdown = fmt.Errorf("Shutdown")
+
 type IdleNodesMonitor struct {
-	idleNotificationC chan chan struct{}
+	idleNotificationC chan idledetection.IdleNotification
 	cancel            context.CancelFunc
-	idleDetectionCs   map[stdtypes.NodeID]chan chan struct{}
+	idleDetectionCs   []chan idledetection.IdleNotification
 }
 
-func NewIdleNodesMonitor(idleDetectionCs map[stdtypes.NodeID]chan chan struct{}) *IdleNodesMonitor {
+func NewIdleNodesMonitor(idleDetectionCs []chan idledetection.IdleNotification) *IdleNodesMonitor {
 	return &IdleNodesMonitor{
 		idleDetectionCs:   idleDetectionCs,
-		idleNotificationC: make(chan chan struct{}),
+		idleNotificationC: make(chan idledetection.IdleNotification),
 		cancel:            nil,
 	}
 }
@@ -30,7 +32,7 @@ func (m *IdleNodesMonitor) Stop() {
 	}
 }
 
-func (m *IdleNodesMonitor) IdleNotificationC() chan chan struct{} {
+func (m *IdleNodesMonitor) IdleNotificationC() chan idledetection.IdleNotification {
 	return m.idleNotificationC
 }
 
@@ -39,75 +41,83 @@ func (m *IdleNodesMonitor) Run(ctx context.Context) error {
 		return es.Errorf("Idle Nodes Monitor is already running or was running")
 	}
 
-	wg := sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(ctx)
 	m.cancel = cancel
 	defer cancel()
 
-	activeC := make(chan stdtypes.NodeID)
-	idleC := make(chan stdtypes.NodeID)
-	var noLongerInactiveC chan struct{}
+	continueCs := make([]chan idledetection.NoLongerIdleNotification, len(m.idleDetectionCs))
 
-	wg.Add(len(m.idleDetectionCs))
-	for nodeID, idleDetectionC := range m.idleDetectionCs {
-		go func() {
-			defer wg.Done()
-			var continueC chan struct{}
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case <-continueC:
-					activeC <- nodeID
-					continueC = nil
-				case cc := <-idleDetectionC:
-					idleC <- nodeID
-					continueC = cc
-				}
-			}
-		}()
-	}
+	isIdleStates := make([]bool, len(m.idleDetectionCs))
 
 	var err error
-	isIdleStates := make(map[stdtypes.NodeID]bool)
-	for nodeID := range m.idleDetectionCs {
-		isIdleStates[nodeID] = false
-	}
-ActiveCountLoop:
-	for {
-		select {
-		case <-ctx.Done():
-			break ActiveCountLoop
-		case nodeID := <-activeC:
-			if noLongerInactiveC != nil {
-				close(noLongerInactiveC)
-				noLongerInactiveC = nil
-			}
-			if !isIdleStates[nodeID] {
-				err = es.Errorf("node %s indicating not idle but is already registered as such", nodeID)
-				break ActiveCountLoop
-			}
-			isIdleStates[nodeID] = false
-		case nodeID := <-idleC:
-			if isIdleStates[nodeID] {
-				err = es.Errorf("node %s indicating idle but is already registered as such", nodeID)
-				break ActiveCountLoop
-			}
+	for err == nil {
+		selectCases := make([]reflect.SelectCase, 0, 2*len(m.idleDetectionCs)+1)
+		selectReactions := make([]func(receivedVal reflect.Value), 0, 2*len(m.idleDetectionCs)+1)
 
-			isIdleStates[nodeID] = true
+		for i, continueC := range continueCs {
+			selectCases = append(selectCases, reflect.SelectCase{
+				Chan: reflect.ValueOf(continueC),
+				Dir:  reflect.SelectRecv,
+			})
+			selectReactions = append(selectReactions, func(_noLongerIdleNotification reflect.Value) {
+				noLongerIdleNotification := _noLongerIdleNotification.Interface().(idledetection.NoLongerIdleNotification)
 
-			if !sliceutil.Contains(maputil.GetValues(isIdleStates), false) {
-				noLongerInactiveC = make(chan struct{})
-				m.idleNotificationC <- noLongerInactiveC
-			}
+				if !isIdleStates[i] {
+					err = es.Errorf("node indicating not idle but is already registered as such")
+				}
+				isIdleStates[i] = false
+				continueCs[i] = nil
+				close(noLongerIdleNotification.Ack)
+			})
 		}
+
+		for i, idleDetectionC := range m.idleDetectionCs {
+			selectCases = append(selectCases, reflect.SelectCase{
+				Chan: reflect.ValueOf(idleDetectionC),
+				Dir:  reflect.SelectRecv,
+			})
+			selectReactions = append(selectReactions, func(_idleNotification reflect.Value) {
+				idleNotification := _idleNotification.Interface().(idledetection.IdleNotification)
+				if isIdleStates[i] {
+					err = es.Errorf("node indicating idle but is already registered as such")
+				}
+
+				isIdleStates[i] = true
+				continueCs[i] = idleNotification.NoLongerIdleC
+
+				if !sliceutil.Contains(isIdleStates, false) &&
+					len(sliceutil.Filter(continueCs, func(_ int, c chan idledetection.NoLongerIdleNotification) bool { return len(c) > 0 })) == 0 {
+					globalIdleNotification := idledetection.NewIdleNotification()
+					select {
+					case m.idleNotificationC <- globalIdleNotification:
+					case <-ctx.Done():
+					}
+					select {
+					case <-globalIdleNotification.Ack:
+					case <-ctx.Done():
+					}
+				}
+				close(idleNotification.Ack)
+			})
+		}
+
+		selectCases = append(selectCases, reflect.SelectCase{
+			Chan: reflect.ValueOf(ctx.Done()),
+			Dir:  reflect.SelectRecv,
+		})
+		selectReactions = append(selectReactions, func(_ reflect.Value) {
+			err = ErrorShutdown
+		})
+
+		ind, val, _ := reflect.Select(selectCases)
+		selectReactions[ind](val)
 	}
 
-	wg.Wait()
-
-	close(activeC)
-	close(idleC)
 	close(m.idleNotificationC)
 
-	return err
+	if err != nil && err != ErrorShutdown {
+		return err
+	}
+
+	return nil
 }
