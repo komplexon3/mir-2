@@ -1,0 +1,15 @@
+4-test
+
+Results: (report_2024-08-01_14-46-10_test/4-test)
+validity: failure
+integrity: success
+consistency: success
+
+
+Commit: 3b3dba11e605f5e7dcdb79a7fcbbf41237682659
+
+
+Node 0 took action: dropped event {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"net","Metadata":{},"DestNodes":["3"],"RemoteDestModule":"bcb","Payload":"eyJNc2dUeXBlIjoiU3RhcnRNZXNzYWdlIiwiTXNnRGF0YSI6eyJEYXRhIjoiYUdWc2JHOD0ifX0="}}
+
+Node 0 took action: dropped event {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"bcb","Metadata":{"msgID":"7iI49GZ8kv","vc":{"V":{"0":8,"2":8}}},"Sender":"2","Payload":"eyJNc2dUeXBlIjoiRWNob01lc3NhZ2UiLCJNc2dEYXRhIjp7IlNpZ25hdHVyZSI6Ik1FUUNJQTVQRC9xSzcrc0lwNUJkVVc4ZEx2Qk5wZVUzdFZSS3QrbG8rbDVhU3BhR0FpQkdGZ3M5dktOZTlyYlppWmlCWGpQSGw0MVp3eDRUUHI2VnliMU53b2pqTmc9PSJ9fQ=="}}
+

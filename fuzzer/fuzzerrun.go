@@ -3,11 +3,11 @@ package fuzzer
 import (
 	"context"
 	"fmt"
+	"math/rand/v2"
 	"os"
 	"os/exec"
 	"path"
 	"slices"
-	"strings"
 	"sync"
 	"time"
 
@@ -16,23 +16,25 @@ import (
 	"github.com/filecoin-project/mir/fuzzer/checker"
 	"github.com/filecoin-project/mir/fuzzer/cortexcreeper"
 	"github.com/filecoin-project/mir/fuzzer/nodeinstance"
+	"github.com/filecoin-project/mir/pkg/deploytest"
 	"github.com/filecoin-project/mir/pkg/logging"
+	"github.com/filecoin-project/mir/pkg/trantor/types"
 	"github.com/filecoin-project/mir/pkg/util/maputil"
 	"github.com/filecoin-project/mir/stdtypes"
 	es "github.com/go-errors/errors"
 )
 
-type fuzzerRun[T any] struct {
-	name              string
+type fuzzerRun struct {
 	ca                *centraladversay.Adversary
 	nodeInstances     nodeinstance.NodeInstances
-	reportsDir        string
-	puppeteerSchedule []actions.DelayedEvents
 	propertyChecker   *checker.Checker
 	eventsToCheckerC  chan stdtypes.Event
+	name              string
+	reportDir         string
+	puppeteerSchedule []actions.DelayedEvents
 }
 
-func newFuzzerRun[T any](
+func newFuzzerRun[T, S any](
 	name string,
 	createNodeInstance nodeinstance.NodeInstanceCreationFunc[T],
 	nodeConfigs nodeinstance.NodeConfigs[T],
@@ -40,10 +42,12 @@ func newFuzzerRun[T any](
 	puppeteerSchedule []actions.DelayedEvents,
 	byzantineActions []actions.WeightedAction,
 	networkActions []actions.WeightedAction,
-	reportsDir string,
-	properties checker.Properties,
+	reportDir string,
+	createChecker checker.CreateCheckerFunc[S],
+	checkerParams S,
+	rand *rand.Rand,
 	baseLogger logging.Logger,
-) (*fuzzerRun[T], error) {
+) (*fuzzerRun, error) {
 	// TODO: create node instances here and run them from here as well (instead of in the ca)
 
 	// setting up node instances and cortex creepers
@@ -54,24 +58,31 @@ func newFuzzerRun[T any](
 		}
 	}
 
+	// setup transport
+	nodeWeights := make(map[stdtypes.NodeID]types.VoteWeight, len(nodeIDs))
+	for _, nodeID := range nodeIDs {
+		nodeWeights[nodeID] = "1"
+	}
+	fakeTransport := deploytest.NewFakeTransport(nodeWeights)
+
 	nodeInstances := make(nodeinstance.NodeInstances, len(nodeIDs))
 	cortexCreepers := make(cortexcreeper.CortexCreepers, len(nodeIDs))
-	idleDetectionCs := make(map[stdtypes.NodeID]chan chan struct{}, len(nodeIDs))
+	idleDetectionCs := make([]chan chan struct{}, 0, len(nodeIDs))
 
 	for nodeID, config := range nodeConfigs {
 		nodeLogger := logging.Decorate(baseLogger, string(nodeID)+" - ")
 		cortexCreeper := cortexcreeper.NewCortexCreeper()
 		cortexCreepers[nodeID] = cortexCreeper
-		nodeInstance, err := createNodeInstance(nodeID, config, cortexCreeper, nodeLogger)
+		nodeInstance, err := createNodeInstance(nodeID, config, fakeTransport, cortexCreeper, reportDir, nodeLogger)
 		if err != nil {
 			return nil, es.Errorf("Failed to create node instance with id %s: %v", nodeID, err)
 		}
 		nodeInstances[nodeID] = nodeInstance
-		idleDetectionCs[nodeID] = nodeInstance.GetIdleDetectionC()
+		idleDetectionCs = append(idleDetectionCs, nodeInstance.GetIdleDetectionC())
 	}
 
 	eventsToCheckerChan := make(chan stdtypes.Event)
-	adv, err := centraladversay.NewAdversary(nodeIDs, cortexCreepers, idleDetectionCs, byzantineActions, networkActions, byzantineNodes, eventsToCheckerChan, baseLogger)
+	adv, err := centraladversay.NewAdversary(nodeIDs, cortexCreepers, idleDetectionCs, byzantineActions, networkActions, byzantineNodes, eventsToCheckerChan, rand, baseLogger)
 	if err != nil {
 		return nil, es.Errorf("failed to create adversary: %v", err)
 	}
@@ -91,16 +102,17 @@ func newFuzzerRun[T any](
 		ps = append(ps, actions.DelayedEvents{NodeID: de.NodeID, Events: evtsWithNodeMetadata})
 	}
 
-	propertyChecker, err := checker.NewChecker(properties)
+	checkerLogger := logging.Decorate(baseLogger, "Checker - ")
+	propertyChecker, err := createChecker(checkerParams, checkerLogger)
 	if err != nil {
 		return nil, es.Errorf("fauled to create checker: %v", err)
 	}
 
-	return &fuzzerRun[T]{
+	return &fuzzerRun{
 		name:              name,
 		ca:                adv,
 		puppeteerSchedule: ps,
-		reportsDir:        reportsDir,
+		reportDir:         reportDir,
 		nodeInstances:     nodeInstances,
 		propertyChecker:   propertyChecker,
 		eventsToCheckerC:  eventsToCheckerChan,
@@ -108,12 +120,11 @@ func newFuzzerRun[T any](
 }
 
 // TODO: make fuzz run dir and fuzzerRun dirs inside, general fuzz run report file in fuzz run dir
-func (r *fuzzerRun[T]) Run(ctx context.Context, name string, maxEvents int, logger logging.Logger) error {
+func (r *fuzzerRun) Run(ctx context.Context, name string, timeout time.Duration, logger logging.Logger) error {
 	wg := sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	reportDir := fmt.Sprintf("./report_%s_%s", time.Now().Format("2006-01-02_15-04-05"), strings.Join(strings.Split(name, " "), "_"))
-	err := os.MkdirAll(reportDir, os.ModePerm)
+	err := os.MkdirAll(r.reportDir, os.ModePerm)
 	if err != nil {
 		return es.Errorf("failed to create report directory: %v", err)
 	}
@@ -150,7 +161,7 @@ func (r *fuzzerRun[T]) Run(ctx context.Context, name string, maxEvents int, logg
 		defer wg.Done()
 		defer close(caErr)
 		select {
-		case caErr <- r.ca.RunExperiment(ctx, r.puppeteerSchedule, maxEvents):
+		case caErr <- r.ca.RunExperiment(ctx, r.puppeteerSchedule):
 		default:
 		}
 		fmt.Println("CA DONE CA DONE CA DONE CA DONE CA DONE ")
@@ -169,6 +180,9 @@ func (r *fuzzerRun[T]) Run(ctx context.Context, name string, maxEvents int, logg
 		if err != nil {
 			err = es.Errorf("Central Adversary error: %v", err)
 		}
+	case <-time.After(timeout):
+		err = es.Errorf("TIMEOUT")
+
 	}
 
 	if err != nil {
@@ -176,13 +190,16 @@ func (r *fuzzerRun[T]) Run(ctx context.Context, name string, maxEvents int, logg
 	}
 
 	// stop everything
+	logger.Log(logging.LevelDebug, "Sending Shutdown Nodes Runner")
 	nodesRunner.Stop()
+	logger.Log(logging.LevelDebug, "Sending Shutdown Central Adversary")
+	r.ca.Stop()
+	logger.Log(logging.LevelDebug, "Sending Shutdown Property Checker")
 	r.propertyChecker.Stop()
-	// TODO: add mechanism to stop ca
-	// cancel()
 
 	// wait until everything stopped
 	wg.Wait()
+	logger.Log(logging.LevelDebug, "Fuzzer routines shut down complete")
 
 	close(r.eventsToCheckerC)
 
@@ -190,7 +207,7 @@ func (r *fuzzerRun[T]) Run(ctx context.Context, name string, maxEvents int, logg
 	results, _ := r.propertyChecker.GetResults()
 
 	allPassed := true
-	resultStr := fmt.Sprintf("Results: (%s)\n", reportDir)
+	resultStr := fmt.Sprintf("Results: (%s)\n", r.reportDir)
 	for label, res := range results {
 		resultStr = fmt.Sprintf("%s%s: %s\n", resultStr, label, res.String())
 		if res != checker.SUCCESS {
@@ -214,14 +231,14 @@ func (r *fuzzerRun[T]) Run(ctx context.Context, name string, maxEvents int, logg
 	resultStr = fmt.Sprintf("%s\n\n%s\n\nCommit: %s\n\n", name, resultStr, commit)
 	resultStr += r.ca.GetActionTrace().String()
 
-	err = os.WriteFile(path.Join(reportDir, "report.txt"), []byte(resultStr), 0644)
+	err = os.WriteFile(path.Join(r.reportDir, "report.txt"), []byte(resultStr), 0644)
 	if err != nil {
 		es.Errorf("failed to write report file: %v", err)
 	}
 
 	// delete report dir if all tests passed
 	if allPassed {
-		os.RemoveAll(reportDir)
+		os.RemoveAll(r.reportDir)
 	}
 
 	return nil

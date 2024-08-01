@@ -11,12 +11,14 @@ import (
 type NodesRunner struct {
 	nodeInstances NodeInstances
 	doneC         chan struct{}
+	isDoneC       chan struct{}
 }
 
 func NewNodesRunner(nodeInstances NodeInstances) *NodesRunner {
 	return &NodesRunner{
 		nodeInstances: nodeInstances,
 		doneC:         make(chan struct{}),
+		isDoneC:       make(chan struct{}),
 	}
 }
 
@@ -26,6 +28,7 @@ func (r *NodesRunner) Run(
 	ctx context.Context,
 	logger logging.Logger,
 ) error {
+	defer close(r.isDoneC)
 	wg := &sync.WaitGroup{}
 
 	var err error
@@ -77,5 +80,6 @@ ShutdownLoop:
 
 func (r *NodesRunner) Stop() error {
 	close(r.doneC)
+	<-r.isDoneC
 	return nil
 }

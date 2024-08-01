@@ -1,0 +1,17 @@
+14-test
+
+Results: (report_2024-08-01_14-40-53_test/14-test)
+validity: failure
+integrity: success
+consistency: success
+
+
+Commit: 3b3dba11e605f5e7dcdb79a7fcbbf41237682659
+
+
+Node 2 took action: dropped event {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"net","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"bcb","Payload":"eyJNc2dUeXBlIjoiRWNob01lc3NhZ2UiLCJNc2dEYXRhIjp7IlNpZ25hdHVyZSI6Ik1FVUNJRkkxZE5iUG95aWFrT2g1cUJjekxTSjdTVTF6ZldvQnFOa0kvS1lKQmxrYkFpRUFnRFVGQU5wTndReW9jUWFsU284dGc3dXZpSlhqT3BtUVV6NkNObFhVVkdvPSJ9fQ=="}}
+
+Node 0 took action: dropped event {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"net","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"bcb","Payload":"eyJNc2dUeXBlIjoiRWNob01lc3NhZ2UiLCJNc2dEYXRhIjp7IlNpZ25hdHVyZSI6Ik1FUUNJR1VPeUNXZ2ZMdEtYR2JjUlJMbEF2c3VoNHd3REhOZExvR3Q1WHVyY3U0UEFpQlUvM0pjVFhaS3ZlNEFZYVArazlFNS81Sjd6S1NldUkyQzVaOEVZbVE2bGc9PSJ9fQ=="}}
+
+Node 0 took action: dropped event {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"bcb","Metadata":{"msgID":"FDScPoltaT","vc":{"V":{"0":9,"3":8}}},"Sender":"3","Payload":"eyJNc2dUeXBlIjoiRWNob01lc3NhZ2UiLCJNc2dEYXRhIjp7IlNpZ25hdHVyZSI6Ik1FUUNJRDc3Q0o3Ykl6RS9LQVpnRWlndFFmdGdXcEE1SFZxVDA2bFl0RnpHOHFmUkFpQlJOakxnT3Q0ekUxa21KYVRKcDg2aVlIYXFVWnF2bVdrTURDWDhaSjNHZGc9PSJ9fQ=="}}
+

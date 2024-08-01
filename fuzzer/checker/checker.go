@@ -9,16 +9,14 @@ import (
 	es "github.com/go-errors/errors"
 
 	"github.com/filecoin-project/mir/fuzzer/checker/events"
+	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/modules"
 	"github.com/filecoin-project/mir/stdtypes"
 )
 
-type (
-	Property   = modules.PassiveModule
-	Properties = map[string]modules.PassiveModule
-)
-
 type checkerStatus int64
+
+type CreateCheckerFunc[T any] func(params T, logger logging.Logger) (*Checker, error)
 
 const (
 	NOT_STARTED checkerStatus = iota
@@ -56,26 +54,6 @@ func (cr CheckerResult) String() string {
 }
 
 type Decoder func([]byte) (stdtypes.Event, error)
-
-type property struct {
-	runnerModule modules.PassiveModule
-	eventChan    chan stdtypes.Event
-	isDoneC      chan struct{}
-	name         string
-	result       CheckerResult
-	done         bool
-}
-
-func newProperty(name string, module modules.PassiveModule) *property {
-	return &property{
-		name:         name,
-		runnerModule: module,
-		eventChan:    make(chan stdtypes.Event),
-		isDoneC:      make(chan struct{}, 1), // TODO: why does this channel have a capacity of 1?
-		done:         false,
-		result:       NOT_READY,
-	}
-}
 
 // TODO: doesn't need error
 func NewChecker(properties Properties) (*Checker, error) {

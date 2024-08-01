@@ -1,0 +1,19 @@
+37-test
+
+Results: (report_2024-08-01_14-52-09_test/37-test)
+validity: failure
+integrity: success
+consistency: success
+
+
+Commit: 3b3dba11e605f5e7dcdb79a7fcbbf41237682659
+
+
+Node 0 took action: duplicated event {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"net","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"bcb","Payload":"eyJNc2dUeXBlIjoiU3RhcnRNZXNzYWdlIiwiTXNnRGF0YSI6eyJEYXRhIjoiYUdWc2JHOD0ifX0="}}
+
+Node 0 took action: dropped event {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"bcb","Metadata":{"msgID":"MU1icj1lKk","vc":{"V":{"0":8,"1":8}}},"Sender":"1","Payload":"eyJNc2dUeXBlIjoiRWNob01lc3NhZ2UiLCJNc2dEYXRhIjp7IlNpZ25hdHVyZSI6Ik1FWUNJUUN1MTNhYkIydTVmbGZEeU9ZMFFJa1BVNldkeTFkQjkvMG9PYUV1Z0lpQUN3SWhBTXRlMzZWQjB5NWhlRWpRd3hjVWo2MXRYWWU3Vk15WGphQlZoRisyaFBwWiJ9fQ=="}}
+
+Node 0 took action: duplicated event {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"bcb","Metadata":{"msgID":"48hr7n7s56","vc":{"V":{"0":9,"2":8}}},"Sender":"2","Payload":"eyJNc2dUeXBlIjoiRWNob01lc3NhZ2UiLCJNc2dEYXRhIjp7IlNpZ25hdHVyZSI6Ik1FWUNJUUN1cjZpczRjVkhHR0k1NGxsKzF6aUdEVXJrNi9ZeklldnZLWXM2WnNWa0VBSWhBTFltQS9SeFNMQUJNRUtCenJ6N1RDc1JBeC9yWWtUbnhSVXBvZSsrb0RnQiJ9fQ=="}}
+
+Node 0 took action: dropped event {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"bcb","Metadata":{"msgID":"Zbjs0NTJgV","vc":{"V":{"0":10,"3":8}}},"Sender":"3","Payload":"eyJNc2dUeXBlIjoiRWNob01lc3NhZ2UiLCJNc2dEYXRhIjp7IlNpZ25hdHVyZSI6Ik1FVUNJUUQzMnVkQnRRQ0JKRHpiWkw2T0FNRVZRckdGRktWcE1BNnFYUUxuMWpHWnJRSWdFVGRVTCt5TDVvaFVjMWdPbDZXZFdJZW55emlQRzF0cStsM1lOd2MxdDdzPSJ9fQ=="}}
+

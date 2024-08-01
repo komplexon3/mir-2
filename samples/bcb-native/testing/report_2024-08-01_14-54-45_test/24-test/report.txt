@@ -1,0 +1,17 @@
+24-test
+
+Results: (report_2024-08-01_14-54-45_test/24-test)
+validity: failure
+integrity: success
+consistency: success
+
+
+Commit: 3b3dba11e605f5e7dcdb79a7fcbbf41237682659
+
+
+Node 0 took action: duplicated event {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"bcb","Metadata":{"msgID":"ArdpgwvQ89","vc":{"V":{"0":7,"1":8}}},"Sender":"1","Payload":"eyJNc2dUeXBlIjoiRWNob01lc3NhZ2UiLCJNc2dEYXRhIjp7IlNpZ25hdHVyZSI6Ik1FUUNJRkwydHRSaUdHTjdEcXVLU29tVXkySTVrTzgvUGxURmdDMnF4S1JDcTNvdkFpQlVwUU9vMG0zcXZmTDIyNS93RDhSVjRES2pnQ1pwVlJXTlFsdnpmbkQyWHc9PSJ9fQ=="}}
+
+Node 0 took action: event delayed (network)
+
+Node 0 took action: dropped event {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"bcb","Metadata":{"msgID":"TPc0wLHirA","vc":{"V":{"0":9,"3":8}}},"Sender":"3","Payload":"eyJNc2dUeXBlIjoiRWNob01lc3NhZ2UiLCJNc2dEYXRhIjp7IlNpZ25hdHVyZSI6Ik1FWUNJUUNBdzBxQm1YVGE2ZklobTExSWV4aFlUUFJoR2x3d0RyMUdDYzgxcVo2Tkt3SWhBSnpRMWtmZHE0cEpWYTk2U0YzMXpNWGoyWmVnc2k4RGZQOEM3UUpjNHR2VyJ9fQ=="}}
+

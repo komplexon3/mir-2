@@ -1,0 +1,15 @@
+31-test
+
+Results: (report_2024-08-01_14-54-45_test/31-test)
+consistency: success
+validity: failure
+integrity: success
+
+
+Commit: 3b3dba11e605f5e7dcdb79a7fcbbf41237682659
+
+
+Node 0 took action: duplicated event {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"net","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"bcb","Payload":"eyJNc2dUeXBlIjoiU3RhcnRNZXNzYWdlIiwiTXNnRGF0YSI6eyJEYXRhIjoiYUdWc2JHOD0ifX0="}}
+
+Node 3 took action: dropped event {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"net","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"bcb","Payload":"eyJNc2dUeXBlIjoiRWNob01lc3NhZ2UiLCJNc2dEYXRhIjp7IlNpZ25hdHVyZSI6Ik1FVUNJSFhLSFJNRXpzYkFncjhLdGZKOXg4d0NFVTU1THVJYzY0QXZ0RnpBcURJbUFpRUFteHRtNkIzb1dsT1FMUHQzeVVrei9rS2FJbDBMc29XLys0eWp5M0VEdWFRPSJ9fQ=="}}
+

@@ -3,6 +3,9 @@ package fuzzer
 import (
 	"context"
 	"fmt"
+	"math/rand/v2"
+	"path"
+	"time"
 
 	"github.com/filecoin-project/mir/fuzzer/actions"
 	"github.com/filecoin-project/mir/fuzzer/nodeinstance"
@@ -16,43 +19,47 @@ const (
 	MAX_EVENTS = 200
 )
 
-type Fuzzer[T any] struct {
+type Fuzzer[T, S any] struct {
+	checkerParams      S
 	createNodeInstance nodeinstance.NodeInstanceCreationFunc[T]
 	nodeConfigs        nodeinstance.NodeConfigs[T]
+	createChecker      checker.CreateCheckerFunc[S]
+	reportsDir         string
 	byzantineNodes     []stdtypes.NodeID
 	puppeteerSchedule  []actions.DelayedEvents
 	byzantineActions   []actions.WeightedAction
 	networkActions     []actions.WeightedAction
-	reportsDir         string
-	properties         checker.Properties
 }
 
-func NewFuzzer[T any](
+func NewFuzzer[T, S any](
 	createNodeInstance nodeinstance.NodeInstanceCreationFunc[T],
 	nodeConfigs nodeinstance.NodeConfigs[T],
 	byzantineNodes []stdtypes.NodeID,
 	puppeteerSchedule []actions.DelayedEvents,
 	byzantineActions []actions.WeightedAction,
 	networkActions []actions.WeightedAction,
+	createChecker checker.CreateCheckerFunc[S],
+	checkerParams S,
 	reportsDir string,
-	properties checker.Properties,
-) (*Fuzzer[T], error) {
-	return &Fuzzer[T]{
+) (*Fuzzer[T, S], error) {
+	return &Fuzzer[T, S]{
 		createNodeInstance: createNodeInstance,
 		nodeConfigs:        nodeConfigs,
 		byzantineNodes:     byzantineNodes,
 		puppeteerSchedule:  puppeteerSchedule,
 		byzantineActions:   byzantineActions,
 		networkActions:     networkActions,
+		createChecker:      createChecker,
+		checkerParams:      checkerParams,
 		reportsDir:         reportsDir,
-		properties:         properties,
 	}, nil
 }
 
-func (f *Fuzzer[T]) Run(ctx context.Context, name string, runs int, maxEvents int, logger logging.Logger) error {
+func (f *Fuzzer[T, S]) Run(ctx context.Context, name string, runs int, timeout time.Duration, rand *rand.Rand, logger logging.Logger) error {
 	for r := range runs {
 		// TODO: every individual run should contain it's errors -> add panic handling
-		runName := fmt.Sprintf("%s-%d", name, r)
+		runName := fmt.Sprintf("%d-%s", r, name)
+		runReportDir := path.Join(f.reportsDir, runName)
 		runCtx, runCancel := context.WithCancel(ctx)
 		err := func() (err error) {
 			defer func() {
@@ -64,12 +71,12 @@ func (f *Fuzzer[T]) Run(ctx context.Context, name string, runs int, maxEvents in
 				runCancel()
 			}()
 
-			fuzzerRun, err := newFuzzerRun(runName, f.createNodeInstance, f.nodeConfigs, f.byzantineNodes, f.puppeteerSchedule, f.byzantineActions, f.networkActions, f.reportsDir, f.properties, logger)
+			fuzzerRun, err := newFuzzerRun(runName, f.createNodeInstance, f.nodeConfigs, f.byzantineNodes, f.puppeteerSchedule, f.byzantineActions, f.networkActions, runReportDir, f.createChecker, f.checkerParams, rand, logger)
 			if err != nil {
 				return err
 			}
 
-			err = fuzzerRun.Run(runCtx, runName, maxEvents, logger)
+			err = fuzzerRun.Run(runCtx, runName, timeout, logger)
 			if err != nil {
 				return err
 			}

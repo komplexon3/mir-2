@@ -12,7 +12,6 @@ import (
 
 // EventList represents a list of Events, e.g. as produced by a module.
 type EventList struct {
-
 	// The internal list is intentionally left uninitialized until its actual use.
 	// This probably speeds up appending empty lists to other lists.
 	list *list.List
@@ -167,6 +166,7 @@ func (el *EventList) String() string {
 	for curr = curr.Next(); curr != nil; curr = curr.Next() {
 		str += ", " + curr.Value.(Event).ToString()
 	}
+	str += "]"
 	return str
 }
 
@@ -191,7 +191,6 @@ type EventListIterator struct {
 // Next will return the next Event until the end of the associated EventList is encountered.
 // Thereafter, it will return nil.
 func (eli *EventListIterator) Next() Event {
-
 	// Return nil if list has been exhausted.
 	if eli.currentElement == nil {
 		return nil

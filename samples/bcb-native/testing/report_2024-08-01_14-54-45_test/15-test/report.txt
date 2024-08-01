@@ -1,0 +1,15 @@
+15-test
+
+Results: (report_2024-08-01_14-54-45_test/15-test)
+validity: failure
+integrity: success
+consistency: success
+
+
+Commit: 3b3dba11e605f5e7dcdb79a7fcbbf41237682659
+
+
+Node 2 took action: dropped event {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"net","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"bcb","Payload":"eyJNc2dUeXBlIjoiRWNob01lc3NhZ2UiLCJNc2dEYXRhIjp7IlNpZ25hdHVyZSI6Ik1FVUNJR3h4VkxVWVlPYmtxN2g0L3BtWUNFVXdkckhOeWhIZzdSZ1hXcDRZQkR4UEFpRUFtbVo2M2JxSUVlY1lNV0ROb1pYbHpsOTd4dFpMd0lxbmdRbmZ5MVRFWFk4PSJ9fQ=="}}
+
+Node 3 took action: dropped event {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"net","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"bcb","Payload":"eyJNc2dUeXBlIjoiRWNob01lc3NhZ2UiLCJNc2dEYXRhIjp7IlNpZ25hdHVyZSI6Ik1FVUNJQVN0WURxMGJLUUVYb1prRUYxeU0rUXJqZHBsRnBSTy85OVUxU0U0bVl6MEFpRUF3UlVCWTNUY3BkMXgzcWFNcjJLSGlIYmFzL2dBaU42bjRNWHdqTmptbFR3PSJ9fQ=="}}
+

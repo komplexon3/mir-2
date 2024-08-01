@@ -1,0 +1,17 @@
+31-test
+
+Results: (report_2024-08-01_14-52-09_test/31-test)
+validity: success
+integrity: failure
+consistency: success
+
+
+Commit: 3b3dba11e605f5e7dcdb79a7fcbbf41237682659
+
+
+Node 1 took action: dropped event {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"bcb","Metadata":{"msgID":"9zm2HziGkL","vc":{"V":{"0":8,"2":8}}},"Sender":"2","Payload":"eyJNc2dUeXBlIjoiRWNob01lc3NhZ2UiLCJNc2dEYXRhIjp7IlNpZ25hdHVyZSI6Ik1FVUNJUUQzQkZWVEIwMzh4WWczMGRLU2VqaXBLSlRaYnh2aUhLbmYrV3R2dkVia1dnSWdJL1FIL0VyRVU5UEZ0M1VwQ0dCcCtQZ1JoWVpYcEVLWFYraHE1NVFaYW9vPSJ9fQ=="}}
+
+Node 1 took action: dropped event {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"bcb","Metadata":{"msgID":"F89UxMnxTD","vc":{"V":{"0":23,"1":8,"3":8}}},"Sender":"0","Payload":"eyJNc2dUeXBlIjoiRmluYWxNZXNzYWdlIiwiTXNnRGF0YSI6eyJEYXRhIjoiYUdWc2JHOD0iLCJTaWduZXJzIjpbIjEiLCIwIiwiMyJdLCJTaWduYXR1cmVzIjpbIk1FVUNJRUozY0s2aTBJd2lsRVRPTWdTMjJsb21QQzJ4TVdWWFVFd2dldG1SMWw4REFpRUF6RjV1Y2kvTDUxY0NZbDlERmlub1R3N0tuNUJMNS9KWVRiR3BqZ1RTSEtBPSIsIk1FVUNJUURGN1YrcUtudWtaS0syZ2N6cWpsanJjNUdwTGZBb3dVWC9uSWJQbVA5Vy9RSWdIZWZjeWVDOHJGcm9FVUZmbHh3djhEY3kzSk14R3YxOTBUSUNKb0s2OUFVPSIsIk1FUUNJRTlZandMeEhTb2JoTGFFb0hTbXBpUUFDWENBRmxZRUlPZk9NRzNVRlMxMkFpQXdaRlVMTzM3c2FNUWE0aGFEVU9ZaHg3Wm1rNjhPWEgvV1A5bTRUZzF3dlE9PSJdfX0="}}
+
+Node 2 took action: duplicated event {"EvType":"Deliver","EvData":{"SrcModule":"","DestModule":"null","Metadata":{},"Data":"aGVsbG8="}}
+

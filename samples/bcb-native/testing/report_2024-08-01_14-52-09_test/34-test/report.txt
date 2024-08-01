@@ -1,0 +1,17 @@
+34-test
+
+Results: (report_2024-08-01_14-52-09_test/34-test)
+validity: failure
+integrity: success
+consistency: success
+
+
+Commit: 3b3dba11e605f5e7dcdb79a7fcbbf41237682659
+
+
+Node 3 took action: duplicated event {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"net","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"bcb","Payload":"eyJNc2dUeXBlIjoiRWNob01lc3NhZ2UiLCJNc2dEYXRhIjp7IlNpZ25hdHVyZSI6Ik1FWUNJUURuN0kvR3psSlBCK0p0eThJdlNRVWo3Q0FPaHJLMktlVWhWUGgzU2pJNVdnSWhBSjdwT0tSUWtOREhFU3Jkckx3N25oZVlGRVBRWHBtUXNsc2VzYXc5ak9GcyJ9fQ=="}}
+
+Node 2 took action: duplicated event {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"net","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"bcb","Payload":"eyJNc2dUeXBlIjoiRWNob01lc3NhZ2UiLCJNc2dEYXRhIjp7IlNpZ25hdHVyZSI6Ik1FVUNJUUNkZzdULzIycHl2K0hJSU1PeFEvUFAxaVFNcjFnckJIRjIvMC9Ha2RqVTFRSWdjTXVuVWJVWWRudkVjNUU3WXduOGx4VGcxQVphd3NETGxiMEthYzVURm1jPSJ9fQ=="}}
+
+Node 2 took action: duplicated event {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"bcb","Metadata":{"msgID":"BVxLjuYGPc","vc":{"V":{"0":14}}},"Sender":"0","Payload":"eyJNc2dUeXBlIjoiRWNob01lc3NhZ2UiLCJNc2dEYXRhIjp7IlNpZ25hdHVyZSI6Ik1FVUNJUUNkZzdULzIycHl2K0hJSU1PeFEvUFAxaVFNcjFnckJIRjIvMC9Ha2RqVTFRSWdjTXVuVWJVWWRudkVjNUU3WXduOGx4VGcxQVphd3NETGxiMEthYzVURm1jPSJ9fQ=="}}
+

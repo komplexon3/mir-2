@@ -404,8 +404,11 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 		// Choose one case from above and execute the corresponding reaction.
 
 		chosenCase, receivedValue, _ := reflect.Select(selectCases)
+		n.Config.Logger.Log(logging.LevelDebug, "react select", "case", chosenCase)
 		selectReactions[chosenCase](receivedValue)
 	}
+
+	n.Config.Logger.Log(logging.LevelDebug, "node process ready to exit")
 
 	n.workErrNotifier.SetExitStatus(nil, nil) // TODO: change this when statuses are implemented.
 	return returnErr
@@ -588,6 +591,14 @@ func (n *Node) inputIsPaused() bool {
 }
 
 func (n *Node) runIdleDetector(ctx context.Context) {
+	var continueEventLoopChan chan struct{}
+	defer func() {
+		// in case we exit somehow before closing this
+		if continueEventLoopChan != nil {
+			close(continueEventLoopChan)
+		}
+	}()
+	defer n.Config.Logger.Log(logging.LevelDebug, "idle loop exit")
 	for {
 		select {
 		case <-ctx.Done():
@@ -595,7 +606,7 @@ func (n *Node) runIdleDetector(ctx context.Context) {
 		case <-n.workErrNotifier.ExitC():
 			return
 
-		case continueEventLoopChan := <-n.noEvents:
+		case continueEventLoopChan = <-n.noEvents:
 			pauseWg := sync.WaitGroup{}
 			pauseCtx, pauseCancel := context.WithCancel(ctx)
 			pauseCounter := make(chan struct{}, len(n.modules))
@@ -656,6 +667,7 @@ func (n *Node) runIdleDetector(ctx context.Context) {
 			pauseCancel()
 			pauseWg.Wait()
 			close(continueEventLoopChan)
+			continueEventLoopChan = nil
 		}
 	}
 }

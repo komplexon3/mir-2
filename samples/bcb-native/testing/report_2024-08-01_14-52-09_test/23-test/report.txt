@@ -1,0 +1,19 @@
+23-test
+
+Results: (report_2024-08-01_14-52-09_test/23-test)
+validity: failure
+integrity: success
+consistency: success
+
+
+Commit: 3b3dba11e605f5e7dcdb79a7fcbbf41237682659
+
+
+Node 0 took action: duplicated event {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"bcb","Metadata":{"msgID":"RDJsZo4ocE","vc":{"V":{"0":7}}},"Sender":"0","Payload":"eyJNc2dUeXBlIjoiU3RhcnRNZXNzYWdlIiwiTXNnRGF0YSI6eyJEYXRhIjoiYUdWc2JHOD0ifX0="}}
+
+Node 3 took action: event delayed (network)
+
+Node 0 took action: dropped event {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"net","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"bcb","Payload":"eyJNc2dUeXBlIjoiRWNob01lc3NhZ2UiLCJNc2dEYXRhIjp7IlNpZ25hdHVyZSI6Ik1FVUNJUUNvbGtPVm1MVUNFYkRxbzBoaHY0dml6OC9Fd2JPeWZuZVpWakZHRlNlUG93SWdOYUdIMzhZQmRYSVVVZ1cxQUtvSHd5Vm1QLy9ZMVV3Mld2UlJwT3BZdVRzPSJ9fQ=="}}
+
+Node 0 took action: event delayed (network)
+

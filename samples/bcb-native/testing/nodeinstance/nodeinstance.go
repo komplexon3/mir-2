@@ -20,6 +20,18 @@ import (
 	es "github.com/go-errors/errors"
 )
 
+type NilSnitch struct {
+	prevInterceptor string
+}
+
+func (ns *NilSnitch) Intercept(events *stdtypes.EventList) (*stdtypes.EventList, error) {
+	if events == nil {
+		panic(ns.prevInterceptor + "returned nil")
+	}
+
+	return events, nil
+}
+
 type BcbNodeInstance struct {
 	node            *mir.Node
 	transportModule *deploytest.FakeLink
@@ -30,9 +42,7 @@ type BcbNodeInstance struct {
 }
 
 type BcbNodeInstanceConfig struct {
-	FakeTransport *deploytest.FakeTransport
 	Leader        stdtypes.NodeID
-	ReportPath    string
 	InstanceUID   []byte
 	NumberOfNodes int
 }
@@ -51,7 +61,7 @@ func (bi *BcbNodeInstance) Run(ctx context.Context) error {
 }
 
 func (bi *BcbNodeInstance) Stop() {
-	// bi.cortexCreeper.StopInjector() // TODO: fix -tmp - double close
+	bi.cortexCreeper.StopInjector()
 	bi.node.Stop()
 }
 
@@ -66,14 +76,14 @@ func (bi *BcbNodeInstance) Cleanup() error {
 	return nil
 }
 
-func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig, cortexCreeper *cortexcreeper.CortexCreeper, logger logging.Logger) (nodeinstance.NodeInstance, error) {
+func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig, transport *deploytest.FakeTransport, cortexCreeper *cortexcreeper.CortexCreeper, logPath string, logger logging.Logger) (nodeinstance.NodeInstance, error) {
 	nodeIDs := make([]stdtypes.NodeID, config.NumberOfNodes)
 	for i := 0; i < config.NumberOfNodes; i++ {
 		nodeIDs[i] = stdtypes.NewNodeIDFromInt(i)
 	}
 
 	transportModule := &deploytest.FakeLink{
-		FakeTransport: config.FakeTransport,
+		FakeTransport: transport,
 		Source:        nodeID,
 		DoneC:         make(chan struct{}),
 	}
@@ -97,14 +107,28 @@ func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig,
 		logger,
 	)
 
-	eventLogger, err := eventlog.NewRecorder(nodeID, config.ReportPath, logger)
+	eventLogger, err := eventlog.NewRecorder(nodeID, logPath, logger)
 	if err != nil {
 		return nil, es.Errorf("error setting up interceptor: %w", err)
 	}
 
 	msgMetadataInterceptorIn, msgMetadataInterceptorOut := msgmetadata.NewMsgMetadataInterceptorPair(logger, "vc", "msgID")
 
-	interceptor := eventlog.MultiInterceptor(msgMetadataInterceptorIn, &nomulticast.NoMulticast{}, cortexCreeper, vcinterceptor.New(nodeID), msgMetadataInterceptorOut, eventLogger)
+	interceptor := eventlog.MultiInterceptor(
+		&NilSnitch{prevInterceptor: "Input"},
+		msgMetadataInterceptorIn,
+		&NilSnitch{prevInterceptor: "MsgMetadataIn"},
+		&nomulticast.NoMulticast{},
+		&NilSnitch{prevInterceptor: "NoMulticast"},
+		cortexCreeper,
+		&NilSnitch{prevInterceptor: "CortexCreeper"},
+		vcinterceptor.New(nodeID),
+		&NilSnitch{prevInterceptor: "VCInterceptor"},
+		msgMetadataInterceptorOut,
+		&NilSnitch{prevInterceptor: "MsgMetadataOut"},
+		eventLogger,
+		&NilSnitch{prevInterceptor: "EventLogger"},
+	)
 
 	// setup crypto
 	keyPairs, err := mirCrypto.GenerateKeys(config.NumberOfNodes, 42)

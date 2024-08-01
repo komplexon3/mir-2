@@ -1,0 +1,17 @@
+41-test
+
+Results: (report_2024-08-01_14-52-09_test/41-test)
+validity: failure
+integrity: success
+consistency: success
+
+
+Commit: 3b3dba11e605f5e7dcdb79a7fcbbf41237682659
+
+
+Node 0 took action: event delayed (network)
+
+Node 1 took action: dropped event {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"bcb","Metadata":{"msgID":"cSKqth579z","vc":{"V":{"0":24,"1":8,"2":8}}},"Sender":"0","Payload":"eyJNc2dUeXBlIjoiRmluYWxNZXNzYWdlIiwiTXNnRGF0YSI6eyJEYXRhIjoiYUdWc2JHOD0iLCJTaWduZXJzIjpbIjIiLCIxIiwiMCJdLCJTaWduYXR1cmVzIjpbIk1FVUNJUUQwYTAwZHBIRFhVek9JZmdPQWhlSzF3TmFkTkJPbks3b0c5b09GNmZCQWd3SWdjNC9MU3pDY0drZVU3SU1qdWdVVlZZTU03Z3M3S3JiMEpvSXh6ZXVVUGRzPSIsIk1FVUNJRXlYQmVGcEZYU0J6Nk1RcnM0cmM2bGoyZ0M2WXlmbGhucEk4NmxqVHpidEFpRUEyZEtPZVRWRGxLaDdiOW0ySGdGUXVUVGN6L3BQa1B0elRHTWYxdHNFWWMwPSIsIk1FVUNJUUNrQlY2eDFIV2hybE96akdycjZ3MkJsYXlpWDJnNnFxR05jbGZSSWwvWjVBSWdmdFlaaEsySXJVS0d6NE0vN2Z4MnY4UWZoZVNhS0d2dzVlZzdpWXorN0lVPSJdfX0="}}
+
+Node 2 took action: dropped event {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"bcb","Metadata":{"msgID":"rm2HqPEEQ8","vc":{"V":{"0":25,"1":8,"2":8}}},"Sender":"0","Payload":"eyJNc2dUeXBlIjoiRmluYWxNZXNzYWdlIiwiTXNnRGF0YSI6eyJEYXRhIjoiYUdWc2JHOD0iLCJTaWduZXJzIjpbIjIiLCIxIiwiMCJdLCJTaWduYXR1cmVzIjpbIk1FVUNJUUQwYTAwZHBIRFhVek9JZmdPQWhlSzF3TmFkTkJPbks3b0c5b09GNmZCQWd3SWdjNC9MU3pDY0drZVU3SU1qdWdVVlZZTU03Z3M3S3JiMEpvSXh6ZXVVUGRzPSIsIk1FVUNJRXlYQmVGcEZYU0J6Nk1RcnM0cmM2bGoyZ0M2WXlmbGhucEk4NmxqVHpidEFpRUEyZEtPZVRWRGxLaDdiOW0ySGdGUXVUVGN6L3BQa1B0elRHTWYxdHNFWWMwPSIsIk1FVUNJUUNrQlY2eDFIV2hybE96akdycjZ3MkJsYXlpWDJnNnFxR05jbGZSSWwvWjVBSWdmdFlaaEsySXJVS0d6NE0vN2Z4MnY4UWZoZVNhS0d2dzVlZzdpWXorN0lVPSJdfX0="}}
+

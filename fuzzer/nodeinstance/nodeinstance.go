@@ -5,6 +5,7 @@ import (
 
 	"github.com/filecoin-project/mir"
 	"github.com/filecoin-project/mir/fuzzer/cortexcreeper"
+	"github.com/filecoin-project/mir/pkg/deploytest"
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/stdtypes"
 )
@@ -18,7 +19,7 @@ type NodeInstance interface {
 	Stop()
 }
 
-type NodeInstanceCreationFunc[T any] func(nodeID stdtypes.NodeID, config T, cortexCreeper *cortexcreeper.CortexCreeper, logger logging.Logger) (NodeInstance, error)
+type NodeInstanceCreationFunc[T any] func(nodeID stdtypes.NodeID, config T, transport *deploytest.FakeTransport, cortexCreeper *cortexcreeper.CortexCreeper, logPath string, logger logging.Logger) (NodeInstance, error)
 
 type NodeConfigs[T any] map[stdtypes.NodeID]T
 

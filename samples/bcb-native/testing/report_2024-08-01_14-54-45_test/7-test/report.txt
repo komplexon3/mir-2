@@ -1,0 +1,15 @@
+7-test
+
+Results: (report_2024-08-01_14-54-45_test/7-test)
+validity: failure
+integrity: success
+consistency: success
+
+
+Commit: 3b3dba11e605f5e7dcdb79a7fcbbf41237682659
+
+
+Node 3 took action: event delayed (network)
+
+Node 0 took action: dropped event {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"bcb","Metadata":{"msgID":"AnIJ1yDMBL","vc":{"V":{"0":7,"1":8}}},"Sender":"1","Payload":"eyJNc2dUeXBlIjoiRWNob01lc3NhZ2UiLCJNc2dEYXRhIjp7IlNpZ25hdHVyZSI6Ik1FUUNJQXRsMWM1NWZ1WEF3QWlmTW9vV25lcFpOTnFSTVVBc01iYWVLQk1zYUg1NkFpQkY5THJmRUM5LzFYQ3VHbUdhVVFIb3BZalhGbTErYzkwcXBMZFppVGxSM2c9PSJ9fQ=="}}
+

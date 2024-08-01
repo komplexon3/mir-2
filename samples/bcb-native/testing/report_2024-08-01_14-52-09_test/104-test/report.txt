@@ -1,0 +1,19 @@
+104-test
+
+Results: (report_2024-08-01_14-52-09_test/104-test)
+validity: failure
+integrity: success
+consistency: success
+
+
+Commit: 3b3dba11e605f5e7dcdb79a7fcbbf41237682659
+
+
+Node 0 took action: duplicated event {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"bcb","Metadata":{"msgID":"EEx2dVMJVJ","vc":{"V":{"0":6}}},"Sender":"0","Payload":"eyJNc2dUeXBlIjoiU3RhcnRNZXNzYWdlIiwiTXNnRGF0YSI6eyJEYXRhIjoiYUdWc2JHOD0ifX0="}}
+
+Node 0 took action: duplicated event {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"bcb","Metadata":{"msgID":"8oH7fqr1n0","vc":{"V":{"0":9,"3":8}}},"Sender":"3","Payload":"eyJNc2dUeXBlIjoiRWNob01lc3NhZ2UiLCJNc2dEYXRhIjp7IlNpZ25hdHVyZSI6Ik1FVUNJQWtZbGlFWGM2Y0RqU0R1NXByYkVhYVZwbVRubGpCWHlWWUp0TG8zT0pwUEFpRUFnVmdQMVhEWUJyRklwdDFnU1ExTmNLK1hPTmN5VDhjUmo2bE4yK2lyQVpJPSJ9fQ=="}}
+
+Node 0 took action: dropped event {"EvType":"SendMessage","EvData":{"SrcModule":"","DestModule":"net","Metadata":{},"DestNodes":["0"],"RemoteDestModule":"bcb","Payload":"eyJNc2dUeXBlIjoiRmluYWxNZXNzYWdlIiwiTXNnRGF0YSI6eyJEYXRhIjoiYUdWc2JHOD0iLCJTaWduZXJzIjpbIjEiLCIwIiwiMyIsIjIiXSwiU2lnbmF0dXJlcyI6WyJNRVVDSUVWNDQ0cVZNc1IrT0J5eDFmeTBmdE1GU3pUc3I1cGFLODMvakt6SUgvOWlBaUVBdEE4WnB2RlU1aTNRZnFnZ0V0RGN1d201UW1zRE50NVpnRFRPOHRRZko2WT0iLCJNRVVDSUIyeno2R1BnSzRta0EzZkRuTzIySWthTnBLdXUwK0xGamRaZVlHazBUR0xBaUVBbUtKdFY3V01HL1Rjb1VwYkRPM2FZZ0ZVTlNIRUoxYTJZdmFNd2l3bG9DRT0iLCJNRVVDSUFrWWxpRVhjNmNEalNEdTVwcmJFYWFWcG1UbmxqQlh5VllKdExvM09KcFBBaUVBZ1ZnUDFYRFlCckZJcHQxZ1NRMU5jSytYT05jeVQ4Y1JqNmxOMitpckFaST0iLCJNRVVDSUdTbDhpV3JhcGlrTi92SGpSY3hpSjYwTThLb1liTThUdjJrVzdvWVFFYkhBaUVBa3pzaGxBVy9OVFpQNUpnZW11NUQvY3lTY3hPWlBrbzNyeXA0YW01bllTRT0iXX19"}}
+
+Node 1 took action: dropped event {"EvType":"MessageReceived","EvData":{"SrcModule":"","DestModule":"bcb","Metadata":{"msgID":"msrk2FxDGq","vc":{"V":{"0":30,"1":8,"2":8,"3":8}}},"Sender":"0","Payload":"eyJNc2dUeXBlIjoiRmluYWxNZXNzYWdlIiwiTXNnRGF0YSI6eyJEYXRhIjoiYUdWc2JHOD0iLCJTaWduZXJzIjpbIjEiLCIwIiwiMyIsIjIiXSwiU2lnbmF0dXJlcyI6WyJNRVVDSUVWNDQ0cVZNc1IrT0J5eDFmeTBmdE1GU3pUc3I1cGFLODMvakt6SUgvOWlBaUVBdEE4WnB2RlU1aTNRZnFnZ0V0RGN1d201UW1zRE50NVpnRFRPOHRRZko2WT0iLCJNRVVDSUIyeno2R1BnSzRta0EzZkRuTzIySWthTnBLdXUwK0xGamRaZVlHazBUR0xBaUVBbUtKdFY3V01HL1Rjb1VwYkRPM2FZZ0ZVTlNIRUoxYTJZdmFNd2l3bG9DRT0iLCJNRVVDSUFrWWxpRVhjNmNEalNEdTVwcmJFYWFWcG1UbmxqQlh5VllKdExvM09KcFBBaUVBZ1ZnUDFYRFlCckZJcHQxZ1NRMU5jSytYT05jeVQ4Y1JqNmxOMitpckFaST0iLCJNRVVDSUdTbDhpV3JhcGlrTi92SGpSY3hpSjYwTThLb1liTThUdjJrVzdvWVFFYkhBaUVBa3pzaGxBVy9OVFpQNUpnZW11NUQvY3lTY3hPWlBrbzNyeXA0YW01bllTRT0iXX19"}}
+

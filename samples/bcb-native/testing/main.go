@@ -3,14 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
+	"math/rand/v2"
+	"strings"
+	"time"
 
 	es "github.com/go-errors/errors"
 
 	"github.com/filecoin-project/mir/fuzzer"
 	"github.com/filecoin-project/mir/fuzzer/actions"
 
-	"github.com/filecoin-project/mir/fuzzer/checker"
-	"github.com/filecoin-project/mir/pkg/deploytest"
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/trantor/types"
 	broadcastevents "github.com/filecoin-project/mir/samples/bcb-native/events"
@@ -20,7 +21,9 @@ import (
 )
 
 const (
-	MAX_EVENTS = 200
+	MAX_RUN_DURATION = 2 * time.Second
+	SEED1            = 42
+	SEED2            = 123
 )
 
 var puppeteerEvents = []actions.DelayedEvents{
@@ -39,17 +42,17 @@ var weightedActionsForNetwork = []actions.WeightedAction{
 			nil,
 			nil
 	}, 10),
-	// actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
-	// 	return "event delayed (network)",
-	// 		nil,
-	// 		[]actions.DelayedEvents{
-	// 			{
-	// 				NodeID: sourceNode,
-	// 				Events: stdtypes.ListOf(e),
-	// 			},
-	// 		},
-	// 		nil
-	// }, 1),
+	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
+		return "event delayed (network)",
+			nil,
+			[]actions.DelayedEvents{
+				{
+					NodeID: sourceNode,
+					Events: stdtypes.ListOf(e),
+				},
+			},
+			nil
+	}, 1),
 }
 
 var weightedActionsForByzantineNodes = []actions.WeightedAction{
@@ -61,25 +64,25 @@ var weightedActionsForByzantineNodes = []actions.WeightedAction{
 			nil,
 			nil
 	}, 10),
-	// actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
-	// 	return fmt.Sprintf("dropped event %s", e.ToString()),
-	// 		nil,
-	// 		nil,
-	// 		nil
-	// }, 1),
-	// actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
-	// 	e2, err := e.SetMetadata("duplicated", true)
-	// 	if err != nil {
-	// 		// TODO: should a failed action just be a "noop"
-	// 		return "", nil, nil, err
-	// 	}
-	// 	return fmt.Sprintf("duplicated event %v", e.ToString()),
-	// 		map[stdtypes.NodeID]*stdtypes.EventList{
-	// 			sourceNode: stdtypes.ListOf(e, e2),
-	// 		},
-	// 		nil,
-	// 		nil
-	// }, 1),
+	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
+		return fmt.Sprintf("dropped event %s", e.ToString()),
+			nil,
+			nil,
+			nil
+	}, 1),
+	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
+		e2, err := e.SetMetadata("duplicated", true)
+		if err != nil {
+			// TODO: should a failed action just be a "noop"
+			return "", nil, nil, err
+		}
+		return fmt.Sprintf("duplicated event %v", e.ToString()),
+			map[stdtypes.NodeID]*stdtypes.EventList{
+				sourceNode: stdtypes.ListOf(e, e2),
+			},
+			nil,
+			nil
+	}, 1),
 }
 
 func fuzzBCB(
@@ -104,32 +107,35 @@ func fuzzBCB(
 	nodeConfigs := make(map[stdtypes.NodeID]nodeinstance.BcbNodeInstanceConfig, len(nodes))
 
 	// TODO: the rounds should actually be part of fuzzer, and not handeled here...
-	config := nodeinstance.BcbNodeInstanceConfig{InstanceUID: instanceUID, NumberOfNodes: len(nodes), Leader: sender, FakeTransport: deploytest.NewFakeTransport(nodeWeights), ReportPath: "."}
+	config := nodeinstance.BcbNodeInstanceConfig{InstanceUID: instanceUID, NumberOfNodes: len(nodes), Leader: sender}
 	for _, nodeID := range nodes {
-		fmt.Println(nodeID)
 		nodeConfigs[nodeID] = config
 	}
 
-	systemConfig := &properties.SystemConfig{
+	checkerParams := properties.SystemConfig{
 		AllNodes:       nodes,
 		Sender:         sender,
 		ByzantineNodes: byzantineNodes,
 	}
 
-	checkerProperties := checker.Properties{
-		"validity":    properties.NewValidity(*systemConfig, logger),
-		"integrity":   properties.NewIntegrity(*systemConfig, logger),
-		"consistency": properties.NewConsistency(*systemConfig, logger),
-	}
-
-	fuzzer, err := fuzzer.NewFuzzer(nodeinstance.CreateBcbNodeInstance, nodeConfigs, byzantineNodes, puppeteerEvents, byzantineActions, networkActions, "", checkerProperties)
+	fuzzer, err := fuzzer.NewFuzzer(
+		nodeinstance.CreateBcbNodeInstance,
+		nodeConfigs,
+		byzantineNodes,
+		puppeteerEvents,
+		byzantineActions,
+		networkActions,
+		properties.CreateBCBChecker,
+		checkerParams,
+		fmt.Sprintf("./report_%s_%s", time.Now().Format("2006-01-02_15-04-05"), strings.Join(strings.Split(name, " "), "_")),
+	)
 	if err != nil {
 		return es.Errorf("failed to create fuzzer: %v", err)
 	}
 
 	// TODO: properly deal with context
 	ctx := context.Background()
-	err = fuzzer.Run(ctx, name, rounds, MAX_EVENTS, logger)
+	err = fuzzer.Run(ctx, name, rounds, MAX_RUN_DURATION, rand.New(rand.NewPCG(SEED1, SEED2)), logger)
 	if err != nil {
 		return es.Errorf("fuzzer encountered an issue: %v", err)
 	}
@@ -138,7 +144,7 @@ func fuzzBCB(
 }
 
 func main() {
-	logger := logging.ConsoleDebugLogger
+	logger := logging.ConsoleWarnLogger
 	logger = logging.Synchronize(logger)
-	fuzzBCB("test", []stdtypes.NodeID{"0", "1", "2", "3"}, []stdtypes.NodeID{}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, 1, logger)
+	fuzzBCB("test", []stdtypes.NodeID{"0", "1", "2", "3"}, []stdtypes.NodeID{"1"}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, 300, logger)
 }

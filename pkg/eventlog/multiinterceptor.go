@@ -9,7 +9,6 @@ type repeater struct {
 }
 
 func (r *repeater) Intercept(events *stdtypes.EventList) (*stdtypes.EventList, error) {
-
 	// Avoid nil dereference if Intercept is called on a nil *Recorder and simply do nothing.
 	// This can happen if a pointer type to *Recorder is assigned to a variable with the interface type Interceptor.
 	// Mir would treat that variable as non-nil, thinking there is an interceptor, and call Intercept() on it.

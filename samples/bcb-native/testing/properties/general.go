@@ -3,13 +3,25 @@ package properties
 import (
 	"fmt"
 
+	"github.com/filecoin-project/mir/fuzzer/checker"
+	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/stdtypes"
 )
 
+func CreateBCBChecker(sc SystemConfig, logger logging.Logger) (*checker.Checker, error) {
+	checkerProperties := checker.Properties{
+		"validity":    NewValidity(sc, logger),
+		"integrity":   NewIntegrity(sc, logger),
+		"consistency": NewConsistency(sc, logger),
+	}
+
+	return checker.NewChecker(checkerProperties)
+}
+
 type SystemConfig struct {
+	Sender         stdtypes.NodeID
 	ByzantineNodes []stdtypes.NodeID
 	AllNodes       []stdtypes.NodeID
-	Sender         stdtypes.NodeID
 }
 
 func getNodeIdFromMetadata(e stdtypes.Event) stdtypes.NodeID {

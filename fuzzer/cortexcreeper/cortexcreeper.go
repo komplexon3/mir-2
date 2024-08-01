@@ -14,18 +14,20 @@ var ErrorShutdown = fmt.Errorf("shutdown signal received")
 type CortexCreepers map[stdtypes.NodeID]*CortexCreeper
 
 type CortexCreeper struct {
-	node      *mir.Node
-	eventsIn  chan *stdtypes.EventList
-	eventsOut chan *stdtypes.EventList
-	doneC     chan struct{}
+	node           *mir.Node
+	eventsIn       chan *stdtypes.EventList
+	eventsOut      chan *stdtypes.EventList
+	doneC          chan struct{}
+	interceptDoneC chan struct{}
 }
 
 func NewCortexCreeper() *CortexCreeper {
 	return &CortexCreeper{
-		node:      nil,
-		eventsIn:  make(chan *stdtypes.EventList),
-		eventsOut: make(chan *stdtypes.EventList),
-		doneC:     make(chan struct{}),
+		node:           nil,
+		eventsIn:       make(chan *stdtypes.EventList),
+		eventsOut:      make(chan *stdtypes.EventList),
+		doneC:          make(chan struct{}),
+		interceptDoneC: make(chan struct{}),
 	}
 }
 
@@ -38,6 +40,8 @@ func (cc *CortexCreeper) Run(ctx context.Context) error {
 	if cc.node == nil {
 		return es.Errorf("Initialize cortex creeper with node before running it (Setup).")
 	}
+
+	defer close(cc.interceptDoneC)
 
 	for {
 		select {
@@ -52,10 +56,9 @@ func (cc *CortexCreeper) Run(ctx context.Context) error {
 			}
 			cc.node.InjectEvents(ctx, markedEvts)
 		case <-ctx.Done():
-			close(cc.doneC)
 			return nil
 		case <-cc.doneC:
-			return ErrorShutdown
+			return nil
 		}
 	}
 }
@@ -75,10 +78,7 @@ func (cc *CortexCreeper) Intercept(evts *stdtypes.EventList) (*stdtypes.EventLis
 	// events to adversary
 	select {
 	case cc.eventsIn <- evts:
-	case <-cc.doneC:
-		return nil, ErrorShutdown
-
-		// TODO deal with closing the channels
+	case <-cc.interceptDoneC:
 	}
 	return stdtypes.EmptyList(), nil
 }
@@ -88,5 +88,8 @@ func (cc *CortexCreeper) GetEventsIn() chan *stdtypes.EventList {
 }
 
 func (cc *CortexCreeper) PushEvents(evts *stdtypes.EventList) {
-	cc.eventsOut <- evts
+	select {
+	case cc.eventsOut <- evts:
+	case <-cc.doneC:
+	}
 }
