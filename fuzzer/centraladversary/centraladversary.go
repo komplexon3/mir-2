@@ -164,7 +164,7 @@ func (a *Adversary) RunCentralAdversary(ctx context.Context) error {
 				var err error
 
 				sourceNodeID := ccsNodeIds[ind-extraSelectCases]
-				isByzantineSourceNode := sliceutil.Contains(a.nodeIDs, sourceNodeID)
+				isByzantineSourceNode := sliceutil.Contains(a.byzantineNodes, sourceNodeID)
 				isDeliverEvent := false
 
 				// TODO: figure out how to actually do this filtering
@@ -183,6 +183,7 @@ func (a *Adversary) RunCentralAdversary(ctx context.Context) error {
 					}
 					delete(a.undeliveredMsgs, msgID.(string))
 				default:
+					// not an event of interest, just let it through
 					a.pushEvents(ctx, sourceNodeID, stdtypes.ListOf(event))
 					continue
 				}
@@ -194,6 +195,15 @@ func (a *Adversary) RunCentralAdversary(ctx context.Context) error {
 				} else if isDeliverEvent {
 					action = a.networkActionSelector.SelectAction()
 				} else {
+					switch eventT := event.(type) {
+					case *stdevents.SendMessage:
+						msgID := utils.RandomString(10)
+						event, err = eventT.SetMetadata("msgID", msgID)
+						if err != nil {
+							return err
+						}
+						a.undeliveredMsgs[msgID] = struct{}{}
+					}
 					a.pushEvents(ctx, sourceNodeID, stdtypes.ListOf(event))
 					continue
 				}
