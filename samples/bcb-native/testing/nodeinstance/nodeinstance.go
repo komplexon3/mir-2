@@ -20,18 +20,6 @@ import (
 	es "github.com/go-errors/errors"
 )
 
-type NilSnitch struct {
-	prevInterceptor string
-}
-
-func (ns *NilSnitch) Intercept(events *stdtypes.EventList) (*stdtypes.EventList, error) {
-	if events == nil {
-		panic(ns.prevInterceptor + "returned nil")
-	}
-
-	return events, nil
-}
-
 type BcbNodeInstance struct {
 	node            *mir.Node
 	transportModule *deploytest.FakeLink
@@ -115,19 +103,12 @@ func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig,
 	msgMetadataInterceptorIn, msgMetadataInterceptorOut := msgmetadata.NewMsgMetadataInterceptorPair(logger, "vc", "msgID")
 
 	interceptor := eventlog.MultiInterceptor(
-		&NilSnitch{prevInterceptor: "Input"},
 		msgMetadataInterceptorIn,
-		&NilSnitch{prevInterceptor: "MsgMetadataIn"},
 		&nomulticast.NoMulticast{},
-		&NilSnitch{prevInterceptor: "NoMulticast"},
 		cortexCreeper,
-		&NilSnitch{prevInterceptor: "CortexCreeper"},
 		vcinterceptor.New(nodeID),
-		&NilSnitch{prevInterceptor: "VCInterceptor"},
 		msgMetadataInterceptorOut,
-		&NilSnitch{prevInterceptor: "MsgMetadataOut"},
 		eventLogger,
-		&NilSnitch{prevInterceptor: "EventLogger"},
 	)
 
 	// setup crypto
