@@ -13,16 +13,18 @@ import (
 	"github.com/filecoin-project/mir/pkg/util/sliceutil"
 )
 
-type Consistency struct {
-	m            dsl.Module
-	systemConfig SystemConfig
-	logger       logging.Logger
+//
+// Consistency: If a correct party c-delivers m and another correct party c-delivers m′, then m = m′.
 
+type Consistency struct {
+	m                       dsl.Module
+	logger                  logging.Logger
 	broadcastDeliverTracker map[stdtypes.NodeID][]byte
+	systemConfig            SystemConfig
 }
 
 func NewConsistency(sc SystemConfig, logger logging.Logger) dsl.Module {
-	m := dsl.NewModule("validity")
+	m := dsl.NewModule("consistency")
 
 	// TODO: setup broadcast
 	v := Consistency{

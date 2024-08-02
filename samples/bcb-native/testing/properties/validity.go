@@ -13,21 +13,20 @@ import (
 	"github.com/filecoin-project/mir/pkg/util/sliceutil"
 )
 
+// Validity: If a correct sender Ps c-broadcasts m, then all correct parties eventually c-deliver m.
+
 type Validity struct {
-	m            dsl.Module
-	systemConfig SystemConfig
-	logger       logging.Logger
-
-	byzantineSender bool
-
-	broadcastRequest        []byte
+	m                       dsl.Module
+	logger                  logging.Logger
 	broadcastDeliverTracker map[stdtypes.NodeID][]byte
+	systemConfig            SystemConfig
+	broadcastRequest        []byte
+	byzantineSender         bool
 }
 
 func NewValidity(sc SystemConfig, logger logging.Logger) dsl.Module {
 	m := dsl.NewModule("validity")
 
-	// TODO: setup broadcast
 	v := Validity{
 		m:            m,
 		systemConfig: sc,

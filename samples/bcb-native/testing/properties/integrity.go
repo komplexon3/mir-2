@@ -13,19 +13,19 @@ import (
 	"github.com/filecoin-project/mir/pkg/logging"
 )
 
+// Integrity: Every correct party c-delivers at most one request. Moreover, if the sender Ps is correct, then the request was previously c-broadcast by Ps.
+
 type Integrity struct {
-	m            dsl.Module
-	systemConfig SystemConfig
-	logger       logging.Logger
-
-	byzantineSender bool
-
-	broadcastRequest        []byte
+	m                       dsl.Module
+	logger                  logging.Logger
 	broadcastDeliverTracker map[stdtypes.NodeID]bool
+	systemConfig            SystemConfig
+	broadcastRequest        []byte
+	byzantineSender         bool
 }
 
 func NewIntegrity(sc SystemConfig, logger logging.Logger) dsl.Module {
-	m := dsl.NewModule("validity")
+	m := dsl.NewModule("integrity")
 
 	byzSender := slices.Contains(sc.ByzantineNodes, sc.Sender)
 

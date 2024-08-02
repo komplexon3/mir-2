@@ -11,7 +11,6 @@ import (
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/util/maputil"
 	"github.com/filecoin-project/mir/pkg/util/sliceutil"
-	broadcastevents "github.com/filecoin-project/mir/samples/bcb-native/events"
 	"github.com/filecoin-project/mir/stdevents"
 	"github.com/filecoin-project/mir/stdtypes"
 
@@ -27,14 +26,15 @@ type Adversary struct {
 	byzantineActionSelector actions.Actions
 	networkActionSelector   actions.Actions
 	logger                  logging.Logger
-	actionTrace             *actionTrace
+	cortexCreepers          cortexcreeper.CortexCreepers
 	idleNodesMonitor        *IdleNodesMonitor
 	undeliveredMsgs         map[string]struct{}
-	cortexCreepers          cortexcreeper.CortexCreepers
+	actionTrace             *actionTrace
 	delayedEventsManager    *delayedEventsManager
 	globalEventsStreamOut   chan stdtypes.Event
 	doneC                   chan struct{}
 	isDoneC                 chan struct{}
+	isInterestingEvent      func(event stdtypes.Event) bool
 	nodeIDs                 []stdtypes.NodeID
 	byzantineNodes          []stdtypes.NodeID
 }
@@ -43,6 +43,7 @@ func NewAdversary(
 	nodeIDs []stdtypes.NodeID,
 	cortexCreepers cortexcreeper.CortexCreepers,
 	idleDetectionCs []chan chan struct{},
+	isInterestingEvent func(event stdtypes.Event) bool,
 	byzantineWeightedActions []actions.WeightedAction,
 	networkWeightedActions []actions.WeightedAction,
 	byzantineNodes []stdtypes.NodeID,
@@ -71,6 +72,7 @@ func NewAdversary(
 		nodeIDs:                 nodeIDs,
 		actionTrace:             NewActionTrace(),
 		delayedEventsManager:    NewDelayedEventsManager(),
+		isInterestingEvent:      isInterestingEvent,
 		globalEventsStreamOut:   globalEventsStream,
 		doneC:                   make(chan struct{}),
 		isDoneC:                 make(chan struct{}),
@@ -167,13 +169,8 @@ func (a *Adversary) RunCentralAdversary(ctx context.Context) error {
 				isByzantineSourceNode := sliceutil.Contains(a.byzantineNodes, sourceNodeID)
 				isDeliverEvent := false
 
-				// TODO: figure out how to actually do this filtering
-
 				// hardcoded tmp solution
 				switch evT := event.(type) {
-				case *broadcastevents.BroadcastRequest:
-				case *broadcastevents.Deliver:
-				case *stdevents.SendMessage:
 				case *stdevents.MessageReceived:
 					// in case this is 'dropped' -> still gotta mark it
 					isDeliverEvent = true
@@ -182,7 +179,9 @@ func (a *Adversary) RunCentralAdversary(ctx context.Context) error {
 						return err
 					}
 					delete(a.undeliveredMsgs, msgID.(string))
-				default:
+				}
+
+				if !a.isInterestingEvent(event) {
 					// not an event of interest, just let it through
 					a.pushEvents(ctx, sourceNodeID, stdtypes.ListOf(event))
 					continue

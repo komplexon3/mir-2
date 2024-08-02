@@ -16,6 +16,7 @@ import (
 	"github.com/filecoin-project/mir/fuzzer/checker"
 	"github.com/filecoin-project/mir/fuzzer/cortexcreeper"
 	"github.com/filecoin-project/mir/fuzzer/nodeinstance"
+	"github.com/filecoin-project/mir/fuzzer/utils"
 	"github.com/filecoin-project/mir/pkg/deploytest"
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/trantor/types"
@@ -23,6 +24,12 @@ import (
 	"github.com/filecoin-project/mir/stdtypes"
 	es "github.com/go-errors/errors"
 )
+
+type runResult struct {
+	results    map[string]checker.CheckerResult
+	exitReason error
+	allPassed  bool
+}
 
 type fuzzerRun struct {
 	ca                *centraladversay.Adversary
@@ -40,6 +47,7 @@ func newFuzzerRun[T, S any](
 	nodeConfigs nodeinstance.NodeConfigs[T],
 	byzantineNodes []stdtypes.NodeID,
 	puppeteerSchedule []actions.DelayedEvents,
+	isInterestingEvent func(event stdtypes.Event) bool,
 	byzantineActions []actions.WeightedAction,
 	networkActions []actions.WeightedAction,
 	reportDir string,
@@ -82,7 +90,7 @@ func newFuzzerRun[T, S any](
 	}
 
 	eventsToCheckerChan := make(chan stdtypes.Event)
-	adv, err := centraladversay.NewAdversary(nodeIDs, cortexCreepers, idleDetectionCs, byzantineActions, networkActions, byzantineNodes, eventsToCheckerChan, rand, baseLogger)
+	adv, err := centraladversay.NewAdversary(nodeIDs, cortexCreepers, idleDetectionCs, isInterestingEvent, byzantineActions, networkActions, byzantineNodes, eventsToCheckerChan, rand, baseLogger)
 	if err != nil {
 		return nil, es.Errorf("failed to create adversary: %v", err)
 	}
@@ -120,13 +128,13 @@ func newFuzzerRun[T, S any](
 }
 
 // TODO: make fuzz run dir and fuzzerRun dirs inside, general fuzz run report file in fuzz run dir
-func (r *fuzzerRun) Run(ctx context.Context, name string, timeout time.Duration, logger logging.Logger) error {
+func (r *fuzzerRun) Run(ctx context.Context, name string, timeout time.Duration, logger logging.Logger) (*runResult, error) {
 	wg := sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	err := os.MkdirAll(r.reportDir, os.ModePerm)
 	if err != nil {
-		return es.Errorf("failed to create report directory: %v", err)
+		return nil, es.Errorf("failed to create report directory: %v", err)
 	}
 
 	nodesRunner := nodeinstance.NewNodesRunner(r.nodeInstances)
@@ -167,26 +175,28 @@ func (r *fuzzerRun) Run(ctx context.Context, name string, timeout time.Duration,
 		fmt.Println("CA DONE CA DONE CA DONE CA DONE CA DONE ")
 	}()
 
+	var exitErr error
 	select {
-	case err = <-nodesErr:
-		if err != nil {
-			err = es.Errorf("Nodes error: %v", err)
+	case exitErr = <-nodesErr:
+		if exitErr != nil {
+			exitErr = es.Errorf("Nodes error: %v", exitErr)
 		}
-	case err = <-checkerErr:
-		if err != nil {
-			err = es.Errorf("Checker error: %v", err)
+	case exitErr = <-checkerErr:
+		if exitErr != nil {
+			exitErr = es.Errorf("Checker error: %v", exitErr)
 		}
-	case err = <-caErr:
-		if err != nil {
-			err = es.Errorf("Central Adversary error: %v", err)
+	case exitErr = <-caErr:
+		if exitErr != nil {
+			exitErr = es.Errorf("Central Adversary error: %v", exitErr)
 		}
 	case <-time.After(timeout):
-		err = es.Errorf("TIMEOUT")
+		exitErr = es.Errorf("TIMEOUT")
 
 	}
 
-	if err != nil {
-		logger.Log(logging.LevelError, "Error occured during fuzzer run:", "error", err)
+	if exitErr != nil {
+		// TODO: error is expected - filter for "expected exit errors" and give log an info enty instead
+		logger.Log(logging.LevelError, "Error occured during fuzzer run:", "error", exitErr)
 	}
 
 	// stop everything
@@ -209,7 +219,7 @@ func (r *fuzzerRun) Run(ctx context.Context, name string, timeout time.Duration,
 	allPassed := true
 	resultStr := fmt.Sprintf("Results: (%s)\n", r.reportDir)
 	for label, res := range results {
-		resultStr = fmt.Sprintf("%s%s: %s\n", resultStr, label, res.String())
+		resultStr = fmt.Sprintf("%s\n", utils.PrintResult(label, res))
 		if res != checker.SUCCESS {
 			allPassed = false
 		}
@@ -228,12 +238,13 @@ func (r *fuzzerRun) Run(ctx context.Context, name string, timeout time.Duration,
 		}
 		return string(commit)
 	}()
-	resultStr = fmt.Sprintf("%s\n\n%s\n\nCommit: %s\n\n", name, resultStr, commit)
+	resultStr = fmt.Sprintf("%s\n\n%s\n\nCommit: %s\n\nExit reason: %v\n\n===================================\n\n", name, resultStr, commit, exitErr)
 	resultStr += r.ca.GetActionTrace().String()
 
 	err = os.WriteFile(path.Join(r.reportDir, "report.txt"), []byte(resultStr), 0644)
 	if err != nil {
 		es.Errorf("failed to write report file: %v", err)
+		return nil, err
 	}
 
 	// delete report dir if all tests passed
@@ -241,5 +252,9 @@ func (r *fuzzerRun) Run(ctx context.Context, name string, timeout time.Duration,
 		os.RemoveAll(r.reportDir)
 	}
 
-	return nil
+	return &runResult{
+		results:    results,
+		exitReason: exitErr,
+		allPassed:  allPassed,
+	}, nil
 }

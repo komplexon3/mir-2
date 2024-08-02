@@ -11,6 +11,7 @@ import (
 
 	"github.com/filecoin-project/mir/fuzzer"
 	"github.com/filecoin-project/mir/fuzzer/actions"
+	"github.com/filecoin-project/mir/stdevents"
 
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/trantor/types"
@@ -21,7 +22,7 @@ import (
 )
 
 const (
-	MAX_RUN_DURATION = 2 * time.Second
+	MAX_RUN_DURATION = 5 * time.Second
 	SEED1            = 42
 	SEED2            = 123
 )
@@ -85,6 +86,18 @@ var weightedActionsForByzantineNodes = []actions.WeightedAction{
 	}, 1),
 }
 
+func isInterestingEvent(event stdtypes.Event) bool {
+	switch event.(type) {
+	case *broadcastevents.BroadcastRequest:
+	case *broadcastevents.Deliver:
+	case *stdevents.SendMessage:
+	case *stdevents.MessageReceived:
+	default:
+		return false
+	}
+	return true
+}
+
 func fuzzBCB(
 	name string,
 	nodes []stdtypes.NodeID,
@@ -123,6 +136,7 @@ func fuzzBCB(
 		nodeConfigs,
 		byzantineNodes,
 		puppeteerEvents,
+		isInterestingEvent,
 		byzantineActions,
 		networkActions,
 		properties.CreateBCBChecker,
@@ -146,5 +160,5 @@ func fuzzBCB(
 func main() {
 	logger := logging.ConsoleWarnLogger
 	logger = logging.Synchronize(logger)
-	fuzzBCB("test", []stdtypes.NodeID{"0", "1", "2", "3"}, []stdtypes.NodeID{"1"}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, 300, logger)
+	fuzzBCB("test", []stdtypes.NodeID{"0", "1", "2", "3"}, []stdtypes.NodeID{"1"}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, 100, logger)
 }

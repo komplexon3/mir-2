@@ -1,8 +1,6 @@
 package bcb
 
 import (
-	"fmt"
-
 	es "github.com/go-errors/errors"
 	"github.com/pkg/errors"
 
@@ -21,7 +19,7 @@ import (
 	"github.com/filecoin-project/mir/pkg/util/sliceutil"
 )
 
-//TODO Sanitize messages received by this module (e.g. check that the sender is the expected one, make sure no crashing if data=nil, etc.)
+// TODO Sanitize messages received by this module (e.g. check that the sender is the expected one, make sure no crashing if data=nil, etc.)
 
 // ModuleConfig sets the module ids. All replicas are expected to use identical module configurations.
 type ModuleConfig struct {
@@ -157,7 +155,6 @@ func NewModule(mc ModuleConfig, params *ModuleParams, nodeID stdtypes.NodeID, lo
 	cryptopbdsl.UponSigsVerified(m, func(_ []stdtypes.NodeID, _ []error, allOK bool, context *verifyFinalContext) error {
 		if allOK && !state.delivered {
 			state.delivered = true
-			fmt.Println("Deliver")
 			dsl.EmitEvent(m, events.NewDeliver(mc.Consumer, context.data))
 		}
 		return nil
