@@ -12,6 +12,7 @@ import (
 	mirCrypto "github.com/filecoin-project/mir/pkg/crypto"
 	"github.com/filecoin-project/mir/pkg/deploytest"
 	"github.com/filecoin-project/mir/pkg/eventlog"
+	"github.com/filecoin-project/mir/pkg/idledetection"
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/modules"
 	trantorpbtypes "github.com/filecoin-project/mir/pkg/pb/trantorpb/types"
@@ -24,7 +25,8 @@ type BcbNodeInstance struct {
 	node            *mir.Node
 	transportModule *deploytest.FakeLink
 	cortexCreeper   *cortexcreeper.CortexCreeper
-	idleDetectionC  chan chan struct{}
+	idleDetectionC  chan idledetection.IdleNotification
+	eventLogger     *eventlog.Recorder
 	nodeID          stdtypes.NodeID
 	config          BcbNodeInstanceConfig
 }
@@ -39,11 +41,12 @@ func (bi *BcbNodeInstance) GetNode() *mir.Node {
 	return bi.node
 }
 
-func (bi *BcbNodeInstance) GetIdleDetectionC() chan chan struct{} {
+func (bi *BcbNodeInstance) GetIdleDetectionC() chan idledetection.IdleNotification {
 	return bi.idleDetectionC
 }
 
 func (bi *BcbNodeInstance) Run(ctx context.Context) error {
+	defer bi.eventLogger.Stop()
 	go bi.cortexCreeper.Run(ctx) // ignoring error for now
 	return bi.node.Run(ctx)
 }
@@ -141,6 +144,7 @@ func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig,
 		config:          config,
 		cortexCreeper:   cortexCreeper,
 		idleDetectionC:  idleDetectionC,
+		eventLogger:     eventLogger,
 	}
 
 	return &instance, nil

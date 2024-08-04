@@ -105,7 +105,7 @@ func (f *Fuzzer[T, S]) Run(ctx context.Context, name string, runs int, timeout t
 			}
 			resultStr += fmt.Sprintf("\nExit Reason: %v\n\n", results.exitReason)
 			for label, res := range results.results {
-				resultStr += fmt.Sprintln(utils.PrintResult(label, res))
+				resultStr += fmt.Sprintln(utils.FormatResult(label, res))
 			}
 			resultStr += "\n-----------------------------------\n\n"
 

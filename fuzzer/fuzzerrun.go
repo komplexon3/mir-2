@@ -18,6 +18,7 @@ import (
 	"github.com/filecoin-project/mir/fuzzer/nodeinstance"
 	"github.com/filecoin-project/mir/fuzzer/utils"
 	"github.com/filecoin-project/mir/pkg/deploytest"
+	"github.com/filecoin-project/mir/pkg/idledetection"
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/trantor/types"
 	"github.com/filecoin-project/mir/pkg/util/maputil"
@@ -75,7 +76,7 @@ func newFuzzerRun[T, S any](
 
 	nodeInstances := make(nodeinstance.NodeInstances, len(nodeIDs))
 	cortexCreepers := make(cortexcreeper.CortexCreepers, len(nodeIDs))
-	idleDetectionCs := make([]chan chan struct{}, 0, len(nodeIDs))
+	idleDetectionCs := make([]chan idledetection.IdleNotification, 0, len(nodeIDs))
 
 	for nodeID, config := range nodeConfigs {
 		nodeLogger := logging.Decorate(baseLogger, string(nodeID)+" - ")
@@ -201,6 +202,7 @@ func (r *fuzzerRun) Run(ctx context.Context, name string, timeout time.Duration,
 
 	// stop everything
 	logger.Log(logging.LevelDebug, "Sending Shutdown Nodes Runner")
+	// causes 'idle but already indicating idle' error in idle nodes monitor during shutdown
 	nodesRunner.Stop()
 	logger.Log(logging.LevelDebug, "Sending Shutdown Central Adversary")
 	r.ca.Stop()
@@ -219,7 +221,7 @@ func (r *fuzzerRun) Run(ctx context.Context, name string, timeout time.Duration,
 	allPassed := true
 	resultStr := fmt.Sprintf("Results: (%s)\n", r.reportDir)
 	for label, res := range results {
-		resultStr = fmt.Sprintf("%s\n", utils.PrintResult(label, res))
+		resultStr += fmt.Sprintf("%s\n", utils.FormatResult(label, res))
 		if res != checker.SUCCESS {
 			allPassed = false
 		}

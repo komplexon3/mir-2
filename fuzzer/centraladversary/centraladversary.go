@@ -4,10 +4,12 @@ import (
 	"context"
 	"math/rand/v2"
 	"reflect"
+	"sync"
 
 	"github.com/filecoin-project/mir/fuzzer/actions"
 	"github.com/filecoin-project/mir/fuzzer/cortexcreeper"
 	"github.com/filecoin-project/mir/fuzzer/utils"
+	"github.com/filecoin-project/mir/pkg/idledetection"
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/util/maputil"
 	"github.com/filecoin-project/mir/pkg/util/sliceutil"
@@ -42,7 +44,7 @@ type Adversary struct {
 func NewAdversary(
 	nodeIDs []stdtypes.NodeID,
 	cortexCreepers cortexcreeper.CortexCreepers,
-	idleDetectionCs []chan chan struct{},
+	idleDetectionCs []chan idledetection.IdleNotification,
 	isInterestingEvent func(event stdtypes.Event) bool,
 	byzantineWeightedActions []actions.WeightedAction,
 	networkWeightedActions []actions.WeightedAction,
@@ -86,19 +88,24 @@ func (a *Adversary) Stop() {
 }
 
 func (a *Adversary) RunCentralAdversary(ctx context.Context) error {
+	wg := sync.WaitGroup{}
 	defer close(a.isDoneC)
 	// slice of cortex creepers ordered by nodeIds to easily reference them to the select cases
 	ccsNodeIds := maputil.GetSortedKeys(a.cortexCreepers)
 	ccs := maputil.GetValuesOf(a.cortexCreepers, ccsNodeIds)
 
 	// TODO: actually handle errors from idleNodesMonitor
+	wg.Add(1)
 	go func() {
+		wg.Done()
 		err := a.idleNodesMonitor.Run(ctx)
-		if err != nil {
+		if err != nil || err != ErrorShutdown {
 			a.logger.Log(logging.LevelError, "idle nodes monitor failed", "err", err)
 		}
 	}()
 	defer a.idleNodesMonitor.Stop()
+
+	defer wg.Wait()
 
 	for {
 

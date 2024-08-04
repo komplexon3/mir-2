@@ -119,7 +119,7 @@ func NewRecorder(
 	if !i.syncWrite {
 		go func() {
 			err := i.run()
-			if err != nil {
+			if err != nil && err != errStopped {
 				logger.Log(logging.LevelError, "Interceptor returned with error.", "err", err)
 			} else {
 				logger.Log(logging.LevelDebug, "Interceptor returned successfully.")
@@ -135,7 +135,6 @@ func NewRecorder(
 // to the output stream has completed (successfully or otherwise), Intercept
 // returns an error.
 func (i *Recorder) Intercept(events *stdtypes.EventList) (*stdtypes.EventList, error) {
-
 	// Avoid nil dereference if Intercept is called on a nil *Recorder and simply do nothing.
 	// This can happen if a pointer type to *Recorder is assigned to a variable with the interface type Interceptor.
 	// Mir would treat that variable as non-nil, thinking there is an interceptor, and call Intercept() on it.
@@ -176,7 +175,6 @@ func (i *Recorder) Intercept(events *stdtypes.EventList) (*stdtypes.EventList, e
 // Interceptor, and should only be invoked after the mir node has completely
 // exited.  The returned error
 func (i *Recorder) Stop() error {
-
 	// In synchronous mode, the interceptor has nothing to stop.
 	// Since we assume that the Mir node has already completely stopped,
 	// we do not need to worry about concurrent or later invocations of Intercept().
