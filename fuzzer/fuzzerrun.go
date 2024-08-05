@@ -26,6 +26,8 @@ import (
 	es "github.com/go-errors/errors"
 )
 
+var ErrorTimeout = fmt.Errorf("TIMEOUT")
+
 type runResult struct {
 	results    map[string]checker.CheckerResult
 	exitReason error
@@ -151,7 +153,7 @@ func (r *fuzzerRun) Run(ctx context.Context, name string, timeout time.Duration,
 		case nodesErr <- nodesRunner.Run(ctx, logger):
 		default:
 		}
-		fmt.Println("NODES DONE NODES DONE NODES DONE NODES DONE NODES DONE ")
+		logger.Log(logging.LevelDebug, "Nodes shut down")
 	}()
 
 	wg.Add(1)
@@ -162,7 +164,7 @@ func (r *fuzzerRun) Run(ctx context.Context, name string, timeout time.Duration,
 		case checkerErr <- r.propertyChecker.Run(ctx, r.eventsToCheckerC):
 		default:
 		}
-		fmt.Println("CHECKER DONE CHECKER DONE CHECKER DONE")
+		logger.Log(logging.LevelDebug, "Checker shut down")
 	}()
 
 	wg.Add(1)
@@ -173,26 +175,25 @@ func (r *fuzzerRun) Run(ctx context.Context, name string, timeout time.Duration,
 		case caErr <- r.ca.RunExperiment(ctx, r.puppeteerSchedule):
 		default:
 		}
-		fmt.Println("CA DONE CA DONE CA DONE CA DONE CA DONE ")
+		logger.Log(logging.LevelDebug, "Central adversary shut down")
 	}()
 
 	var exitErr error
 	select {
 	case exitErr = <-nodesErr:
 		if exitErr != nil {
-			exitErr = es.Errorf("Nodes error: %v", exitErr)
+			exitErr = fmt.Errorf("Nodes error: %v", exitErr)
 		}
 	case exitErr = <-checkerErr:
 		if exitErr != nil {
-			exitErr = es.Errorf("Checker error: %v", exitErr)
+			exitErr = fmt.Errorf("Checker error: %v", exitErr)
 		}
 	case exitErr = <-caErr:
 		if exitErr != nil {
-			exitErr = es.Errorf("Central Adversary error: %v", exitErr)
+			exitErr = fmt.Errorf("Central Adversary error: %v", exitErr)
 		}
 	case <-time.After(timeout):
-		exitErr = es.Errorf("TIMEOUT")
-
+		exitErr = ErrorTimeout
 	}
 
 	if exitErr != nil {
@@ -250,9 +251,9 @@ func (r *fuzzerRun) Run(ctx context.Context, name string, timeout time.Duration,
 	}
 
 	// delete report dir if all tests passed
-	if allPassed {
-		os.RemoveAll(r.reportDir)
-	}
+	// if allPassed {
+	// 	os.RemoveAll(r.reportDir)
+	// }
 
 	return &runResult{
 		results:    results,

@@ -61,17 +61,19 @@ func NewFuzzer[T, S any](
 	}, nil
 }
 
-func (f *Fuzzer[T, S]) Run(ctx context.Context, name string, runs int, timeout time.Duration, rand *rand.Rand, logger logging.Logger) error {
+func (f *Fuzzer[T, S]) Run(ctx context.Context, name string, runs int, timeout time.Duration, rand *rand.Rand, logger logging.Logger) (int, error) {
 	err := os.MkdirAll(f.reportsDir, os.ModePerm)
 	if err != nil {
-		return es.Errorf("failed to create fuzzing campaign report directory: %v", err)
+		return 0, es.Errorf("failed to create fuzzing campaign report directory: %v", err)
 	}
 
 	reportFile, err := os.Create(path.Join(f.reportsDir, "report.txt"))
 	if err != nil {
-		return es.Errorf("failed to create fuzzing campaign report file: %v", err)
+		return 0, es.Errorf("failed to create fuzzing campaign report file: %v", err)
 	}
 	defer reportFile.Close()
+
+	countInteresting := 0
 
 	for r := range runs {
 		// TODO: every individual run should contain it's errors -> add panic handling
@@ -101,6 +103,7 @@ func (f *Fuzzer[T, S]) Run(ctx context.Context, name string, runs int, timeout t
 
 			resultStr := runName
 			if !results.allPassed {
+				countInteresting++
 				resultStr += " - INTERESTING"
 			}
 			resultStr += fmt.Sprintf("\nExit Reason: %v\n\n", results.exitReason)
@@ -125,5 +128,5 @@ func (f *Fuzzer[T, S]) Run(ctx context.Context, name string, runs int, timeout t
 			// don't fail/return, go on to next run
 		}
 	}
-	return nil
+	return countInteresting, nil
 }
