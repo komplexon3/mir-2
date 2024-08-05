@@ -99,7 +99,7 @@ func (a *Adversary) RunCentralAdversary(ctx context.Context) error {
 	go func() {
 		wg.Done()
 		err := a.idleNodesMonitor.Run(ctx)
-		if err != nil || err != ErrorShutdown {
+		if err != nil && err != ErrorShutdown {
 			a.logger.Log(logging.LevelError, "idle nodes monitor failed", "err", err)
 		}
 	}()
@@ -161,7 +161,22 @@ func (a *Adversary) RunCentralAdversary(ctx context.Context) error {
 					}
 					a.logger.Log(logging.LevelDebug, "Delayed events ready for dispatch")
 					delayedEvents := a.delayedEventsManager.PopRandomDelayedEvents()
-					a.pushEvents(ctx, delayedEvents.NodeID, delayedEvents.Events)
+					delayedEventsListWithMsgID := stdtypes.EmptyList()
+					evIterator := delayedEvents.Events.Iterator()
+					for ev := evIterator.Next(); ev != nil; ev = evIterator.Next() {
+						switch evT := ev.(type) {
+						case *stdevents.SendMessage:
+							msgID := utils.RandomString(10)
+							var err error
+							ev, err = evT.SetMetadata("msgID", msgID)
+							if err != nil {
+								return err
+							}
+							a.undeliveredMsgs[msgID] = struct{}{}
+						}
+						delayedEventsListWithMsgID.PushBack(ev)
+					}
+					a.pushEvents(ctx, delayedEvents.NodeID, delayedEventsListWithMsgID)
 				}
 			} else {
 				a.logger.Log(logging.LevelDebug, "Nodes Idle BUT msgs in transit", "msg count", len(a.undeliveredMsgs))
