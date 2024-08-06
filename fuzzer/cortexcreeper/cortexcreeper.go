@@ -13,9 +13,21 @@ var ErrorShutdown = fmt.Errorf("shutdown signal received")
 
 type CortexCreepers map[stdtypes.NodeID]*CortexCreeper
 
+type EventsAck struct {
+	Events *stdtypes.EventList
+	Ack    chan struct{}
+}
+
+func newEventsAck(events *stdtypes.EventList) *EventsAck {
+	return &EventsAck{
+		Events: events,
+		Ack:    make(chan struct{}),
+	}
+}
+
 type CortexCreeper struct {
 	node           *mir.Node
-	eventsIn       chan *stdtypes.EventList
+	eventsIn       chan *EventsAck
 	eventsOut      chan *stdtypes.EventList
 	doneC          chan struct{}
 	interceptDoneC chan struct{}
@@ -24,7 +36,7 @@ type CortexCreeper struct {
 func NewCortexCreeper() *CortexCreeper {
 	return &CortexCreeper{
 		node:           nil,
-		eventsIn:       make(chan *stdtypes.EventList),
+		eventsIn:       make(chan *EventsAck),
 		eventsOut:      make(chan *stdtypes.EventList),
 		doneC:          make(chan struct{}),
 		interceptDoneC: make(chan struct{}),
@@ -75,15 +87,21 @@ func (cc *CortexCreeper) Intercept(evts *stdtypes.EventList) (*stdtypes.EventLis
 		}
 	}
 
+	evtsAck := newEventsAck(evts)
+
 	// events to adversary
 	select {
-	case cc.eventsIn <- evts:
+	case cc.eventsIn <- evtsAck:
+	case <-cc.interceptDoneC:
+	}
+	select {
+	case <-evtsAck.Ack:
 	case <-cc.interceptDoneC:
 	}
 	return stdtypes.EmptyList(), nil
 }
 
-func (cc *CortexCreeper) GetEventsIn() chan *stdtypes.EventList {
+func (cc *CortexCreeper) GetEventsIn() chan *EventsAck {
 	return cc.eventsIn
 }
 

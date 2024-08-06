@@ -74,11 +74,15 @@ func (n *Node) processModuleEvents(
 	select {
 	case continueChan := <-pause:
 		n.Config.Logger.Log(logging.LevelTrace, "pausing module", "module", name)
-		<-continueChan
-		n.Config.Logger.Log(logging.LevelTrace, "continue module", "module", name)
+		select {
+		case <-continueChan:
+		case <-ctx.Done():
+			return false, nil
+		case <-n.workErrNotifier.ExitC():
+			return false, nil
+		}
 		return true, nil
 	case eventsIn, inputOpen = <-eventSource:
-		n.Config.Logger.Log(logging.LevelTrace, "new events to process", "module", name, "events", eventsIn)
 		if !inputOpen {
 			return false, nil
 		}
