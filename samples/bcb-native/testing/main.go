@@ -22,9 +22,9 @@ import (
 )
 
 const (
-	MAX_RUN_DURATION = time.Second / 2
+	MAX_RUN_DURATION = 1 * time.Second
 	SEED1            = 42
-	SEED2            = 123
+	SEED2            = 321
 )
 
 var puppeteerEvents = []actions.DelayedEvents{
@@ -70,7 +70,7 @@ var weightedActionsForByzantineNodes = []actions.WeightedAction{
 			nil,
 			nil,
 			nil
-	}, 1),
+	}, 2),
 	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
 		e2, err := e.SetMetadata("duplicated", true)
 		if err != nil {
@@ -88,8 +88,8 @@ var weightedActionsForByzantineNodes = []actions.WeightedAction{
 
 func isInterestingEvent(event stdtypes.Event) bool {
 	switch event.(type) {
-	case *broadcastevents.BroadcastRequest:
-	case *broadcastevents.Deliver:
+	// case *broadcastevents.BroadcastRequest:
+	// case *broadcastevents.Deliver:
 	case *stdevents.SendMessage:
 	case *stdevents.MessageReceived:
 	default:
@@ -107,7 +107,7 @@ func fuzzBCB(
 	networkActions []actions.WeightedAction,
 	rounds int,
 	logger logging.Logger,
-) error {
+) (int, error) {
 	// check that shit makes sense
 	// rename to lower case
 
@@ -144,25 +144,29 @@ func fuzzBCB(
 		fmt.Sprintf("./report_%s_%s", time.Now().Format("2006-01-02_15-04-05"), strings.Join(strings.Split(name, " "), "_")),
 	)
 	if err != nil {
-		return es.Errorf("failed to create fuzzer: %v", err)
+		return 0, es.Errorf("failed to create fuzzer: %v", err)
 	}
 
 	// TODO: properly deal with context
 	ctx := context.Background()
-	err = fuzzer.Run(ctx, name, rounds, MAX_RUN_DURATION, rand.New(rand.NewPCG(SEED1, SEED2)), logger)
+	hits, err := fuzzer.Run(ctx, name, rounds, MAX_RUN_DURATION, rand.New(rand.NewPCG(SEED1, SEED2)), logger)
 	if err != nil {
-		return es.Errorf("fuzzer encountered an issue: %v", err)
+		return 0, es.Errorf("fuzzer encountered an issue: %v", err)
 	}
 
-	return nil
+	return hits, nil
 }
 
 func main() {
 	rounds := 10000
-	logger := logging.ConsoleWarnLogger
+	logger := logging.ConsoleErrorLogger
 	logger = logging.Synchronize(logger)
 	startTime := time.Now()
-	fuzzBCB("test", []stdtypes.NodeID{"0", "1", "2", "3"}, []stdtypes.NodeID{"1"}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, rounds, logger)
+	hits, err := fuzzBCB("test", []stdtypes.NodeID{"0", "1", "2", "3"}, []stdtypes.NodeID{"1"}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, rounds, logger)
+	if err != nil {
+		fmt.Println(err)
+	}
 	duration := time.Since(startTime)
+	fmt.Printf("=================================================================\nInteresting cases %d (out of %d - %.3f%%)\n", hits, rounds, float32(hits)/float32(rounds)*100)
 	fmt.Printf("=================================================================\nExecution time: %s - for a total of %d rounds (avg per round: %s)\n", duration, rounds, time.Duration(int64(duration)/int64(rounds)))
 }

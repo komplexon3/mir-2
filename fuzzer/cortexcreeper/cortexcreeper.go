@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/filecoin-project/mir"
+	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/stdtypes"
 	es "github.com/go-errors/errors"
 )
@@ -58,6 +59,7 @@ func (cc *CortexCreeper) Run(ctx context.Context) error {
 	for {
 		select {
 		case evts := <-cc.eventsOut:
+			cc.node.Config.Logger.Log(logging.LevelTrace, "cc - got evtsOut", "evts", evts)
 			// hard coded only one event
 			// TODO: handle multiple events
 			markedEvts := stdtypes.EmptyList()
@@ -66,7 +68,9 @@ func (cc *CortexCreeper) Run(ctx context.Context) error {
 				markedE, _ := e.SetMetadata("injected", true)
 				markedEvts.PushBack(markedE)
 			}
+			cc.node.Config.Logger.Log(logging.LevelTrace, "cc - injecting", "evts", evts)
 			cc.node.InjectEvents(ctx, markedEvts)
+			cc.node.Config.Logger.Log(logging.LevelTrace, "cc - done injecting", "evts", evts)
 		case <-ctx.Done():
 			return nil
 		case <-cc.doneC:
@@ -105,9 +109,17 @@ func (cc *CortexCreeper) GetEventsIn() chan *EventsAck {
 	return cc.eventsIn
 }
 
-func (cc *CortexCreeper) PushEvents(evts *stdtypes.EventList) {
-	select {
-	case cc.eventsOut <- evts:
-	case <-cc.doneC:
+func (cc *CortexCreeper) PushEvents(ctx context.Context, evts *stdtypes.EventList) {
+	cc.node.Config.Logger.Log(logging.LevelTrace, "cc - pushing evtsOut", "evts", evts)
+	// hard coded only one event
+	// TODO: handle multiple events
+	markedEvts := stdtypes.EmptyList()
+	evtsIter := evts.Iterator()
+	for e := evtsIter.Next(); e != nil; e = evtsIter.Next() {
+		markedE, _ := e.SetMetadata("injected", true)
+		markedEvts.PushBack(markedE)
 	}
+	cc.node.Config.Logger.Log(logging.LevelTrace, "cc - injecting", "evts", evts)
+	cc.node.InjectEvents(ctx, markedEvts)
+	cc.node.Config.Logger.Log(logging.LevelTrace, "cc - done injecting", "evts", evts)
 }

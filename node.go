@@ -169,6 +169,7 @@ func NewNodeWithIdleDetection(id stdtypes.NodeID, config *NodeConfig, m modules.
 	}
 
 	n.inactiveNotificationChan = make(chan idledetection.IdleNotification)
+	n.eventsIn = make(chan *stdtypes.EventList, len(m)+1) // need one extra spot for cortex creeper injected events
 	return n, n.inactiveNotificationChan, nil
 }
 

@@ -131,6 +131,10 @@ func (a *Adversary) RunCentralAdversary(ctx context.Context) error {
 				a.logger.Log(logging.LevelTrace, "processing evts", "node", nodeID, "events", evtsAck.Events)
 				defer a.logger.Log(logging.LevelTrace, "done processing evts", "node", nodeID, "events", evtsAck.Events)
 				defer close(evtsAck.Ack)
+				dispatchEvents := make(map[stdtypes.NodeID]*stdtypes.EventList, len(a.nodeIDs))
+				for _, nodeID := range a.nodeIDs {
+					dispatchEvents[nodeID] = stdtypes.EmptyList()
+				}
 				elIterator := evtsAck.Events.Iterator()
 				for event := elIterator.Next(); event != nil; event = elIterator.Next() {
 					var err error
@@ -153,7 +157,16 @@ func (a *Adversary) RunCentralAdversary(ctx context.Context) error {
 
 					if !a.isInterestingEvent(event) {
 						// not an event of interest, just let it through
-						a.pushEvents(ctx, nodeID, stdtypes.ListOf(event))
+						switch eventT := event.(type) {
+						case *stdevents.SendMessage:
+							msgID := utils.RandomString(10)
+							event, err = eventT.SetMetadata("msgID", msgID)
+							if err != nil {
+								return err
+							}
+							a.undeliveredMsgs[msgID] = struct{}{}
+						}
+						dispatchEvents[nodeID].PushBack(event)
 						continue
 					}
 
@@ -173,7 +186,9 @@ func (a *Adversary) RunCentralAdversary(ctx context.Context) error {
 							}
 							a.undeliveredMsgs[msgID] = struct{}{}
 						}
-						a.pushEvents(ctx, nodeID, stdtypes.ListOf(event))
+						a.logger.Log(logging.LevelTrace, "def - pushing evt", "evt", event.ToString())
+						dispatchEvents[nodeID].PushBack(event)
+						a.logger.Log(logging.LevelTrace, "done def - pushing evt", "evt", event.ToString())
 						continue
 					}
 
@@ -228,9 +243,10 @@ func (a *Adversary) RunCentralAdversary(ctx context.Context) error {
 							}
 							newEvents.PushBack(ev)
 						}
-						a.pushEvents(ctx, injectNodeID, newEvents)
+						dispatchEvents[injectNodeID].PushBackList(newEvents)
 					}
 				}
+				defer a.dispatchMultiNode(ctx, dispatchEvents)
 				return nil
 			})
 		}
@@ -300,7 +316,7 @@ func (a *Adversary) RunCentralAdversary(ctx context.Context) error {
 							}
 							delayedEventsListWithMsgID.PushBack(ev)
 						}
-						a.pushEvents(ctx, delayedEvents.NodeID, delayedEventsListWithMsgID)
+						a.dispatch(ctx, delayedEvents.NodeID, delayedEventsListWithMsgID)
 					} else {
 						a.logger.Log(logging.LevelDebug, "Nodes Idle BUT msgs in transit", "msg count", len(a.undeliveredMsgs))
 					}
@@ -320,7 +336,20 @@ func (a *Adversary) RunCentralAdversary(ctx context.Context) error {
 	return err
 }
 
-func (a *Adversary) pushEvents(ctx context.Context, nodeID stdtypes.NodeID, events *stdtypes.EventList) {
+func (a *Adversary) dispatchMultiNode(ctx context.Context, events map[stdtypes.NodeID]*stdtypes.EventList) error {
+	for nodeID, evts := range events {
+		if err := a.dispatch(ctx, nodeID, evts); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (a *Adversary) dispatch(ctx context.Context, nodeID stdtypes.NodeID, events *stdtypes.EventList) error {
+	if events.Len() == 0 {
+		// no events, return directly
+		return nil
+	}
 	if a.globalEventsStreamOut != nil {
 		evtsIter := events.Iterator()
 		for evt := evtsIter.Next(); evt != nil; evt = evtsIter.Next() {
@@ -328,17 +357,20 @@ func (a *Adversary) pushEvents(ctx context.Context, nodeID stdtypes.NodeID, even
 			evtWithNodeID, err := evt.SetMetadata("node", nodeID)
 			if err != nil {
 				// should probably be handles better but for now panic is okay -> fuzzer should be able to deal with panics anyways
-				panic(es.Errorf("pushEvents failed to set metadata: %v", err))
+				return (es.Errorf("dispatch failed to set metadata: %v", err))
 			}
 			select {
 			case a.globalEventsStreamOut <- evtWithNodeID:
 			case <-a.doneC:
+				// TODO: add 'shutdown' error?
+				return nil
 			case <-ctx.Done():
+				return nil
 			}
 		}
+		a.cortexCreepers[nodeID].PushEvents(ctx, events)
 	}
-	cc := a.cortexCreepers[nodeID]
-	cc.PushEvents(events)
+	return nil
 }
 
 // TODO: should take ctx

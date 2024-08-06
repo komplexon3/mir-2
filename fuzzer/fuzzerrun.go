@@ -251,9 +251,9 @@ func (r *fuzzerRun) Run(ctx context.Context, name string, timeout time.Duration,
 	}
 
 	// delete report dir if all tests passed
-	// if allPassed {
-	// 	os.RemoveAll(r.reportDir)
-	// }
+	if allPassed {
+		os.RemoveAll(r.reportDir)
+	}
 
 	return &runResult{
 		results:    results,

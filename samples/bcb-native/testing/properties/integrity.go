@@ -62,7 +62,9 @@ func (i *Integrity) handleBroadcastRequest(e *bcbevents.BroadcastRequest) error 
 func (i *Integrity) handleDeliver(e *bcbevents.Deliver) error {
 	nodeID := getNodeIdFromMetadata(e)
 
-	if _, ok := i.broadcastDeliverTracker[nodeID]; ok {
+	if slices.Contains(i.systemConfig.ByzantineNodes, nodeID) {
+		// byzantine node, ignore
+	} else if _, ok := i.broadcastDeliverTracker[nodeID]; ok {
 		fmt.Printf("Node %s delivered a second value\n", nodeID)
 		// fail
 		dsl.EmitEvent(i.m, checkerevents.NewFailureEvent())
