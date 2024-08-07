@@ -157,10 +157,11 @@ func (f *Fuzzer[T, S]) Run(ctx context.Context, name string, runs int, timeout t
 			return nil
 		}()
 		if err != nil {
+			// TODO: this will not work with the update writer, add a way to output this...
 			fmt.Printf("Run %s failed: %v", runName, err)
 			// don't fail/return, go on to next run
 		}
-		updateWriter.Update(r, countInteresting, countTimeoutExit, countIdleExit, countOtherExit)
+		updateWriter.Update(r+1, countInteresting, countTimeoutExit, countIdleExit, countOtherExit)
 	}
 	updateWriter.Stop()
 	return countInteresting, nil
@@ -195,7 +196,7 @@ func (uw *UpdateWriter) Start() {
 }
 
 func (uw *UpdateWriter) Stop() {
-	uw.writer.Start()
+	uw.writer.Stop()
 }
 
 func (uw *UpdateWriter) Update(runsCompleted, interstingCases, timoutExits, idleExits, otherExits int) {
