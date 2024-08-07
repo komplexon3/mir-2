@@ -5,9 +5,7 @@ import (
 
 	"github.com/filecoin-project/mir"
 	"github.com/filecoin-project/mir/fuzzer/cortexcreeper"
-	msgmetadata "github.com/filecoin-project/mir/fuzzer/interceptors/msgMetadata"
-	"github.com/filecoin-project/mir/fuzzer/interceptors/nomulticast"
-	"github.com/filecoin-project/mir/fuzzer/interceptors/vcinterceptor"
+	"github.com/filecoin-project/mir/fuzzer/interceptors"
 	"github.com/filecoin-project/mir/fuzzer/nodeinstance"
 	mirCrypto "github.com/filecoin-project/mir/pkg/crypto"
 	"github.com/filecoin-project/mir/pkg/deploytest"
@@ -100,19 +98,13 @@ func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig,
 
 	eventLogger, err := eventlog.NewRecorder(nodeID, logPath, logger)
 	if err != nil {
-		return nil, es.Errorf("error setting up interceptor: %w", err)
+		return nil, es.Errorf("error setting up event logger interceptor: %w", err)
 	}
 
-	msgMetadataInterceptorIn, msgMetadataInterceptorOut := msgmetadata.NewMsgMetadataInterceptorPair(logger, "vc", "msgID")
-
-	interceptor := eventlog.MultiInterceptor(
-		msgMetadataInterceptorIn,
-		&nomulticast.NoMulticast{},
-		cortexCreeper,
-		vcinterceptor.New(nodeID),
-		msgMetadataInterceptorOut,
-		eventLogger,
-	)
+	interceptor, err := interceptors.NewFuzzerInterceptor(nodeID, cortexCreeper, logger, eventLogger)
+	if err != nil {
+		return nil, es.Errorf("error setting up fuzzer interceptor: %w", err)
+	}
 
 	// setup crypto
 	keyPairs, err := mirCrypto.GenerateKeys(config.NumberOfNodes, 42)

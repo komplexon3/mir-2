@@ -5,11 +5,11 @@ import (
 	"os"
 	"slices"
 
+	"github.com/filecoin-project/mir/fuzzer/interceptors/vcinterceptor/vectorclock"
 	"github.com/filecoin-project/mir/pkg/eventlog"
 	"github.com/filecoin-project/mir/pkg/pb/eventpb"
 	"github.com/filecoin-project/mir/pkg/pb/recordingpb"
 	"github.com/filecoin-project/mir/pkg/util/sliceutil"
-	"github.com/filecoin-project/mir/pkg/vcinterceptor/vectorclock"
 	"github.com/filecoin-project/mir/stdtypes"
 )
 
