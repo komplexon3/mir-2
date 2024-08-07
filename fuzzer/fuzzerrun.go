@@ -181,17 +181,8 @@ func (r *fuzzerRun) Run(ctx context.Context, name string, timeout time.Duration,
 	var exitErr error
 	select {
 	case exitErr = <-nodesErr:
-		if exitErr != nil {
-			exitErr = fmt.Errorf("Nodes error: %v", exitErr)
-		}
 	case exitErr = <-checkerErr:
-		if exitErr != nil {
-			exitErr = fmt.Errorf("Checker error: %v", exitErr)
-		}
 	case exitErr = <-caErr:
-		if exitErr != nil {
-			exitErr = fmt.Errorf("Central Adversary error: %v", exitErr)
-		}
 	case <-time.After(timeout):
 		exitErr = ErrorTimeout
 	}
@@ -259,5 +250,5 @@ func (r *fuzzerRun) Run(ctx context.Context, name string, timeout time.Duration,
 		results:    results,
 		exitReason: exitErr,
 		allPassed:  allPassed,
-	}, nil
+	}, exitErr
 }

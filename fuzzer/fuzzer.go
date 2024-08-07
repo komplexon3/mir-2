@@ -3,16 +3,20 @@ package fuzzer
 import (
 	"context"
 	"fmt"
+	"io"
 	"math/rand/v2"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/filecoin-project/mir/fuzzer/actions"
+	centraladversay "github.com/filecoin-project/mir/fuzzer/centraladversary"
 	"github.com/filecoin-project/mir/fuzzer/nodeinstance"
 	"github.com/filecoin-project/mir/fuzzer/utils"
 	"github.com/filecoin-project/mir/pkg/logging"
 	es "github.com/go-errors/errors"
+	"github.com/gosuri/uilive"
 
 	"github.com/filecoin-project/mir/fuzzer/checker"
 	"github.com/filecoin-project/mir/stdtypes"
@@ -61,7 +65,7 @@ func NewFuzzer[T, S any](
 	}, nil
 }
 
-func (f *Fuzzer[T, S]) Run(ctx context.Context, name string, runs int, timeout time.Duration, rand *rand.Rand, logger logging.Logger) (int, error) {
+func (f *Fuzzer[T, S]) Run(ctx context.Context, name string, runs int, timeout time.Duration, rand *rand.Rand, logLevel logging.LogLevel) (int, error) {
 	err := os.MkdirAll(f.reportsDir, os.ModePerm)
 	if err != nil {
 		return 0, es.Errorf("failed to create fuzzing campaign report directory: %v", err)
@@ -73,8 +77,13 @@ func (f *Fuzzer[T, S]) Run(ctx context.Context, name string, runs int, timeout t
 	}
 	defer reportFile.Close()
 
-	countInteresting := 0
+	updateWriter := NewUpdateWriter(runs, 100)
+	updateWriter.Start()
 
+	countInteresting := 0
+	countIdleExit := 0
+	countTimeoutExit := 0
+	countOtherExit := 0
 	for r := range runs {
 		// TODO: every individual run should contain it's errors -> add panic handling
 		runName := fmt.Sprintf("%d-%s", r, name)
@@ -90,13 +99,37 @@ func (f *Fuzzer[T, S]) Run(ctx context.Context, name string, runs int, timeout t
 				runCancel()
 			}()
 
+			err = os.MkdirAll(runReportDir, os.ModePerm)
+			if err != nil {
+				return es.Errorf("failed to create report directory: %v", err)
+			}
+
+			fLogger, err := logging.NewFileLogger(logLevel, path.Join(runReportDir, "log.txt"))
+			if err != nil {
+				return es.Errorf("failed to create log file: %v", err)
+			}
+
+			defer fLogger.Stop() // close file
+			logger := logging.Synchronize(fLogger)
+			// logger := logging.NilLogger
+
 			fuzzerRun, err := newFuzzerRun(runName, f.createNodeInstance, f.nodeConfigs, f.byzantineNodes, f.puppeteerSchedule, f.isInterestingEvent, f.byzantineActions, f.networkActions, runReportDir, f.createChecker, f.checkerParams, rand, logger)
 			if err != nil {
 				return err
 			}
 
-			results, _ := fuzzerRun.Run(runCtx, runName, timeout, logger)
+			results, runErr := fuzzerRun.Run(runCtx, runName, timeout, logger)
 			// runErr is not necessaritly an err,err...
+			switch runErr {
+			case ErrorTimeout:
+				countTimeoutExit++
+			case centraladversay.ErrShutdownIdleWithoutDelayedEvents:
+				countIdleExit++
+			default:
+				countOtherExit++
+			}
+			// no results means something really went wrong
+			// TODO: should probably have fuzzerrun return 2 errors - 'real' errors and run return codes
 			if results == nil {
 				return err
 			}
@@ -127,6 +160,51 @@ func (f *Fuzzer[T, S]) Run(ctx context.Context, name string, runs int, timeout t
 			fmt.Printf("Run %s failed: %v", runName, err)
 			// don't fail/return, go on to next run
 		}
+		updateWriter.Update(r, countInteresting, countTimeoutExit, countIdleExit, countOtherExit)
 	}
+	updateWriter.Stop()
 	return countInteresting, nil
+}
+
+type UpdateWriter struct {
+	startTime        time.Time
+	secondLine       io.Writer
+	thirdLine        io.Writer
+	fourthLine       io.Writer
+	writer           *uilive.Writer
+	progressBarWidth int
+	totalRuns        int
+}
+
+func NewUpdateWriter(totalRuns, progressbarWidth int) *UpdateWriter {
+	writer := uilive.New()
+
+	return &UpdateWriter{
+		progressBarWidth: progressbarWidth,
+		totalRuns:        totalRuns,
+		writer:           writer,
+		secondLine:       writer.Newline(),
+		thirdLine:        writer.Newline(),
+		fourthLine:       writer.Newline(),
+	}
+}
+
+func (uw *UpdateWriter) Start() {
+	uw.writer.Start()
+	uw.startTime = time.Now()
+}
+
+func (uw *UpdateWriter) Stop() {
+	uw.writer.Start()
+}
+
+func (uw *UpdateWriter) Update(runsCompleted, interstingCases, timoutExits, idleExits, otherExits int) {
+	runsPaddingNeeded := len(string(uw.totalRuns))
+	fractionCompleted := float64(runsCompleted) / float64(uw.totalRuns)
+	progressTicksCheck := int(float64(uw.progressBarWidth) * fractionCompleted)
+
+	fmt.Fprintf(uw.writer, "Fuzzing Target - Total Runs: %*d, Completed Runs: %*d, Time Elapsed: %s\n", runsPaddingNeeded, uw.totalRuns, runsPaddingNeeded, runsCompleted, time.Since(uw.startTime).Round(time.Second))
+	fmt.Fprintf(uw.secondLine, "[%s%s] %3d%%\n", strings.Repeat("=", progressTicksCheck), strings.Repeat("_", uw.progressBarWidth-progressTicksCheck), int(fractionCompleted*100))
+	fmt.Fprintf(uw.thirdLine, "Timout Exits: %*d\t\tIdle Exits: %*d\t\tOther Exits: %*d\n", runsPaddingNeeded, timoutExits, runsPaddingNeeded, idleExits, runsPaddingNeeded, otherExits)
+	fmt.Fprintf(uw.fourthLine, "Interesing Cases: %*d\n", runsPaddingNeeded, interstingCases)
 }

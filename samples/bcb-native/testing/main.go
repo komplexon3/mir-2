@@ -106,7 +106,7 @@ func fuzzBCB(
 	byzantineActions []actions.WeightedAction,
 	networkActions []actions.WeightedAction,
 	rounds int,
-	logger logging.Logger,
+	logLevel logging.LogLevel,
 ) (int, error) {
 	// check that shit makes sense
 	// rename to lower case
@@ -149,7 +149,7 @@ func fuzzBCB(
 
 	// TODO: properly deal with context
 	ctx := context.Background()
-	hits, err := fuzzer.Run(ctx, name, rounds, MAX_RUN_DURATION, rand.New(rand.NewPCG(SEED1, SEED2)), logger)
+	hits, err := fuzzer.Run(ctx, name, rounds, MAX_RUN_DURATION, rand.New(rand.NewPCG(SEED1, SEED2)), logLevel)
 	if err != nil {
 		return 0, es.Errorf("fuzzer encountered an issue: %v", err)
 	}
@@ -158,11 +158,10 @@ func fuzzBCB(
 }
 
 func main() {
-	rounds := 10000
-	logger := logging.ConsoleErrorLogger
-	logger = logging.Synchronize(logger)
+	rounds := 1000
+	logLevel := logging.LevelDebug
 	startTime := time.Now()
-	hits, err := fuzzBCB("test", []stdtypes.NodeID{"0", "1", "2", "3"}, []stdtypes.NodeID{"1"}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, rounds, logger)
+	hits, err := fuzzBCB("test", []stdtypes.NodeID{"0", "1", "2", "3"}, []stdtypes.NodeID{"1"}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, rounds, logLevel)
 	if err != nil {
 		fmt.Println(err)
 	}
