@@ -69,7 +69,7 @@ func (v *Totality) handleFinal(e *checkerevents.FinalEvent) error {
 
 	// checking that all correct nodes delivered the broadcasted value
 	nonByzantineNodes := sliceutil.Filter(v.systemConfig.AllNodes, func(_ int, n stdtypes.NodeID) bool {
-		return slices.Contains(v.systemConfig.ByzantineNodes, n)
+		return !slices.Contains(v.systemConfig.ByzantineNodes, n)
 	})
 
 	// only checking non byzantine nodes

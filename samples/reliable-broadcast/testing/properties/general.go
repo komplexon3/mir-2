@@ -26,7 +26,6 @@ type SystemConfig struct {
 }
 
 func getNodeIdFromMetadata(e stdtypes.Event) stdtypes.NodeID {
-	fmt.Println(e.ToString())
 	node, err := e.GetMetadata("node")
 	if err != nil {
 		panic("node not in metadata")

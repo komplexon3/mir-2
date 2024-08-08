@@ -169,7 +169,8 @@ func NewNodeWithIdleDetection(id stdtypes.NodeID, config *NodeConfig, m modules.
 	}
 
 	n.inactiveNotificationChan = make(chan idledetection.IdleNotification)
-	n.eventsIn = make(chan *stdtypes.EventList, len(m)+1) // need one extra spot for cortex creeper injected events
+	n.eventsIn = make(chan *stdtypes.EventList, len(m)+1000) // need one extra spot for cortex creeper injected events, plus a bunch to make sure the network never blocks us
+	// TODO: just increasing the buffer size works but isn't very nice... maybe this can be solved in a better way
 	return n, n.inactiveNotificationChan, nil
 }
 
@@ -268,15 +269,6 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 			}
 		}()
 		defer close(n.inactiveNotificationChan)
-
-		// observe if node is active
-		// TODO: cancel/shutdown
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			n.runIdleDetector(ctx)
-		}()
-
 	}
 
 	// This loop shovels events between the appropriate channels, until a stopping condition is satisfied.
@@ -285,7 +277,7 @@ func (n *Node) process(ctx context.Context) error { //nolint:gocyclo
 
 		// TODO: push this stuff into module/funtion
 
-		if n.inactiveNotificationChan != nil && n.pendingEvents.totalEvents == 0 {
+		if n.inactiveNotificationChan != nil && n.pendingEvents.totalEvents == 0 && len(n.eventsIn) == 0 {
 			n.runIdleDetector(ctx)
 		}
 

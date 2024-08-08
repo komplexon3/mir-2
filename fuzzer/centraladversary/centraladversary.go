@@ -2,6 +2,7 @@ package centraladversay
 
 import (
 	"context"
+	"fmt"
 	"math/rand/v2"
 	"reflect"
 	"sync"
@@ -11,6 +12,7 @@ import (
 	"github.com/filecoin-project/mir/fuzzer/utils"
 	"github.com/filecoin-project/mir/pkg/idledetection"
 	"github.com/filecoin-project/mir/pkg/logging"
+	"github.com/filecoin-project/mir/pkg/util/maputil"
 	"github.com/filecoin-project/mir/pkg/util/sliceutil"
 	"github.com/filecoin-project/mir/stdevents"
 	"github.com/filecoin-project/mir/stdtypes"
@@ -28,7 +30,7 @@ type Adversary struct {
 	networkActionSelector   actions.Actions
 	logger                  logging.Logger
 	cortexCreepers          cortexcreeper.CortexCreepers
-	undeliveredMsgs         map[string]struct{}
+	undeliveredMsgs         map[string]stdtypes.Event // keeping track of actual messages to aid in debugging
 	actionTrace             *actionTrace
 	delayedEventsManager    *delayedEventsManager
 	globalEventsStreamOut   chan stdtypes.Event
@@ -67,7 +69,7 @@ func NewAdversary(
 		byzantineActionSelector: byzantineActionSelector,
 		networkActionSelector:   networkActionSelector,
 		cortexCreepers:          cortexCreepers,
-		undeliveredMsgs:         make(map[string]struct{}),
+		undeliveredMsgs:         make(map[string]stdtypes.Event),
 		byzantineNodes:          byzantineNodes,
 		nodeIDs:                 nodeIDs,
 		actionTrace:             NewActionTrace(),
@@ -164,7 +166,7 @@ func (a *Adversary) RunCentralAdversary(ctx context.Context) error {
 							if err != nil {
 								return err
 							}
-							a.undeliveredMsgs[msgID] = struct{}{}
+							a.undeliveredMsgs[msgID] = eventT
 						}
 						dispatchEvents[nodeID].PushBack(event)
 						continue
@@ -184,11 +186,9 @@ func (a *Adversary) RunCentralAdversary(ctx context.Context) error {
 							if err != nil {
 								return err
 							}
-							a.undeliveredMsgs[msgID] = struct{}{}
+							a.undeliveredMsgs[msgID] = eventT
 						}
-						a.logger.Log(logging.LevelTrace, "def - pushing evt", "evt", event.ToString())
 						dispatchEvents[nodeID].PushBack(event)
-						a.logger.Log(logging.LevelTrace, "done def - pushing evt", "evt", event.ToString())
 						continue
 					}
 
@@ -232,7 +232,7 @@ func (a *Adversary) RunCentralAdversary(ctx context.Context) error {
 								if err != nil {
 									return err
 								}
-								a.undeliveredMsgs[msgID] = struct{}{}
+								a.undeliveredMsgs[msgID] = evT
 
 								// case *stdevents.MessageReceived:
 								// 	msgID, err := evT.GetMetadata("msgID")
@@ -312,13 +312,13 @@ func (a *Adversary) RunCentralAdversary(ctx context.Context) error {
 								if err != nil {
 									return err
 								}
-								a.undeliveredMsgs[msgID] = struct{}{}
+								a.undeliveredMsgs[msgID] = evT
 							}
 							delayedEventsListWithMsgID.PushBack(ev)
 						}
 						a.dispatch(ctx, delayedEvents.NodeID, delayedEventsListWithMsgID)
 					} else {
-						a.logger.Log(logging.LevelDebug, "Nodes Idle BUT msgs in transit", "msg count", len(a.undeliveredMsgs))
+						a.logger.Log(logging.LevelDebug, "Nodes Idle BUT msgs in transit", "msg count", len(a.undeliveredMsgs), "msgs", maputil.Transform(a.undeliveredMsgs, func(msgID string, e stdtypes.Event) (string, string) { return msgID, e.ToString() }))
 					}
 				}
 				return nil
@@ -331,8 +331,10 @@ func (a *Adversary) RunCentralAdversary(ctx context.Context) error {
 		if ackC != nil {
 			close(ackC)
 		}
-
 	}
+
+	// log message to give some info on shutdown
+	a.logger.Log(logging.LevelDebug, "Central Adversary is shutting down", "undeliveredMsgs", maputil.Transform(a.undeliveredMsgs, func(msgID string, e stdtypes.Event) (string, string) { return msgID, e.ToString() }), "delayedEvents", sliceutil.Transform(a.delayedEventsManager.delayedEvents, func(_ int, a actions.DelayedEvents) string { return fmt.Sprintf("%s:%v", a.NodeID, a.Events) }))
 	return err
 }
 

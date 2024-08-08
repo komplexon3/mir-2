@@ -241,8 +241,8 @@ func (r *fuzzerRun) Run(ctx context.Context, name string, timeout time.Duration,
 		return nil, err
 	}
 
-	// delete report dir if all tests passed
-	if allPassed {
+	// delete report dir if all tests passed, and shutdown was 'normal'
+	if allPassed && exitErr == centraladversay.ErrShutdownIdleWithoutDelayedEvents {
 		os.RemoveAll(r.reportDir)
 	}
 

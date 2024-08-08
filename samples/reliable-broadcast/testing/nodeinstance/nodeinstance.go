@@ -5,66 +5,65 @@ import (
 
 	"github.com/filecoin-project/mir"
 	"github.com/filecoin-project/mir/fuzzer/cortexcreeper"
-	msgmetadata "github.com/filecoin-project/mir/fuzzer/interceptors/msgMetadata"
-	"github.com/filecoin-project/mir/fuzzer/interceptors/nomulticast"
-	"github.com/filecoin-project/mir/fuzzer/interceptors/vcinterceptor"
+	"github.com/filecoin-project/mir/fuzzer/interceptors"
 	"github.com/filecoin-project/mir/fuzzer/nodeinstance"
-	mirCrypto "github.com/filecoin-project/mir/pkg/crypto"
 	"github.com/filecoin-project/mir/pkg/deploytest"
 	"github.com/filecoin-project/mir/pkg/eventlog"
+	"github.com/filecoin-project/mir/pkg/idledetection"
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/modules"
 	trantorpbtypes "github.com/filecoin-project/mir/pkg/pb/trantorpb/types"
-	"github.com/filecoin-project/mir/samples/bcb-native/modules/bcb"
+	"github.com/filecoin-project/mir/samples/reliable-broadcast/modules/broadcast"
 	"github.com/filecoin-project/mir/stdtypes"
 	es "github.com/go-errors/errors"
 )
 
-type BcbNodeInstance struct {
+type ReliableBroadcastNodeInstance struct {
 	node            *mir.Node
 	transportModule *deploytest.FakeLink
 	cortexCreeper   *cortexcreeper.CortexCreeper
-	idleDetectionC  chan chan struct{}
+	idleDetectionC  chan idledetection.IdleNotification
+	eventLogger     *eventlog.Recorder
 	nodeID          stdtypes.NodeID
-	config          BcbNodeInstanceConfig
+	config          ReliableBroadcastNodeInstanceConfig
 }
 
-type BcbNodeInstanceConfig struct {
+type ReliableBroadcastNodeInstanceConfig struct {
 	Leader        stdtypes.NodeID
 	InstanceUID   []byte
 	NumberOfNodes int
 }
 
-func (bi *BcbNodeInstance) GetNode() *mir.Node {
+func (bi *ReliableBroadcastNodeInstance) GetNode() *mir.Node {
 	return bi.node
 }
 
-func (bi *BcbNodeInstance) GetIdleDetectionC() chan chan struct{} {
+func (bi *ReliableBroadcastNodeInstance) GetIdleDetectionC() chan idledetection.IdleNotification {
 	return bi.idleDetectionC
 }
 
-func (bi *BcbNodeInstance) Run(ctx context.Context) error {
-	go bi.cortexCreeper.Run(ctx) // ignoring error for now
+func (bi *ReliableBroadcastNodeInstance) Run(ctx context.Context) error {
+	defer bi.eventLogger.Stop()
 	return bi.node.Run(ctx)
 }
 
-func (bi *BcbNodeInstance) Stop() {
-	bi.cortexCreeper.StopInjector()
+func (bi *ReliableBroadcastNodeInstance) Stop() {
+	bi.cortexCreeper.AbortIntercepts()
 	bi.node.Stop()
 }
 
-func (bi *BcbNodeInstance) Setup() error {
+func (bi *ReliableBroadcastNodeInstance) Setup() error {
 	bi.cortexCreeper.Setup(bi.node)
 	bi.transportModule.Connect(&trantorpbtypes.Membership{})
 	return nil
 }
 
-func (bi *BcbNodeInstance) Cleanup() error {
+func (bi *ReliableBroadcastNodeInstance) Cleanup() error {
 	bi.transportModule.Stop()
 	return nil
 }
 
-func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig, transport *deploytest.FakeTransport, cortexCreeper *cortexcreeper.CortexCreeper, logPath string, logger logging.Logger) (nodeinstance.NodeInstance, error) {
+func CreateBroadcastNodeInstance(nodeID stdtypes.NodeID, config ReliableBroadcastNodeInstanceConfig, transport *deploytest.FakeTransport, cortexCreeper *cortexcreeper.CortexCreeper, logPath string, logger logging.Logger) (nodeinstance.NodeInstance, error) {
 	nodeIDs := make([]stdtypes.NodeID, config.NumberOfNodes)
 	for i := 0; i < config.NumberOfNodes; i++ {
 		nodeIDs[i] = stdtypes.NewNodeIDFromInt(i)
@@ -79,14 +78,13 @@ func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig,
 	if err := transportModule.Start(); err != nil {
 		return nil, es.Errorf("could not start network transport: %w", err)
 	}
-	bcbModule := bcb.NewModule(
-		bcb.ModuleConfig{
-			Self:     "bcb",
+	broadcastModule := broadcast.NewModule(
+		broadcast.ModuleConfig{
+			Self:     "broadcast",
 			Consumer: "null",
 			Net:      "net",
-			Crypto:   "crypto",
 		},
-		&bcb.ModuleParams{
+		&broadcast.ModuleParams{
 			InstanceUID: config.InstanceUID,
 			AllNodes:    nodeIDs,
 			Leader:      config.Leader,
@@ -97,35 +95,18 @@ func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig,
 
 	eventLogger, err := eventlog.NewRecorder(nodeID, logPath, logger)
 	if err != nil {
-		return nil, es.Errorf("error setting up interceptor: %w", err)
+		return nil, es.Errorf("error setting up event logger interceptor: %w", err)
 	}
 
-	msgMetadataInterceptorIn, msgMetadataInterceptorOut := msgmetadata.NewMsgMetadataInterceptorPair(logger, "vc", "msgID")
-
-	interceptor := eventlog.MultiInterceptor(
-		msgMetadataInterceptorIn,
-		&nomulticast.NoMulticast{},
-		cortexCreeper,
-		vcinterceptor.New(nodeID),
-		msgMetadataInterceptorOut,
-		eventLogger,
-	)
-
-	// setup crypto
-	keyPairs, err := mirCrypto.GenerateKeys(config.NumberOfNodes, 42)
+	interceptor, err := interceptors.NewFuzzerInterceptor(nodeID, cortexCreeper, logger, eventLogger)
 	if err != nil {
-		return nil, es.Errorf("error setting up key paris: %w", err)
-	}
-	crypto, err := mirCrypto.InsecureCryptoForTestingOnly(nodeIDs, nodeID, &keyPairs)
-	if err != nil {
-		return nil, es.Errorf("error setting up crypto: %w", err)
+		return nil, es.Errorf("error setting up fuzzer interceptor: %w", err)
 	}
 
 	m := map[stdtypes.ModuleID]modules.Module{
-		"net":    transportModule,
-		"crypto": mirCrypto.New(crypto),
-		"bcb":    bcbModule,
-		"null":   modules.NullPassive{}, // just sending delivers to null, will still be intercepted
+		"net":       transportModule,
+		"broadcast": broadcastModule,
+		"null":      modules.NullPassive{}, // just sending delivers to null, will still be intercepted
 	}
 
 	// create a Mir node
@@ -134,13 +115,14 @@ func CreateBcbNodeInstance(nodeID stdtypes.NodeID, config BcbNodeInstanceConfig,
 		return nil, es.Errorf("error creating a Mir node: %w", err)
 	}
 
-	instance := BcbNodeInstance{
+	instance := ReliableBroadcastNodeInstance{
 		node:            node,
 		nodeID:          nodeID,
 		transportModule: transportModule,
 		config:          config,
 		cortexCreeper:   cortexCreeper,
 		idleDetectionC:  idleDetectionC,
+		eventLogger:     eventLogger,
 	}
 
 	return &instance, nil

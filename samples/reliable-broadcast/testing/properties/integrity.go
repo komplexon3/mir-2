@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/filecoin-project/mir/samples/reliable-broadcast/events"
+	bcbevents "github.com/filecoin-project/mir/samples/reliable-broadcast/events"
 	"github.com/filecoin-project/mir/stdtypes"
 
 	checkerevents "github.com/filecoin-project/mir/fuzzer/checker/events"
@@ -29,6 +29,7 @@ func NewIntegrity(sc SystemConfig, logger logging.Logger) dsl.Module {
 
 	byzSender := slices.Contains(sc.ByzantineNodes, sc.Sender)
 
+	// TODO: setup broadcast
 	v := Integrity{
 		m:            m,
 		systemConfig: sc,
@@ -50,7 +51,7 @@ func NewIntegrity(sc SystemConfig, logger logging.Logger) dsl.Module {
 	return m
 }
 
-func (i *Integrity) handleBroadcastRequest(e *events.BroadcastRequest) error {
+func (i *Integrity) handleBroadcastRequest(e *bcbevents.BroadcastRequest) error {
 	nodeID := getNodeIdFromMetadata(e)
 	if nodeID == i.systemConfig.Sender {
 		i.broadcastRequest = e.Data
@@ -58,11 +59,13 @@ func (i *Integrity) handleBroadcastRequest(e *events.BroadcastRequest) error {
 	return nil
 }
 
-func (i *Integrity) handleDeliver(e *events.Deliver) error {
+func (i *Integrity) handleDeliver(e *bcbevents.Deliver) error {
 	nodeID := getNodeIdFromMetadata(e)
 
-	if _, ok := i.broadcastDeliverTracker[nodeID]; ok {
-		fmt.Printf("Node %s delivered a second value\n", nodeID)
+	if slices.Contains(i.systemConfig.ByzantineNodes, nodeID) {
+		// byzantine node, ignore
+	} else if _, ok := i.broadcastDeliverTracker[nodeID]; ok {
+		// fmt.Printf("Node %s delivered a second value\n", nodeID)
 		// fail
 		dsl.EmitEvent(i.m, checkerevents.NewFailureEvent())
 	} else if i.byzantineSender {

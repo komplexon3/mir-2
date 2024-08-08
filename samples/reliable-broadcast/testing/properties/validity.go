@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"slices"
 
-	"github.com/filecoin-project/mir/samples/reliable-broadcast/events"
+	bcbevents "github.com/filecoin-project/mir/samples/reliable-broadcast/events"
 	"github.com/filecoin-project/mir/stdtypes"
 
 	checkerevents "github.com/filecoin-project/mir/fuzzer/checker/events"
@@ -46,7 +46,7 @@ func NewValidity(sc SystemConfig, logger logging.Logger) dsl.Module {
 	return m
 }
 
-func (v *Validity) handleBroadcastRequest(e *events.BroadcastRequest) error {
+func (v *Validity) handleBroadcastRequest(e *bcbevents.BroadcastRequest) error {
 	nodeID := getNodeIdFromMetadata(e)
 	if nodeID == v.systemConfig.Sender {
 		v.broadcastRequest = e.Data
@@ -54,7 +54,7 @@ func (v *Validity) handleBroadcastRequest(e *events.BroadcastRequest) error {
 	return nil
 }
 
-func (v *Validity) handleDeliver(e *events.Deliver) error {
+func (v *Validity) handleDeliver(e *bcbevents.Deliver) error {
 	nodeID := getNodeIdFromMetadata(e)
 
 	v.broadcastDeliverTracker[nodeID] = e.Data
@@ -70,7 +70,7 @@ func (v *Validity) handleFinal(e *checkerevents.FinalEvent) error {
 
 	// checking that all nodes delivered the broadcasted value
 	nonByzantineNodes := sliceutil.Filter(v.systemConfig.AllNodes, func(_ int, n stdtypes.NodeID) bool {
-		return slices.Contains(v.systemConfig.ByzantineNodes, n)
+		return !slices.Contains(v.systemConfig.ByzantineNodes, n)
 	})
 
 	// only checking non byzantine nodes

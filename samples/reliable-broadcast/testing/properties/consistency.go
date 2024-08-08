@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"slices"
 
-	"github.com/filecoin-project/mir/samples/reliable-broadcast/events"
+	bcbevents "github.com/filecoin-project/mir/samples/reliable-broadcast/events"
 	"github.com/filecoin-project/mir/stdtypes"
 
 	checkerevents "github.com/filecoin-project/mir/fuzzer/checker/events"
@@ -13,6 +13,7 @@ import (
 	"github.com/filecoin-project/mir/pkg/util/sliceutil"
 )
 
+//
 // Consistency: If a correct party c-delivers m and another correct party c-delivers m′, then m = m′.
 
 type Consistency struct {
@@ -25,6 +26,7 @@ type Consistency struct {
 func NewConsistency(sc SystemConfig, logger logging.Logger) dsl.Module {
 	m := dsl.NewModule("consistency")
 
+	// TODO: setup broadcast
 	v := Consistency{
 		m:            m,
 		systemConfig: sc,
@@ -40,7 +42,7 @@ func NewConsistency(sc SystemConfig, logger logging.Logger) dsl.Module {
 	return m
 }
 
-func (c *Consistency) handleDeliver(e *events.Deliver) error {
+func (c *Consistency) handleDeliver(e *bcbevents.Deliver) error {
 	nodeID := getNodeIdFromMetadata(e)
 	c.broadcastDeliverTracker[nodeID] = e.Data
 

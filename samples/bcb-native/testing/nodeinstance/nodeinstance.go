@@ -44,13 +44,11 @@ func (bi *BcbNodeInstance) GetIdleDetectionC() chan idledetection.IdleNotificati
 }
 
 func (bi *BcbNodeInstance) Run(ctx context.Context) error {
-	defer bi.eventLogger.Stop()
-	go bi.cortexCreeper.Run(ctx) // ignoring error for now
 	return bi.node.Run(ctx)
 }
 
 func (bi *BcbNodeInstance) Stop() {
-	bi.cortexCreeper.StopInjector()
+	bi.cortexCreeper.AbortIntercepts()
 	bi.node.Stop()
 }
 

@@ -5,9 +5,7 @@ import (
 	"fmt"
 
 	"github.com/filecoin-project/mir"
-	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/stdtypes"
-	es "github.com/go-errors/errors"
 )
 
 var ErrorShutdown = fmt.Errorf("shutdown signal received")
@@ -30,7 +28,6 @@ type CortexCreeper struct {
 	node           *mir.Node
 	eventsIn       chan *EventsAck
 	eventsOut      chan *stdtypes.EventList
-	doneC          chan struct{}
 	interceptDoneC chan struct{}
 }
 
@@ -39,7 +36,6 @@ func NewCortexCreeper() *CortexCreeper {
 		node:           nil,
 		eventsIn:       make(chan *EventsAck),
 		eventsOut:      make(chan *stdtypes.EventList),
-		doneC:          make(chan struct{}),
 		interceptDoneC: make(chan struct{}),
 	}
 }
@@ -49,38 +45,8 @@ func (cc *CortexCreeper) Setup(node *mir.Node) error {
 	return nil
 }
 
-func (cc *CortexCreeper) Run(ctx context.Context) error {
-	if cc.node == nil {
-		return es.Errorf("Initialize cortex creeper with node before running it (Setup).")
-	}
-
-	defer close(cc.interceptDoneC)
-
-	for {
-		select {
-		case evts := <-cc.eventsOut:
-			cc.node.Config.Logger.Log(logging.LevelTrace, "cc - got evtsOut", "evts", evts)
-			// hard coded only one event
-			// TODO: handle multiple events
-			markedEvts := stdtypes.EmptyList()
-			evtsIter := evts.Iterator()
-			for e := evtsIter.Next(); e != nil; e = evtsIter.Next() {
-				markedE, _ := e.SetMetadata("injected", true)
-				markedEvts.PushBack(markedE)
-			}
-			cc.node.Config.Logger.Log(logging.LevelTrace, "cc - injecting", "evts", evts)
-			cc.node.InjectEvents(ctx, markedEvts)
-			cc.node.Config.Logger.Log(logging.LevelTrace, "cc - done injecting", "evts", evts)
-		case <-ctx.Done():
-			return nil
-		case <-cc.doneC:
-			return nil
-		}
-	}
-}
-
-func (cc *CortexCreeper) StopInjector() {
-	close(cc.doneC)
+func (cc *CortexCreeper) AbortIntercepts() {
+	close(cc.interceptDoneC)
 }
 
 func (cc *CortexCreeper) Intercept(evts *stdtypes.EventList) (*stdtypes.EventList, error) {
@@ -110,7 +76,6 @@ func (cc *CortexCreeper) GetEventsIn() chan *EventsAck {
 }
 
 func (cc *CortexCreeper) PushEvents(ctx context.Context, evts *stdtypes.EventList) {
-	cc.node.Config.Logger.Log(logging.LevelTrace, "cc - pushing evtsOut", "evts", evts)
 	// hard coded only one event
 	// TODO: handle multiple events
 	markedEvts := stdtypes.EmptyList()
@@ -119,7 +84,5 @@ func (cc *CortexCreeper) PushEvents(ctx context.Context, evts *stdtypes.EventLis
 		markedE, _ := e.SetMetadata("injected", true)
 		markedEvts.PushBack(markedE)
 	}
-	cc.node.Config.Logger.Log(logging.LevelTrace, "cc - injecting", "evts", evts)
 	cc.node.InjectEvents(ctx, markedEvts)
-	cc.node.Config.Logger.Log(logging.LevelTrace, "cc - done injecting", "evts", evts)
 }

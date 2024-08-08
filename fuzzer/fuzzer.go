@@ -79,6 +79,7 @@ func (f *Fuzzer[T, S]) Run(ctx context.Context, name string, runs int, timeout t
 
 	updateWriter := NewUpdateWriter(runs, 100)
 	updateWriter.Start()
+	updateWriter.Update(0, 0, 0, 0, 0)
 
 	countInteresting := 0
 	countIdleExit := 0

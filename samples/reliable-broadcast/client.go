@@ -36,7 +36,6 @@ const (
 
 // parsedArgs represents parsed command-line parameters passed to the program.
 type parsedArgs struct {
-
 	// ID of this node.
 	// The package github.com/hyperledger-labs/mir/pkg/types defines this and other types used by the library.
 	OwnID stdtypes.NodeID
