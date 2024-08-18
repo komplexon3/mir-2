@@ -16,6 +16,7 @@ import (
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/trantor/types"
 	broadcastevents "github.com/filecoin-project/mir/samples/reliable-broadcast/events"
+
 	broadcastmessages "github.com/filecoin-project/mir/samples/reliable-broadcast/messages"
 	"github.com/filecoin-project/mir/samples/reliable-broadcast/testing/nodeinstance"
 	"github.com/filecoin-project/mir/samples/reliable-broadcast/testing/properties"
@@ -24,14 +25,14 @@ import (
 
 const (
 	MAX_RUN_DURATION = 1 * time.Second
-	SEED1            = 42
+	SEED1            = 123
 	SEED2            = 321
 )
 
 var puppeteerEvents = []actions.DelayedEvents{
 	{
 		NodeID: stdtypes.NodeID("0"),
-		Events: stdtypes.ListOf(broadcastevents.NewBroadcastRequest("broadcast", []byte("hello"))),
+		Events: stdtypes.ListOf(broadcastevents.NewBroadcastRequest("broadcast", "hello")),
 	},
 }
 
@@ -45,7 +46,7 @@ var weightedActionsForNetwork = []actions.WeightedAction{
 			nil
 	}, 10),
 	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
-		return "event delayed (network)",
+		return fmt.Sprintf("event delayed (network) %v", e.ToString()),
 			nil,
 			[]actions.DelayedEvents{
 				{
@@ -99,11 +100,11 @@ var weightedActionsForByzantineNodes = []actions.WeightedAction{
 
 		switch msg := sendEvt.Payload.(type) {
 		case *broadcastmessages.StartMessage:
-			msg.Data = []byte(string(msg.Data) + "-changed")
+			msg.Data = msg.Data + "-changed"
 		case *broadcastmessages.EchoMessage:
-			msg.Data = []byte(string(msg.Data) + "-changed")
+			msg.Data = msg.Data + "-changed"
 		case *broadcastmessages.ReadyMessage:
-			msg.Data = []byte(string(msg.Data) + "-changed")
+			msg.Data = msg.Data + "-changed"
 		default:
 			return "",
 				nil,
@@ -191,10 +192,10 @@ func fuzz(
 }
 
 func main() {
-	rounds := 1000
+	rounds := 10000
 	logLevel := logging.LevelTrace
 	startTime := time.Now()
-	hits, err := fuzz("test-reliable", []stdtypes.NodeID{"0", "1", "2", "3"}, []stdtypes.NodeID{"1"}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, rounds, logLevel)
+	hits, err := fuzz("test-reliable", []stdtypes.NodeID{"0", "1", "2", "3"}, []stdtypes.NodeID{"1", "2"}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, rounds, logLevel)
 	if err != nil {
 		fmt.Println(err)
 	}

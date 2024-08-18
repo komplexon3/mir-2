@@ -2,6 +2,7 @@ package interceptors
 
 import (
 	"github.com/filecoin-project/mir/fuzzer/cortexcreeper"
+	"github.com/filecoin-project/mir/fuzzer/interceptors/deepcopymsgs"
 	msgmetadata "github.com/filecoin-project/mir/fuzzer/interceptors/msgMetadata"
 	"github.com/filecoin-project/mir/fuzzer/interceptors/nomulticast"
 	"github.com/filecoin-project/mir/fuzzer/interceptors/vcinterceptor"
@@ -43,6 +44,7 @@ func NewFuzzerInterceptor(nodeID stdtypes.NodeID, cortexCreeper *cortexcreeper.C
 		preCAInterceptor: eventlog.MultiInterceptor(
 			msgMetadataInterceptorIn,
 			&nomulticast.NoMulticast{},
+			&deepcopymsgs.DeepCopyMsgs{},
 			cortexCreeper,
 		),
 		postCAInterceptor: eventlog.MultiInterceptor(

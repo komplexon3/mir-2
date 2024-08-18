@@ -1,10 +1,9 @@
 package properties
 
 import (
-	"bytes"
 	"slices"
 
-	events "github.com/filecoin-project/mir/samples/bcb-native/events"
+	events "github.com/filecoin-project/mir/samples/reliable-broadcast/events"
 	"github.com/filecoin-project/mir/stdtypes"
 
 	checkerevents "github.com/filecoin-project/mir/fuzzer/checker/events"
@@ -20,7 +19,7 @@ type Totality struct {
 	logger                  logging.Logger
 	broadcastDeliverTracker map[stdtypes.NodeID]bool
 	systemConfig            SystemConfig
-	firstDeliveredValue     []byte
+	firstDeliveredValue     string
 }
 
 func NewTotality(sc SystemConfig, logger logging.Logger) dsl.Module {
@@ -31,7 +30,7 @@ func NewTotality(sc SystemConfig, logger logging.Logger) dsl.Module {
 		systemConfig: sc,
 		logger:       logger,
 
-		firstDeliveredValue:     nil,
+		firstDeliveredValue:     "",
 		broadcastDeliverTracker: make(map[stdtypes.NodeID]bool), // used as a set
 	}
 
@@ -50,10 +49,10 @@ func (v *Totality) handleBroadcastRequest(e *events.BroadcastRequest) error {
 func (v *Totality) handleDeliver(e *events.Deliver) error {
 	nodeID := getNodeIdFromMetadata(e)
 
-	if v.firstDeliveredValue == nil {
+	if v.firstDeliveredValue == "" {
 		v.firstDeliveredValue = e.Data
 		v.broadcastDeliverTracker[nodeID] = true
-	} else if bytes.Equal(v.firstDeliveredValue, e.Data) {
+	} else if v.firstDeliveredValue == e.Data {
 		v.broadcastDeliverTracker[nodeID] = true
 	}
 
@@ -62,7 +61,7 @@ func (v *Totality) handleDeliver(e *events.Deliver) error {
 
 func (v *Totality) handleFinal(e *checkerevents.FinalEvent) error {
 	// if no value was delivered, all ok
-	if v.firstDeliveredValue == nil {
+	if v.firstDeliveredValue == "" {
 		dsl.EmitEvent(v.m, checkerevents.NewSuccessEvent())
 		return nil
 	}

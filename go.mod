@@ -5,10 +5,10 @@ go 1.22
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.2
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
-	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
+	github.com/alecthomas/units v0.0.0-20240626203959-61d1e3462e30 // indirect
 	github.com/otiai10/copy v1.7.0
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.9.0
 	github.com/ttacon/chalk v0.0.0-20160626202418-22c06c80ed31
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
 	golang.org/x/net v0.17.0 // indirect
@@ -44,6 +44,8 @@ require (
 
 require (
 	filippo.io/bigmod v0.0.1 // indirect
+	github.com/alecthomas/kingpin/v2 v2.4.0 // indirect
+	github.com/brunoga/deep v1.2.4 // indirect
 	github.com/cenkalti/backoff/v4 v4.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
@@ -66,11 +68,12 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/stretchr/objx v0.5.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/teivah/onecontext v0.0.0-20200513185103-40f981bfd775 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
+	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/sync v0.2.0 // indirect

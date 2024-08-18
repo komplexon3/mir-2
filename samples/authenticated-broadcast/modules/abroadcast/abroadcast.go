@@ -1,11 +1,11 @@
-package broadcast
+package abroadcast
 
 import (
 	es "github.com/go-errors/errors"
 	"github.com/pkg/errors"
 
-	"github.com/filecoin-project/mir/samples/reliable-broadcast/events"
-	"github.com/filecoin-project/mir/samples/reliable-broadcast/messages"
+	"github.com/filecoin-project/mir/samples/authenticated-broadcast/events"
+	"github.com/filecoin-project/mir/samples/authenticated-broadcast/messages"
 	"github.com/filecoin-project/mir/stdevents"
 	eventsdsl "github.com/filecoin-project/mir/stdevents/dsl"
 	"github.com/filecoin-project/mir/stdtypes"
@@ -15,19 +15,21 @@ import (
 	"github.com/filecoin-project/mir/pkg/modules"
 )
 
+// TODO Sanitize messages received by this module (e.g. check that the sender is the expected one, make sure no crashing if data=nil, etc.)
+
 // ModuleConfig sets the module ids. All replicas are expected to use identical module configurations.
 type ModuleConfig struct {
 	Self     stdtypes.ModuleID // id of this module
 	Consumer stdtypes.ModuleID // id of the module to send the "Deliver" event to
 	Net      stdtypes.ModuleID
+	Crypto   stdtypes.ModuleID
 }
 
 // ModuleParams sets the values for the parameters of an instance of the protocol.
 // All replicas are expected to use identical module parameters.
 type ModuleParams struct {
-	InstanceUID []byte            // unique identifier for this instance of BCB, used to prevent cross-instance replay attacks
-	AllNodes    []stdtypes.NodeID // the list of participating nodes
-	Leader      stdtypes.NodeID   // the id of the leader of the instance
+	AllNodes []stdtypes.NodeID // the list of participating nodes
+	Leader   stdtypes.NodeID   // the id of the leader of the instance
 }
 
 // GetN returns the total number of nodes.
@@ -40,33 +42,32 @@ func (params *ModuleParams) GetF() int {
 	return (params.GetN() - 1) / 3
 }
 
-// broadcastModuleState represents the state of the broadcast module.
-type broadcastModuleState struct {
-	sentEcho      bool
-	sentReady     bool
-	delivered     bool
-	receivedEcho  map[string]map[stdtypes.NodeID]struct{}
-	receivedReady map[string]map[stdtypes.NodeID]struct{}
+// bcbModuleState represents the state of the bcb module.
+type bcbModuleState struct {
+	delivered    bool
+	sentEcho     bool
+	receivedEcho map[string]map[stdtypes.NodeID]struct{} // used as set
 }
 
+// NewModule returns a passive module for the Signed Echo Broadcast from the textbook "Introduction to reliable and
+// secure distributed programming". It serves as a motivating example for the DSL module interface.
+// The pseudocode can also be found in https://dcl.epfl.ch/site/_media/education/sdc_byzconsensus.pdf (Algorithm 4
+// (Echo broadcast [Rei94]))
 func NewModule(mc ModuleConfig, params *ModuleParams, nodeID stdtypes.NodeID, logger logging.Logger) modules.PassiveModule {
 	m := dsl.NewModule(mc.Self)
 
-	state := broadcastModuleState{
-		sentEcho:      false,
-		sentReady:     false,
-		delivered:     false,
-		receivedEcho:  make(map[string]map[stdtypes.NodeID]struct{}), // used as set
-		receivedReady: make(map[string]map[stdtypes.NodeID]struct{}), // used as set
+	state := bcbModuleState{
+		delivered:    false,
+		sentEcho:     false,
+		receivedEcho: make(map[string]map[stdtypes.NodeID]struct{}),
 	}
 
 	dsl.UponEvent(m, func(br *events.BroadcastRequest) error {
-		data := br.Data
 		if nodeID != params.Leader {
 			return es.Errorf("only the leader node can receive requests")
 		}
 
-		eventsdsl.SendMessage(m, mc.Net, mc.Self, messages.NewStartMessage(data), params.AllNodes...)
+		eventsdsl.SendMessage(m, mc.Net, mc.Self, messages.NewStartMessage(br.Data), params.AllNodes...)
 		return nil
 	})
 
@@ -85,7 +86,8 @@ func NewModule(mc ModuleConfig, params *ModuleParams, nodeID stdtypes.NodeID, lo
 		case *messages.StartMessage:
 			if me.Sender == params.Leader {
 				state.sentEcho = true
-				eventsdsl.SendMessage(m, mc.Net, mc.Self, messages.NewEchoMessage(msg.Data), params.AllNodes...)
+				echoMsg := messages.NewEchoMessage(msg.Data)
+				eventsdsl.SendMessage(m, mc.Net, mc.Self, echoMsg, params.AllNodes...)
 			}
 			return nil
 		case *messages.EchoMessage:
@@ -94,13 +96,6 @@ func NewModule(mc ModuleConfig, params *ModuleParams, nodeID stdtypes.NodeID, lo
 			}
 			state.receivedEcho[msg.Data][me.Sender] = struct{}{}
 			return nil
-		case *messages.ReadyMessage:
-			if state.receivedReady[msg.Data] == nil {
-				state.receivedReady[msg.Data] = make(map[stdtypes.NodeID]struct{})
-			}
-			state.receivedReady[msg.Data][me.Sender] = struct{}{}
-			return nil
-
 		}
 		logger.Log(logging.LevelWarn, "Reveived message with unknown payload type", "payload", me.Payload)
 		return nil
@@ -110,23 +105,11 @@ func NewModule(mc ModuleConfig, params *ModuleParams, nodeID stdtypes.NodeID, lo
 		if state.delivered {
 			return nil
 		}
-
 		for req, echos := range state.receivedEcho {
-			if !state.sentReady && len(echos) > (params.GetN()+params.GetF())/2 {
-				state.sentReady = true
-				eventsdsl.SendMessage(m, mc.Net, mc.Self, messages.NewReadyMessage(req), params.AllNodes...)
-			}
-		}
-
-		for req, readies := range state.receivedReady {
-			if !state.sentReady && len(readies) > params.GetF() {
-				state.sentReady = true
-				eventsdsl.SendMessage(m, mc.Net, mc.Self, messages.NewReadyMessage(req), params.AllNodes...)
-			}
-
-			if len(readies) > 2*params.GetF() {
+			if len(echos) > (params.GetN()+params.GetF())/2 {
 				state.delivered = true
 				dsl.EmitEvent(m, events.NewDeliver(mc.Consumer, req))
+				return nil
 			}
 		}
 		return nil

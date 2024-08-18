@@ -3,7 +3,7 @@ package properties
 import (
 	"slices"
 
-	bcbevents "github.com/filecoin-project/mir/samples/reliable-broadcast/events"
+	abroadcastevent "github.com/filecoin-project/mir/samples/authenticated-broadcast/events"
 	"github.com/filecoin-project/mir/stdtypes"
 
 	checkerevents "github.com/filecoin-project/mir/fuzzer/checker/events"
@@ -33,7 +33,7 @@ func NewValidity(sc SystemConfig, logger logging.Logger) dsl.Module {
 
 		byzantineSender: slices.Contains(sc.ByzantineNodes, sc.Sender),
 
-		broadcastRequest:        "", // TODO: actually carries 2 pieces of info, split up (same for other properties)
+		broadcastRequest:        "",
 		broadcastDeliverTracker: make(map[stdtypes.NodeID]string),
 	}
 
@@ -45,7 +45,7 @@ func NewValidity(sc SystemConfig, logger logging.Logger) dsl.Module {
 	return m
 }
 
-func (v *Validity) handleBroadcastRequest(e *bcbevents.BroadcastRequest) error {
+func (v *Validity) handleBroadcastRequest(e *abroadcastevent.BroadcastRequest) error {
 	nodeID := getNodeIdFromMetadata(e)
 	if nodeID == v.systemConfig.Sender {
 		v.broadcastRequest = e.Data
@@ -53,7 +53,7 @@ func (v *Validity) handleBroadcastRequest(e *bcbevents.BroadcastRequest) error {
 	return nil
 }
 
-func (v *Validity) handleDeliver(e *bcbevents.Deliver) error {
+func (v *Validity) handleDeliver(e *abroadcastevent.Deliver) error {
 	nodeID := getNodeIdFromMetadata(e)
 
 	v.broadcastDeliverTracker[nodeID] = e.Data

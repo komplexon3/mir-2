@@ -15,7 +15,6 @@ type messageType string
 const (
 	StartMessageMsg = "StartMessage"
 	EchoMessageMsg  = "EchoMessage"
-	ReadyMessageMsg = "ReadyMessage"
 )
 
 type serializedMessage struct {
@@ -30,8 +29,6 @@ func serialize(e any) ([]byte, error) {
 		msgType = StartMessageMsg
 	case *EchoMessage:
 		msgType = EchoMessageMsg
-	case *ReadyMessage:
-		msgType = ReadyMessageMsg
 	default:
 		return nil, es.Errorf("unknown message type: %T", e)
 	}
@@ -66,8 +63,6 @@ func Deserialize(data []byte) (stdtypes.Message, error) {
 		e = &StartMessage{}
 	case EchoMessageMsg:
 		e = &EchoMessage{}
-	case ReadyMessageMsg:
-		e = &ReadyMessage{}
 	default:
 		return nil, fmt.Errorf("unknown message type: %s", sm.MsgType)
 	}

@@ -3,7 +3,7 @@ package properties
 import (
 	"slices"
 
-	bcbevents "github.com/filecoin-project/mir/samples/reliable-broadcast/events"
+	abroadcastevents "github.com/filecoin-project/mir/samples/authenticated-broadcast/events"
 	"github.com/filecoin-project/mir/stdtypes"
 
 	checkerevents "github.com/filecoin-project/mir/fuzzer/checker/events"
@@ -41,7 +41,7 @@ func NewConsistency(sc SystemConfig, logger logging.Logger) dsl.Module {
 	return m
 }
 
-func (c *Consistency) handleDeliver(e *bcbevents.Deliver) error {
+func (c *Consistency) handleDeliver(e *abroadcastevents.Deliver) error {
 	nodeID := getNodeIdFromMetadata(e)
 	c.broadcastDeliverTracker[nodeID] = e.Data
 
@@ -63,7 +63,9 @@ func (c *Consistency) handleFinal(e *checkerevents.FinalEvent) error {
 		if slices.Contains(c.systemConfig.ByzantineNodes, n) {
 			continue // byzantine node, we don't care...
 		}
+
 		if ref == "" {
+			// note first delivered event
 			ref = d
 			continue
 		}

@@ -15,9 +15,9 @@ import (
 
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/trantor/types"
-	broadcastevents "github.com/filecoin-project/mir/samples/bcb-native/events"
-	"github.com/filecoin-project/mir/samples/bcb-native/testing/nodeinstance"
-	"github.com/filecoin-project/mir/samples/bcb-native/testing/properties"
+	abroadcastevents "github.com/filecoin-project/mir/samples/authenticated-broadcast/events"
+	"github.com/filecoin-project/mir/samples/authenticated-broadcast/testing/nodeinstance"
+	"github.com/filecoin-project/mir/samples/authenticated-broadcast/testing/properties"
 	"github.com/filecoin-project/mir/stdtypes"
 )
 
@@ -30,7 +30,7 @@ const (
 var puppeteerEvents = []actions.DelayedEvents{
 	{
 		NodeID: stdtypes.NodeID("0"),
-		Events: stdtypes.ListOf(broadcastevents.NewBroadcastRequest("bcb", []byte("hello"))),
+		Events: stdtypes.ListOf(abroadcastevents.NewBroadcastRequest("broadcast", "hello")),
 	},
 }
 
@@ -98,7 +98,7 @@ func isInterestingEvent(event stdtypes.Event) bool {
 	return true
 }
 
-func fuzzBCB(
+func fuzz(
 	name string,
 	nodes []stdtypes.NodeID,
 	byzantineNodes []stdtypes.NodeID,
@@ -117,10 +117,10 @@ func fuzzBCB(
 		nodeWeights[id] = "1"
 	}
 	instanceUID := []byte("fuzzing instance")
-	nodeConfigs := make(map[stdtypes.NodeID]nodeinstance.BcbNodeInstanceConfig, len(nodes))
+	nodeConfigs := make(map[stdtypes.NodeID]nodeinstance.ABroadcastNodeInstanceConfig, len(nodes))
 
 	// TODO: the rounds should actually be part of fuzzer, and not handeled here...
-	config := nodeinstance.BcbNodeInstanceConfig{InstanceUID: instanceUID, NumberOfNodes: len(nodes), Leader: sender}
+	config := nodeinstance.ABroadcastNodeInstanceConfig{InstanceUID: instanceUID, NumberOfNodes: len(nodes), Leader: sender}
 	for _, nodeID := range nodes {
 		nodeConfigs[nodeID] = config
 	}
@@ -132,14 +132,14 @@ func fuzzBCB(
 	}
 
 	fuzzer, err := fuzzer.NewFuzzer(
-		nodeinstance.CreateBcbNodeInstance,
+		nodeinstance.CreateABroadcastNodeInstance,
 		nodeConfigs,
 		byzantineNodes,
 		puppeteerEvents,
 		isInterestingEvent,
 		byzantineActions,
 		networkActions,
-		properties.CreateBCBChecker,
+		properties.CreateABroadcastChecker,
 		checkerParams,
 		fmt.Sprintf("./report_%s_%s", time.Now().Format("2006-01-02_15-04-05"), strings.Join(strings.Split(name, " "), "_")),
 	)
@@ -161,7 +161,7 @@ func main() {
 	rounds := 1000
 	logLevel := logging.LevelTrace
 	startTime := time.Now()
-	hits, err := fuzzBCB("test", []stdtypes.NodeID{"0", "1", "2", "3"}, []stdtypes.NodeID{"1"}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, rounds, logLevel)
+	hits, err := fuzz("test", []stdtypes.NodeID{"0", "1", "2", "3"}, []stdtypes.NodeID{"1", "2"}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, rounds, logLevel)
 	if err != nil {
 		fmt.Println(err)
 	}

@@ -13,12 +13,11 @@ import (
 	"github.com/filecoin-project/mir"
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/modules"
-
 	"github.com/filecoin-project/mir/pkg/net/grpc"
 	trantorpbtypes "github.com/filecoin-project/mir/pkg/pb/trantorpb/types"
 	grpctools "github.com/filecoin-project/mir/pkg/util/grpc"
-	"github.com/filecoin-project/mir/samples/reliable-broadcast/modules/broadcast"
-	"github.com/filecoin-project/mir/samples/reliable-broadcast/modules/control"
+	"github.com/filecoin-project/mir/samples/authenticated-broadcast/modules/abroadcast"
+	"github.com/filecoin-project/mir/samples/authenticated-broadcast/modules/control"
 )
 
 const (
@@ -102,16 +101,15 @@ func run() error {
 	}
 	transportModule.Connect(membership)
 
-	broadcastModule := broadcast.NewModule(
-		broadcast.ModuleConfig{
+	broadcastModule := abroadcast.NewModule(
+		abroadcast.ModuleConfig{
 			Self:     "broadcast",
 			Consumer: "control",
 			Net:      "net",
 		},
-		&broadcast.ModuleParams{
-			InstanceUID: []byte("testing instance"),
-			AllNodes:    nodeIDs,
-			Leader:      nodeIDs[leaderNode],
+		&abroadcast.ModuleParams{
+			AllNodes: nodeIDs,
+			Leader:   nodeIDs[leaderNode],
 		},
 		args.OwnID,
 		logger,

@@ -42,22 +42,31 @@ func (params *ModuleParams) GetF() int {
 
 // broadcastModuleState represents the state of the broadcast module.
 type broadcastModuleState struct {
+	// this variable is not part of the original protocol description, but it greatly simplifies the code
+	request string
+
 	sentEcho      bool
 	sentReady     bool
 	delivered     bool
-	receivedEcho  map[string]map[stdtypes.NodeID]struct{}
-	receivedReady map[string]map[stdtypes.NodeID]struct{}
+	receivedEcho  map[stdtypes.NodeID]bool
+	receivedReady map[stdtypes.NodeID]bool
 }
 
+// NewModule returns a passive module for the Signed Echo Broadcast from the textbook "Introduction to reliable and
+// secure distributed programming". It serves as a motivating example for the DSL module interface.
+// The pseudocode can also be found in https://dcl.epfl.ch/site/_media/education/sdc_byzconsensus.pdf (Algorithm 4
+// (Echo broadcast [Rei94]))
 func NewModule(mc ModuleConfig, params *ModuleParams, nodeID stdtypes.NodeID, logger logging.Logger) modules.PassiveModule {
 	m := dsl.NewModule(mc.Self)
 
 	state := broadcastModuleState{
+		request: "",
+
 		sentEcho:      false,
 		sentReady:     false,
 		delivered:     false,
-		receivedEcho:  make(map[string]map[stdtypes.NodeID]struct{}), // used as set
-		receivedReady: make(map[string]map[stdtypes.NodeID]struct{}), // used as set
+		receivedEcho:  make(map[stdtypes.NodeID]bool),
+		receivedReady: make(map[stdtypes.NodeID]bool),
 	}
 
 	dsl.UponEvent(m, func(br *events.BroadcastRequest) error {
@@ -83,22 +92,21 @@ func NewModule(mc ModuleConfig, params *ModuleParams, nodeID stdtypes.NodeID, lo
 
 		switch msg := msgRaw.(type) {
 		case *messages.StartMessage:
-			if me.Sender == params.Leader {
+			if me.Sender == params.Leader && state.request == "" {
+				state.request = msg.Data
 				state.sentEcho = true
-				eventsdsl.SendMessage(m, mc.Net, mc.Self, messages.NewEchoMessage(msg.Data), params.AllNodes...)
+				eventsdsl.SendMessage(m, mc.Net, mc.Self, messages.NewEchoMessage(state.request), params.AllNodes...)
 			}
 			return nil
 		case *messages.EchoMessage:
-			if state.receivedEcho[msg.Data] == nil {
-				state.receivedEcho[msg.Data] = make(map[stdtypes.NodeID]struct{})
+			if !state.receivedEcho[me.Sender] && msg.Data == state.request {
+				state.receivedEcho[me.Sender] = true
 			}
-			state.receivedEcho[msg.Data][me.Sender] = struct{}{}
 			return nil
 		case *messages.ReadyMessage:
-			if state.receivedReady[msg.Data] == nil {
-				state.receivedReady[msg.Data] = make(map[stdtypes.NodeID]struct{})
+			if !state.receivedReady[me.Sender] && msg.Data == state.request {
+				state.receivedReady[me.Sender] = true
 			}
-			state.receivedReady[msg.Data][me.Sender] = struct{}{}
 			return nil
 
 		}
@@ -106,28 +114,19 @@ func NewModule(mc ModuleConfig, params *ModuleParams, nodeID stdtypes.NodeID, lo
 		return nil
 	})
 
+	// upon exists m != ⊥ such that #({p ∈ Π | echos[p] = m}) > (N+f)/2 and sentfinal = FALSE do
 	dsl.UponStateUpdates(m, func() error {
-		if state.delivered {
-			return nil
+		if !state.sentReady && len(state.receivedEcho) > (params.GetN()+params.GetF())/2 {
+			state.sentReady = true
+			eventsdsl.SendMessage(m, mc.Net, mc.Self, messages.NewReadyMessage(state.request), params.AllNodes...)
 		}
-
-		for req, echos := range state.receivedEcho {
-			if !state.sentReady && len(echos) > (params.GetN()+params.GetF())/2 {
-				state.sentReady = true
-				eventsdsl.SendMessage(m, mc.Net, mc.Self, messages.NewReadyMessage(req), params.AllNodes...)
-			}
+		if !state.sentReady && len(state.receivedReady) > params.GetF() {
+			state.sentReady = true
+			eventsdsl.SendMessage(m, mc.Net, mc.Self, messages.NewReadyMessage(state.request), params.AllNodes...)
 		}
-
-		for req, readies := range state.receivedReady {
-			if !state.sentReady && len(readies) > params.GetF() {
-				state.sentReady = true
-				eventsdsl.SendMessage(m, mc.Net, mc.Self, messages.NewReadyMessage(req), params.AllNodes...)
-			}
-
-			if len(readies) > 2*params.GetF() {
-				state.delivered = true
-				dsl.EmitEvent(m, events.NewDeliver(mc.Consumer, req))
-			}
+		if !state.delivered && len(state.receivedReady) > 2*params.GetF() {
+			state.delivered = true
+			dsl.EmitEvent(m, events.NewDeliver(mc.Consumer, state.request))
 		}
 		return nil
 	})

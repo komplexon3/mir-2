@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"slices"
 
-	bcbevents "github.com/filecoin-project/mir/samples/reliable-broadcast/events"
+	abroadcastevents "github.com/filecoin-project/mir/samples/authenticated-broadcast/events"
 	"github.com/filecoin-project/mir/stdtypes"
 
 	checkerevents "github.com/filecoin-project/mir/fuzzer/checker/events"
@@ -50,7 +50,7 @@ func NewIntegrity(sc SystemConfig, logger logging.Logger) dsl.Module {
 	return m
 }
 
-func (i *Integrity) handleBroadcastRequest(e *bcbevents.BroadcastRequest) error {
+func (i *Integrity) handleBroadcastRequest(e *abroadcastevents.BroadcastRequest) error {
 	nodeID := getNodeIdFromMetadata(e)
 	if nodeID == i.systemConfig.Sender {
 		i.broadcastRequest = e.Data
@@ -58,7 +58,7 @@ func (i *Integrity) handleBroadcastRequest(e *bcbevents.BroadcastRequest) error 
 	return nil
 }
 
-func (i *Integrity) handleDeliver(e *bcbevents.Deliver) error {
+func (i *Integrity) handleDeliver(e *abroadcastevents.Deliver) error {
 	nodeID := getNodeIdFromMetadata(e)
 
 	if slices.Contains(i.systemConfig.ByzantineNodes, nodeID) {

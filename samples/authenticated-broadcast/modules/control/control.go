@@ -9,7 +9,7 @@ import (
 	es "github.com/go-errors/errors"
 
 	"github.com/filecoin-project/mir/pkg/modules"
-	broadcastevents "github.com/filecoin-project/mir/samples/reliable-broadcast/events"
+	broadcastevents "github.com/filecoin-project/mir/samples/authenticated-broadcast/events"
 	"github.com/filecoin-project/mir/stdevents"
 	"github.com/filecoin-project/mir/stdtypes"
 )
@@ -44,7 +44,7 @@ func (m *controlModule) ApplyEvents(_ context.Context, events *stdtypes.EventLis
 				fmt.Println("Waiting for the message...")
 			}
 		case *broadcastevents.Deliver:
-			fmt.Println("Leader says: ", evt.Data)
+			fmt.Println("Leader says: ", string(evt.Data))
 		default:
 			return es.Errorf("unknown event type: %T", event)
 		}
