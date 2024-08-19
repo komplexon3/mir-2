@@ -14,4 +14,4 @@ type DelayedEvents struct {
 }
 
 // Returns: events to forward/inject, whether or not this makes this node byzantine, what to log this action as, error
-type Action func(event stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []DelayedEvents, error)
+type Action func(event stdtypes.Event, sourceNode stdtypes.NodeID, allNodes, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []DelayedEvents, error)

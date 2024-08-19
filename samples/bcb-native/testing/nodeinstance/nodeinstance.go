@@ -44,6 +44,7 @@ func (bi *BcbNodeInstance) GetIdleDetectionC() chan idledetection.IdleNotificati
 }
 
 func (bi *BcbNodeInstance) Run(ctx context.Context) error {
+	defer bi.eventLogger.Stop()
 	return bi.node.Run(ctx)
 }
 

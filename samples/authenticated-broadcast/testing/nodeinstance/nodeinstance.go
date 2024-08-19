@@ -43,6 +43,7 @@ func (i *ABroadcastNodeInstance) GetIdleDetectionC() chan idledetection.IdleNoti
 }
 
 func (i *ABroadcastNodeInstance) Run(ctx context.Context) error {
+	defer i.eventLogger.Stop()
 	return i.node.Run(ctx)
 }
 

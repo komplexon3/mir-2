@@ -126,6 +126,7 @@ FanOutLoop:
 			for _, p := range c.properties {
 				select {
 				case p.eventChan <- evt:
+				case <-p.isDoneC: // this property is done, will not consume p.eventChan anymore
 				case <-ctx.Done():
 					break FanOutLoop
 				case <-c.doneC:

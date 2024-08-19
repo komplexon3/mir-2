@@ -15,7 +15,8 @@ import (
 
 	"github.com/filecoin-project/mir/pkg/logging"
 	"github.com/filecoin-project/mir/pkg/trantor/types"
-	abroadcastevents "github.com/filecoin-project/mir/samples/authenticated-broadcast/events"
+	broadcastevents "github.com/filecoin-project/mir/samples/authenticated-broadcast/events"
+	broadcastmessages "github.com/filecoin-project/mir/samples/authenticated-broadcast/messages"
 	"github.com/filecoin-project/mir/samples/authenticated-broadcast/testing/nodeinstance"
 	"github.com/filecoin-project/mir/samples/authenticated-broadcast/testing/properties"
 	"github.com/filecoin-project/mir/stdtypes"
@@ -30,12 +31,12 @@ const (
 var puppeteerEvents = []actions.DelayedEvents{
 	{
 		NodeID: stdtypes.NodeID("0"),
-		Events: stdtypes.ListOf(abroadcastevents.NewBroadcastRequest("broadcast", "hello")),
+		Events: stdtypes.ListOf(broadcastevents.NewBroadcastRequest("broadcast", "hello")),
 	},
 }
 
 var weightedActionsForNetwork = []actions.WeightedAction{
-	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
+	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, allNodes, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
 		return "noop (network)",
 			map[stdtypes.NodeID]*stdtypes.EventList{
 				sourceNode: stdtypes.ListOf(e),
@@ -43,7 +44,7 @@ var weightedActionsForNetwork = []actions.WeightedAction{
 			nil,
 			nil
 	}, 10),
-	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
+	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, allNodes, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
 		return "event delayed (network)",
 			nil,
 			[]actions.DelayedEvents{
@@ -57,7 +58,7 @@ var weightedActionsForNetwork = []actions.WeightedAction{
 }
 
 var weightedActionsForByzantineNodes = []actions.WeightedAction{
-	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
+	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, allNodes, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
 		return "noop",
 			map[stdtypes.NodeID]*stdtypes.EventList{
 				sourceNode: stdtypes.ListOf(e),
@@ -65,13 +66,13 @@ var weightedActionsForByzantineNodes = []actions.WeightedAction{
 			nil,
 			nil
 	}, 10),
-	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
+	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, allNodes, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
 		return fmt.Sprintf("dropped event %s", e.ToString()),
 			nil,
 			nil,
 			nil
 	}, 2),
-	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
+	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, allNodes, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
 		e2, err := e.SetMetadata("duplicated", true)
 		if err != nil {
 			// TODO: should a failed action just be a "noop"
@@ -80,6 +81,51 @@ var weightedActionsForByzantineNodes = []actions.WeightedAction{
 		return fmt.Sprintf("duplicated event %v", e.ToString()),
 			map[stdtypes.NodeID]*stdtypes.EventList{
 				sourceNode: stdtypes.ListOf(e, e2),
+			},
+			nil,
+			nil
+	}, 1),
+	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, allNodes, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
+		newEvts := stdtypes.EmptyList()
+		for _, nodeID := range allNodes {
+			eNew := stdevents.NewSendMessage("net", "broadcast", broadcastmessages.NewEchoMessage("other message"), nodeID)
+			eNewMarked, _ := eNew.SetMetadata("other echo message", true)
+			newEvts.PushBack(eNewMarked)
+		}
+		allEvts := stdtypes.ListOf(e).PushBackList(newEvts)
+		return fmt.Sprintf("new echo %v", allEvts),
+			map[stdtypes.NodeID]*stdtypes.EventList{
+				sourceNode: stdtypes.ListOf(e).PushBackList(newEvts),
+			},
+			nil,
+			nil
+	}, 1),
+	actions.NewWeightedAction(func(e stdtypes.Event, sourceNode stdtypes.NodeID, allNodes, byzantineNodes []stdtypes.NodeID) (string, map[stdtypes.NodeID]*stdtypes.EventList, []actions.DelayedEvents, error) {
+		// swap message content on sends, if it is a message
+		sendEvt, ok := e.(*stdevents.SendMessage)
+		if !ok {
+			return "noop",
+				map[stdtypes.NodeID]*stdtypes.EventList{
+					sourceNode: stdtypes.ListOf(e),
+				},
+				nil,
+				nil
+		}
+
+		switch msg := sendEvt.Payload.(type) {
+		case *broadcastmessages.StartMessage:
+			msg.Data = msg.Data + "-changed"
+		case *broadcastmessages.EchoMessage:
+			msg.Data = msg.Data + "-changed"
+		default:
+			return "",
+				nil,
+				nil,
+				fmt.Errorf("unknown message type: %t", msg)
+		}
+		return fmt.Sprintf("swapped message data %v", e.ToString()),
+			map[stdtypes.NodeID]*stdtypes.EventList{
+				sourceNode: stdtypes.ListOf(e),
 			},
 			nil,
 			nil
@@ -161,7 +207,7 @@ func main() {
 	rounds := 1000
 	logLevel := logging.LevelTrace
 	startTime := time.Now()
-	hits, err := fuzz("test", []stdtypes.NodeID{"0", "1", "2", "3"}, []stdtypes.NodeID{"1", "2"}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, rounds, logLevel)
+	hits, err := fuzz("test", []stdtypes.NodeID{"0", "1", "2", "3", "4"}, []stdtypes.NodeID{"1", "2"}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, rounds, logLevel)
 	if err != nil {
 		fmt.Println(err)
 	}

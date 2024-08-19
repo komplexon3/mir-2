@@ -39,10 +39,6 @@ func (mi *MsgMetadataInterceptorIn) Intercept(events *stdtypes.EventList) (*stdt
 	newEvents := stdtypes.EmptyList()
 	iter := events.Iterator()
 	for ev := iter.Next(); ev != nil; ev = iter.Next() {
-		// TODO: this has nothing to do with msgMetadataInterceptor, all fuzz handling should be done by one "wrapping" interceptor
-		if _, err := ev.GetMetadata("injected"); err == nil {
-			return events, nil
-		}
 		var nEv stdtypes.Event
 		switch evT := ev.(type) {
 		case *stdevents.MessageReceived:

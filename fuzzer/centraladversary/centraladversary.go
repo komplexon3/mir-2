@@ -192,7 +192,7 @@ func (a *Adversary) RunCentralAdversary(ctx context.Context) error {
 						continue
 					}
 
-					actionLog, newEvents, delayedEvents, err := action(event, nodeID, a.byzantineNodes)
+					actionLog, newEvents, delayedEvents, err := action(event, nodeID, a.nodeIDs, a.byzantineNodes)
 					if err != nil {
 						return err
 					}
@@ -246,7 +246,7 @@ func (a *Adversary) RunCentralAdversary(ctx context.Context) error {
 						dispatchEvents[injectNodeID].PushBackList(newEvents)
 					}
 				}
-				defer a.dispatchMultiNode(ctx, dispatchEvents)
+				a.dispatchMultiNode(ctx, dispatchEvents)
 				return nil
 			})
 		}
@@ -352,6 +352,7 @@ func (a *Adversary) dispatch(ctx context.Context, nodeID stdtypes.NodeID, events
 		// no events, return directly
 		return nil
 	}
+
 	if a.globalEventsStreamOut != nil {
 		evtsIter := events.Iterator()
 		for evt := evtsIter.Next(); evt != nil; evt = evtsIter.Next() {
@@ -370,8 +371,8 @@ func (a *Adversary) dispatch(ctx context.Context, nodeID stdtypes.NodeID, events
 				return nil
 			}
 		}
-		a.cortexCreepers[nodeID].PushEvents(ctx, events)
 	}
+	a.cortexCreepers[nodeID].PushEvents(ctx, events)
 	return nil
 }
 

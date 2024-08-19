@@ -1,7 +1,6 @@
 package properties
 
 import (
-	"fmt"
 	"slices"
 
 	bcbevents "github.com/filecoin-project/mir/samples/reliable-broadcast/events"
@@ -71,11 +70,11 @@ func (i *Integrity) handleDeliver(e *bcbevents.Deliver) error {
 		// must not be delivered before so all ok, just note that we delivered something
 		i.broadcastDeliverTracker[nodeID] = true
 	} else if i.broadcastRequest == "" {
-		fmt.Printf("Node %s delivered a value before anything was broadcasted", nodeID)
+		// fmt.Printf("Node %s delivered a value before anything was broadcasted", nodeID)
 		// fail
 		dsl.EmitEvent(i.m, checkerevents.NewFailureEvent())
 	} else if i.broadcastRequest != e.Data {
-		fmt.Printf("Node %s delivered a value different from what the honest sender broadcasted", nodeID)
+		// fmt.Printf("Node %s delivered a value different from what the honest sender broadcasted", nodeID)
 		// fail
 		dsl.EmitEvent(i.m, checkerevents.NewFailureEvent())
 	} else {
