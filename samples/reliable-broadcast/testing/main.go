@@ -240,10 +240,10 @@ func fuzz(
 }
 
 func main() {
-	rounds := 1000
+	rounds := 100000
 	logLevel := logging.LevelTrace
 	startTime := time.Now()
-	hits, err := fuzz("test-reliable", []stdtypes.NodeID{"0", "1", "2"}, []stdtypes.NodeID{"1"}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, rounds, logLevel)
+	hits, err := fuzz("test-reliable-broken", []stdtypes.NodeID{"0", "1", "2", "3"}, []stdtypes.NodeID{"1", "2"}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, rounds, logLevel)
 	if err != nil {
 		fmt.Println(err)
 	}

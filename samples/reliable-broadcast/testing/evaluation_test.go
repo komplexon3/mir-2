@@ -23,13 +23,13 @@ import (
 )
 
 const (
-	runsPerEvaluationRun = 1000
-	evaluationRuns       = 10
+	runsPerEvaluationRun = 100000
+	evaluationRuns       = 1000
 )
 
 var (
 	reportDir     = fmt.Sprintf("./evaluation_%s", time.Now().Format("2006-01-02_15-04-05"))
-	propertyNames = []string{"validity", "consistency", "integrity", "totality"}
+	propertyNames = []string{"integrity"} //"validity", "consistency", "integrity", "totality"}
 )
 
 func evaluationRun(
@@ -84,7 +84,7 @@ func evaluationRun(
 
 	// TODO: properly deal with context
 	ctx := context.Background()
-	hitsAfter, err := fuzzer.RunEvaluation(ctx, name, rounds, MAX_RUN_DURATION, rand.New(rand.NewPCG(SEED1, SEED2+uint64(evaluationRunNr))), 3, logLevel)
+	hitsAfter, err := fuzzer.RunEvaluation(ctx, name, rounds, MAX_RUN_DURATION, rand.New(rand.NewPCG(SEED1, SEED2+uint64(evaluationRunNr))), len(propertyNames), logLevel)
 	if err != nil {
 		return nil, es.Errorf("fuzzer encountered an issue: %v", err)
 	}
@@ -93,10 +93,12 @@ func evaluationRun(
 }
 
 func Test_Evaluation(t *testing.T) {
-	logLevel := logging.LevelDebug
+	logLevel := logging.LevelInfo
+	nodes := []stdtypes.NodeID{"0", "1", "2", "3"}
+	byzantineNodes := []stdtypes.NodeID{}
 	startTime := time.Now()
 
-	evaluationPath := path.Join(reportDir, "evaluation.csv")
+	evaluationPath := path.Join(reportDir, fmt.Sprintf("evaluation-%d-%d-%d-%d.csv", len(nodes), len(byzantineNodes), evaluationRuns, runsPerEvaluationRun))
 	err := os.MkdirAll(reportDir, os.ModePerm)
 	if err != nil {
 		fmt.Printf("failed to create report directory: %v", err)
@@ -116,7 +118,7 @@ func Test_Evaluation(t *testing.T) {
 	}
 	defer evaluationFile.Close()
 	for r := range evaluationRuns {
-		hits, err := evaluationRun(fmt.Sprintf("evaluation-%d", r), r, []stdtypes.NodeID{"0", "1", "2", "3", "4"}, []stdtypes.NodeID{"1", "2"}, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, runsPerEvaluationRun, logLevel)
+		hits, err := evaluationRun(fmt.Sprintf("evaluation-%d", r), r, nodes, byzantineNodes, stdtypes.NodeID("0"), weightedActionsForByzantineNodes, weightedActionsForNetwork, runsPerEvaluationRun, logLevel)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -140,5 +142,5 @@ func Test_Evaluation(t *testing.T) {
 		}
 	}
 	duration := time.Since(startTime)
-	fmt.Printf("=================================================================\nExecution time: %s - for a total of %d rounds (avg per round: %s)\n", duration, runsPerEvaluationRun*evaluationRuns, time.Duration(int64(duration)/int64(runsPerEvaluationRun*evaluationRuns)))
+	fmt.Printf("=================================================================\nExecution time: %s\n", duration)
 }

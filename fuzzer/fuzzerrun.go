@@ -211,7 +211,7 @@ func (r *fuzzerRun) Run(ctx context.Context, name string, timeout time.Duration,
 	results, _ := r.propertyChecker.GetResults()
 
 	allPassed := true
-	resultStr := fmt.Sprintf("Results: (%s)\n", r.reportDir)
+	resultStr := fmt.Sprintf("Results: (%s)\nnodes count: %d, byzantine nodes %v\n\n", r.reportDir, len(r.nodeInstances), r.ca.GetByzantineNodes())
 	for label, res := range results {
 		resultStr += fmt.Sprintf("%s\n", utils.FormatResult(label, res))
 		if res != checker.SUCCESS {

@@ -108,6 +108,9 @@ func NewModule(mc ModuleConfig, params *ModuleParams, nodeID stdtypes.NodeID, lo
 
 	dsl.UponStateUpdates(m, func() error {
 		for req, echos := range state.receivedEcho {
+			if state.delivered {
+				return nil
+			}
 			if !state.sentReady && len(echos) > (params.GetN()+params.GetF())/2 {
 				state.sentReady = true
 				eventsdsl.SendMessage(m, mc.Net, mc.Self, messages.NewReadyMessage(req), params.AllNodes...)
@@ -115,9 +118,6 @@ func NewModule(mc ModuleConfig, params *ModuleParams, nodeID stdtypes.NodeID, lo
 		}
 
 		for req, readies := range state.receivedReady {
-			if state.delivered {
-				return nil
-			}
 			if !state.sentReady && len(readies) > params.GetF() {
 				state.sentReady = true
 				eventsdsl.SendMessage(m, mc.Net, mc.Self, messages.NewReadyMessage(req), params.AllNodes...)

@@ -76,6 +76,10 @@ func (f *Fuzzer[T, S]) RunEvaluation(ctx context.Context, name string, runs int,
 	if err != nil {
 		return nil, es.Errorf("failed to create fuzzing campaign report file: %v", err)
 	}
+	_, err = fmt.Fprintf(reportFile, "count nodes: %d, byzantine nodes: %v\n\n", len(f.nodeConfigs), f.byzantineNodes)
+	if err != nil {
+		return nil, es.Errorf("failed to write to fuzzing campaign report file: %v", err)
+	}
 	defer reportFile.Close()
 
 	updateWriter := NewUpdateWriter(runs, 100)
@@ -179,9 +183,13 @@ func (f *Fuzzer[T, S]) RunEvaluation(ctx context.Context, name string, runs int,
 			fmt.Printf("Run %s failed: %v", runName, err)
 			// don't fail/return, go on to next run
 		}
-		updateWriter.Update(r+1, countInteresting, countTimeoutExit, countIdleExit, countOtherExit)
 		if propertiesHit == numberOfPropertiesToHit {
+			updateWriter.Update(r+1, countInteresting, countTimeoutExit, countIdleExit, countOtherExit)
 			fmt.Println("All properties hit, early exit")
+			break
+		}
+		if (r+1)%10 == 0 {
+			updateWriter.Update(r+1, countInteresting, countTimeoutExit, countIdleExit, countOtherExit)
 		}
 	}
 	updateWriter.Stop()
