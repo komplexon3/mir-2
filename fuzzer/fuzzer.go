@@ -65,8 +65,8 @@ func NewFuzzer[T, S any](
 	}, nil
 }
 
-// jankuly modified to get metrics
-func (f *Fuzzer[T, S]) RunEvaluation(ctx context.Context, name string, runs int, timeout time.Duration, rand *rand.Rand, numberOfPropertiesToHit int, logLevel logging.LogLevel) (map[string]int, error) {
+// jankily modified to get metrics
+func (f *Fuzzer[T, S]) RunEvaluation(ctx context.Context, name string, runs int, timeout time.Duration, rand *rand.Rand, logLevel logging.LogLevel, resC chan map[string]checker.CheckerResult) (map[string]int, error) {
 	err := os.MkdirAll(f.reportsDir, os.ModePerm)
 	if err != nil {
 		return nil, es.Errorf("failed to create fuzzing campaign report directory: %v", err)
@@ -176,17 +176,13 @@ func (f *Fuzzer[T, S]) RunEvaluation(ctx context.Context, name string, runs int,
 				return es.Errorf("failed to flush fuzzing campaign report file to disk: %v", err)
 			}
 
+			resC <- results.results
 			return nil
 		}()
 		if err != nil {
 			// TODO: this will not work with the update writer, add a way to output this...
 			fmt.Printf("Run %s failed: %v", runName, err)
 			// don't fail/return, go on to next run
-		}
-		if propertiesHit == numberOfPropertiesToHit {
-			updateWriter.Update(r+1, countInteresting, countTimeoutExit, countIdleExit, countOtherExit)
-			fmt.Println("All properties hit, early exit")
-			break
 		}
 		if (r+1)%10 == 0 {
 			updateWriter.Update(r+1, countInteresting, countTimeoutExit, countIdleExit, countOtherExit)
